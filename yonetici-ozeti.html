@@ -94,12 +94,6 @@ body.hazir:not(.gosteri-acik) .big{animation:ciroNabiz 3.6s ease-in-out infinite
 body.sekme-pasif .big{animation-play-state:paused}
 @media (prefers-reduced-motion:reduce){.big{animation:none}}
 
-@keyframes veriIsigi{
-  0%,72%,100%{box-shadow:0 0 0 0 rgba(127,197,155,0)}
-  82%{box-shadow:0 0 0 5px rgba(127,197,155,.16)}
-  90%{box-shadow:0 0 0 9px rgba(127,197,155,0)}
-}
-body.hazir:not(.gosteri-acik) .veri .dot{animation:veriIsigi 5.5s ease-out infinite}
 
 /* ---- gezinme ---- */
 .navbar{border-bottom:1px solid var(--rule);background:var(--surf-2);
@@ -212,15 +206,7 @@ body.hazir:not(.gosteri-acik) .veri .dot{animation:veriIsigi 5.5s ease-out infin
    aşabilmesi için: tahmin hedefin %133'üne kadar çubuğa sığar. */
 .bullet .track{position:relative;height:clamp(18px,2.6vh,24px);background:#E2DFD4;
   border-radius:3px;overflow:hidden}
-.bullet .track::after{content:"";position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.48) 50%,transparent 65%);
-  transform:translateX(-125%)}
-@keyframes hedefParla{
-  0%,76%{transform:translateX(-125%)}
-  90%,100%{transform:translateX(125%)}
-}
-body.hazir:not(.gosteri-acik) .bullet .track::after{
-  animation:hedefParla 8.5s cubic-bezier(.35,0,.2,1) 1.5s infinite}
+/* Parlama yalnız haritada: hedef çubuğundaki tarama kaldırıldı. */
 .btablo .alt .track{height:clamp(9px,1.3vh,12px)}
 .bullet .fill{position:absolute;left:0;top:0;bottom:0;border-radius:2px}
 .bullet .mark{position:absolute;top:-4px;bottom:-4px;width:3px;background:var(--gold);border-radius:1px}
@@ -382,7 +368,6 @@ tr.toplam:hover td{background:var(--surf-2)}
   border-left:1px solid var(--rule);border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);
   transition:background .15s,box-shadow .15s}
 .kart:hover{background:var(--brand-soft);box-shadow:0 1px 6px rgba(39,55,85,.10)}
-body.sekme-pasif .veri .dot,body.sekme-pasif .bullet .track::after{animation-play-state:paused}
 
 /* ---- kartların üstünde dolaşan ışık ("yılan") ----
    Kart başına ayrı bir parıltı yerine dört kartı tek şeritte ören bir yol:
@@ -395,20 +380,19 @@ body.sekme-pasif .veri .dot,body.sekme-pasif .bullet .track::after{animation-pla
    çizilebiliyor. Geometriyi yilanKur() ölçüp yazıyor, yerleşim her
    değiştiğinde yeniden kuruluyor. Işığın kendisi stroke-dasharray ile
    yürüyen tek bir kısa kesik. */
-#secSahaKart{position:relative}
 .yilan{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3;overflow:visible}
 .yilan path{fill:none;stroke:var(--fistik);stroke-width:2.4;
   stroke-linecap:round;stroke-linejoin:round;
   filter:drop-shadow(0 0 5px rgba(161,203,58,.85));
-  stroke-dasharray:var(--seg,60px) var(--uz,3000px);
-  stroke-dashoffset:var(--seg,60px);opacity:0}
-@keyframes yilanAk{
-  0%{stroke-dashoffset:var(--seg);opacity:0}
-  4%,66%{opacity:1}
-  72%,100%{stroke-dashoffset:calc(-1 * var(--uz));opacity:0}
-}
-body.hazir:not(.gosteri-acik) .yilan path{animation:yilanAk 11s linear 1.8s infinite}
+  stroke-dashoffset:var(--seg,110px);opacity:0}
 body.sekme-pasif .yilan path{animation-play-state:paused}
+/* ":not(body.hazir) .yilan" yazılmamalı: .gdz de body değil, kural her
+   zaman tutuyordu. Olumsuzlama body'nin kendisine uygulanır. */
+/* Yalnız Genel'de: diğer kırılımlarda .gdz sıfır boya iniyor ve
+   preserveAspectRatio="none" yüzünden yollar tepeye yassılıp ince bir
+   çizgi olarak sızabiliyor. genel-tek-ekran sınıfı yalnız Genel'de var. */
+body.gosteri-acik .yilan,body:not(.hazir) .yilan,
+body:not(.genel-tek-ekran) .yilan{visibility:hidden}
 @media (prefers-reduced-motion:reduce){.yilan{display:none}}
 .kart .ad{display:flex;align-items:center;gap:7px;font-size:clamp(var(--f3),1.05vw,17px);font-weight:650}
 .kart .ad .pay{margin-left:auto;font-size:var(--f4);font-weight:600;color:var(--mut);
@@ -428,7 +412,7 @@ body.sekme-pasif .yilan path{animation-play-state:paused}
 /* ---- Genel sayfasının iki sütunu ---- */
 /* Saha kartları sağda, sayfanın en üstünden başlar: vurgulama hem ciro
    bloğunu hem haritayı etkilediği için üçünün aynı anda görünmesi gerekiyor. */
-.gdz{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,288px);
+.gdz{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,288px);
   gap:var(--gap);align-items:stretch}
 .gdz-ana{min-width:0}
 .gdz-ana > .sec + .sec{margin-top:clamp(8px,1.3vh,14px)}
@@ -866,6 +850,8 @@ body.acilis #spark text.tahmin:not(#suAnYazi){
 <main class="wrap">
 
 <div class="gdz" id="gdzSar">
+ <svg class="yilan" id="yilan" aria-hidden="true" focusable="false" preserveAspectRatio="none"></svg>
+ <style id="yilanStil"></style>
  <div class="gdz-ana">
 
   <section class="sec" id="secCiro" aria-label="Ciro">
@@ -956,8 +942,6 @@ body.acilis #spark text.tahmin:not(#suAnYazi){
  <aside class="gdz-yan">
   <section class="sec" id="secSahaKart" aria-label="Saha bölgeleri">
     <div class="kartlar dikey" id="sahaKartlar"></div>
-    <svg class="yilan" id="yilan" aria-hidden="true" focusable="false"
-         preserveAspectRatio="none"><path id="yilanYol"></path></svg>
   </section>
  </aside>
 </div>
@@ -3701,38 +3685,88 @@ function kapsamHizala(){
   sol.style.setProperty("--kapsam-y", Math.max(0,y).toFixed(1)+"px");
 }
 
-/* Kartların üstünde dolaşan ışığın yolunu kurar. Zikzak: 1. kartın sol
-   üstünden üst kenardan sağa, sonra her kartta bir kenardan aşağı ve alt
-   kenardan karşıya — inilen kenar her kartta yön değiştiriyor, böylece dört
-   kart tek kesintisiz şerit gibi örülüyor.
+/* ---- Kartların üstünde dolaşan ışık ("yılan") ----
+   Panodaki yedi bloğun kenarlarında dolaşan tek bir ışık. Sıra saat yönünde
+   bir tur: ciro kartı (sol üst) → dört saha kartı yukarıdan aşağı → harita →
+   seyir → başa. Her blokta ışık kendi kenarında saat yönünde bir tam tur
+   atıyor, sol üst köşesinden başlayıp yine oraya varıyor.
 
-   Ölçüler offsetLeft/offsetTop ile alınıyor: getBoundingClientRect panonun
-   scale()'ini taşıyor, offset* ise yerleşim pikseli veriyor — viewBox da
-   aynı birimde kurulduğu için ikisi birebir örtüşüyor. */
+   Bloklar arasında HİÇBİR ŞEY ÇİZİLMİYOR: eskiden kartlar tek bir kesintisiz
+   şeritle bağlanıyordu ve kartlar birbirine bitişikmiş gibi duruyordu. Işık
+   şimdi bir bloğu bitirince sönüyor, kısa bir aradan sonra sonraki bloğun
+   sol üst köşesinde yeniden beliriyor.
+
+   Her blok kendi <path>'i; SVG'de kesik deseni (stroke-dasharray) her alt
+   yolda baştan başladığı için tek path ile yapılamıyordu. Zamanlama
+   paylaşılan tek bir periyoda (YILAN_TUR) oturtuluyor ve her bloğun kendi
+   @keyframes'i burada üretiliyor — hepsi aynı süreyle döndüğü için sıra
+   hiç kaymıyor.
+
+   Ölçüler getBoundingClientRect ile alınıp ölçeğe bölünüyor: pano
+   transform:scale() taşıyor, ham değerler viewBox birimiyle uyuşmazdı. */
+const YILAN_TUR = 12;       /* saniye — bir tam tur (eskiden dört kart 11 sn sürüyordu; şimdi yedi blok 12 sn) */
+const YILAN_ARA = 0.10;     /* saniye — bloklar arası sessiz aralık */
+const YILAN_ISIK = 110;     /* piksel — ışığın uzunluğu */
+
 function yilanKur(){
-  const bolum=$("secSahaKart"), sv=$("yilan"), yol=$("yilanYol");
-  if(!bolum||!sv||!yol) return;
-  const kartlar=[].slice.call(bolum.querySelectorAll(".kart"));
-  if(kartlar.length<2 || !bolum.offsetWidth){ sv.style.visibility="hidden"; return; }
-  sv.style.visibility="";
-  sv.setAttribute("viewBox","0 0 "+bolum.offsetWidth+" "+bolum.offsetHeight);
+  const sar=$("gdzSar"), sv=$("yilan"), stil=$("yilanStil");
+  if(!sar||!sv||!stil) return;
+  const sc=parseFloat(document.querySelector(".wrap").dataset.olcek)||1;
+  const kok=sar.getBoundingClientRect();
+  const W=kok.width/sc, Hh=kok.height/sc;
 
-  const r=kartlar.map(function(k){
-    return {x0:k.offsetLeft, y0:k.offsetTop,
-            x1:k.offsetLeft+k.offsetWidth, y1:k.offsetTop+k.offsetHeight};
+  /* Tur sırası: ciro → saha kartları → harita → seyir. Her adım bir
+     öncekinin bittiği yere komşu, böylece sönük aralık hep kısa kalıyor. */
+  const bloklar=[];
+  const ekle=function(el){
+    if(!el) return;
+    const r=el.getBoundingClientRect();
+    if(!r.width || !r.height) return;
+    bloklar.push({x:(r.left-kok.left)/sc, y:(r.top-kok.top)/sc,
+                  w:r.width/sc, h:r.height/sc});
+  };
+  ekle(sar.querySelector(".hero"));
+  [].slice.call(sar.querySelectorAll("#sahaKartlar .kart")).forEach(ekle);
+  ekle(sar.querySelector(".hsag"));
+  ekle(sar.querySelector(".spark"));
+
+  if(bloklar.length<2 || !(W>0) || !(Hh>0)){ sv.style.visibility="hidden"; return; }
+  sv.style.visibility="";
+  sv.setAttribute("viewBox","0 0 "+W.toFixed(1)+" "+Hh.toFixed(1));
+
+  /* Sabit hız: toplam kenar uzunluğu tura bölünür, böylece büyük blokta da
+     küçük blokta da ışık aynı tempoda ilerliyor. */
+  const cevre=bloklar.map(function(b){ return 2*(b.w+b.h); });
+  const toplam=cevre.reduce(function(a,c){return a+c;},0);
+  const araToplam=YILAN_ARA*bloklar.length;
+  const cizimSure=Math.max(0.1, YILAN_TUR-araToplam);
+
+  let ic="", t=0;
+  bloklar.forEach(function(b,i){
+    const uz=cevre[i], sure=cizimSure*uz/toplam;
+    const bas=t, bit=t+sure;
+    t=bit+YILAN_ARA;
+    const yuz=function(sn){ return (sn/YILAN_TUR*100).toFixed(3); };
+    /* Sol üstten saat yönünde tam tur */
+    const d="M"+b.x.toFixed(1)+" "+b.y.toFixed(1)+
+            " h"+b.w.toFixed(1)+" v"+b.h.toFixed(1)+
+            " h"+(-b.w).toFixed(1)+" Z";
+    ic+='<path id="yilan'+i+'" d="'+d+'"/>';
+    stil.__kural=(stil.__kural||"")+
+      "@keyframes yilanAk"+i+"{"+
+        "0%,"+yuz(bas)+"%{stroke-dashoffset:var(--seg);opacity:0}"+
+        (bas>0? (yuz(bas+0.001)+"%{opacity:1}") : "0.001%{opacity:1}")+
+        yuz(bit)+"%{stroke-dashoffset:calc(-1 * var(--uz));opacity:1}"+
+        yuz(bit+0.001)+"%,100%{stroke-dashoffset:calc(-1 * var(--uz));opacity:0}"+
+      "}"+
+      "#yilan"+i+"{--uz:"+uz.toFixed(0)+"px;--seg:"+YILAN_ISIK+"px;"+
+        "stroke-dasharray:"+YILAN_ISIK+"px "+uz.toFixed(0)+"px}"+
+      "body.hazir:not(.gosteri-acik) #yilan"+i+
+        "{animation:yilanAk"+i+" "+YILAN_TUR+"s linear infinite}";
   });
-  let d="M"+r[0].x0+" "+r[0].y0+" L"+r[0].x1+" "+r[0].y0;   /* üst kenar, sağa */
-  let sag=true;                                             /* şu an sağ kenardayız */
-  r.forEach(function(c){
-    d+=" L"+(sag?c.x1:c.x0)+" "+c.y1;                       /* kenardan aşağı */
-    d+=" L"+(sag?c.x0:c.x1)+" "+c.y1;                       /* alt kenar, karşıya */
-    sag=!sag;
-  });
-  yol.setAttribute("d",d);
-  let uz=0; try{ uz=yol.getTotalLength(); }catch(e){}
-  if(!uz || !isFinite(uz)){ sv.style.visibility="hidden"; return; }
-  yol.style.setProperty("--uz", uz.toFixed(0)+"px");
-  yol.style.setProperty("--seg", Math.max(40,uz*0.13).toFixed(0)+"px");
+  sv.innerHTML=ic;
+  stil.textContent=stil.__kural||"";
+  stil.__kural="";
 }
 
 let sigdirZaman=null;

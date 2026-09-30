@@ -556,26 +556,42 @@ Açılış bittikten sonra (`body.hazir`) ve gösteri kapalıyken çalışan sü
 hareketler. Hepsi sekme arka plana geçince duruyor (`body.sekme-pasif`) ve
 `prefers-reduced-motion` altında kapalı.
 
-- **Kartların üstünde dolaşan ışık ("yılan").** Dört saha kartını tek şerit
-  gibi ören bir zikzak: 1. kartın sol üstünden üst kenardan sağa, sağ
-  kenardan aşağı, alt kenardan sola; 2. kartta sol kenardan aşağı, alt
-  kenardan sağa; 3. kartta yine sağ kenardan aşağı… Yol kartların
-  **üstünde** duran bir SVG'de (`#yilan`), kartların kendi kutularında
-  değil — kartlar arası geçiş ancak böyle kesintisiz çizilebiliyor.
-  Geometriyi `yilanKur()` ölçüp yazıyor (`offsetLeft/offsetTop`;
-  `getBoundingClientRect` panonun `scale()`'ini taşıdığı için kullanılamaz),
-  yerleşim her değiştiğinde yeniden kuruluyor. Işık `stroke-dasharray` ile
-  yürüyen tek bir kesik: ölçülen yol 2343 px, kesik 305 px, tur 11 sn
-  (7 sn yürür, 4 sn dinlenir). Önceki hâli kart başına ayrı bir parıltıydı
-  (`kartIsik`), kaldırıldı.
+- **Panoda dolaşan ışık ("yılan").** Yedi bloğun kenarlarında dolaşan tek
+  bir ışık. Sıra bir tur: **ciro kartı (sol üst)** → dört saha kartı
+  yukarıdan aşağı → harita → seyir → başa. Her blokta ışık kendi kenarında
+  sol üst köşeden başlayıp saat yönünde tam tur atıyor.
+
+  **Bloklar arasında hiçbir şey çizilmiyor.** İlk hâli dört kartı tek
+  kesintisiz şeritle bağlıyordu ve kartlar birbirine bitişikmiş gibi
+  duruyordu; ışık artık bir bloğu bitirince sönüyor, ~0,13 sn sonra
+  sonraki bloğun sol üst köşesinde beliriyor.
+
+  Her blok kendi `<path>`'i — SVG'de kesik deseni her alt yolda baştan
+  başladığı için tek path ile yapılamıyordu. Zamanlama tek bir periyoda
+  (`YILAN_TUR`, 12 sn) oturuyor ve her bloğun `@keyframes`'i `yilanKur()`
+  içinde üretilip `#yilanStil`e yazılıyor; hepsi aynı süreyle döndüğü için
+  sıra hiç kaymıyor. Hız sabit: pay, bloğun çevresinin toplama oranı.
+  Ölçülen tur: ciro %0–23,6 · kartlar %24,8–50,1 · harita %51,2–75 ·
+  seyir %76–98,9.
+
+  Ölçüler `getBoundingClientRect` ile alınıp **ölçeğe bölünüyor** (pano
+  `transform:scale()` taşıyor). İki tuzak: `:not(body.hazir) .yilan`
+  yazılırsa `.gdz` de body olmadığı için kural her zaman tutuyor —
+  olumsuzlama `body:not(.hazir)` olmalı; ve yılan yalnız Genel'de
+  gösterilmeli, diğer kırılımlarda `.gdz` sıfır boya inip yollar tepeye
+  yassılıyor.
+
 - **Gerçekleşen ciro rakamı** yavaşça yanıp söner (`ciroNabiz`, 3,6 sn).
   Durum rengi korunsun diye opaklık değil `brightness` oynatılıyor.
 - **Harita** 9,5 sn'de bir soldan sağa parlar (`haritaParla`). Zemin açık
   olduğu için tarama orada görünmüyor, koyu yeşil illerde dalga gibi
   geçiyor. Katman `pointer-events:none` ve balonun altında (z-index 2 < 5),
   hover etkilenmiyor.
-- Veri damgasındaki nokta, hedef çubuğundaki parıltı, "şu an" noktasının
-  nabzı ve güncel kayıt sütununun nefesi önceki turdan duruyor.
+- **Parlama yalnız haritada.** Veri damgasındaki ışık halkası
+  (`veriIsigi`) ve hedef çubuğundaki tarama (`hedefParla`) kaldırıldı;
+  ekranda aynı anda birden çok parıltı olması dikkati dağıtıyordu.
+  "Şu an" noktasının nabzı ve güncel kayıt sütununun nefesi duruyor —
+  onlar parlama değil, veri işareti.
 
 ### Seyrin açılışı soldan sağa
 
