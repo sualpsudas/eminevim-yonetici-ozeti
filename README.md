@@ -273,7 +273,7 @@ dönüşüm. Ölçülen değerler (Gün): 6.613 randevu → %22 → 1.434 kart �
 - Blok saha önizlemesini izler: kart ya da il üstüne gelince o sahanın
   değerlerine döner.
 - **Hizalama:** `.hunipan` ve `.paypan` satırın tepesine yaslanır
-  (`align-self:stretch`), böylece "Dönüşüm oranı" ile "Kanal payı" başlıkları
+  (`align-self:stretch`), böylece "Dönüşüm oranı" ile "Toplam kanal dağılımı" başlıkları
   aynı satırda okunur ve aradaki ayırıcı çizgiler satırın tam boyunca iner.
   Ortada kalsalardı içerik boyları farklı olduğu için başlıklar 39 px
   kayıyordu.
@@ -292,7 +292,7 @@ Veri, gecikmeli bir kayıt serisinden türer (`TES_GECIKME = 75` gün): yılın 
 günlerinde gecikmeli kaynak olmadığı için o aralık kısılarak doldurulur.
 Ölçülen: 299/gün · 8.190/ay · 67.487/yıl.
 
-## Kanal payı halkası
+## Toplam kanal dağılımı
 
 Haritanın sağında. Cironun ne kadarının **şubeden**, ne kadarının **saha
 personelinden** (SPY) geldiğini gösterir — iki dilim, yanında tutar ve yüzde.
@@ -301,7 +301,7 @@ personelinden** (SPY) geldiğini gösterir — iki dilim, yanında tutar ve yüz
   seçiliyken pay %100 saha çıkardı, o da hiçbir şey anlatmazdı. Halka her zaman
   iki kanalın toplamı üzerinden hesaplanır; panelin altında bu not yazılıdır.
 - **Saha önizlemesini izler:** haritada ya da bir saha kartında bir sahanın
-  üstüne gelince o sahanın kanal kırılımına iner (başlık "Kanal payı · Batı").
+  üstüne gelince o sahanın kanal kırılımına iner (başlık "Toplam kanal dağılımı · Batı").
 - Terim çakışmasına dikkat: buradaki **"Saha"** satış kanalıdır (SPY), ekranın
   geri kalanındaki **saha bölgesi** (İstanbul / Batı / Orta / Doğu) değildir.
 
@@ -407,7 +407,7 @@ kayar.
 | Rakamlar | `sayiAk(el, değer, biçim, tür)` — eski değerden yenisine akar. `tür` değişirse (yüzdeden TL'ye) akış yapılmaz, ara değer anlamsız olurdu. |
 | Ciro çubukları | `iskelet()` ile satır **sayısı** imzalanır (etiket metni imzaya girmez, yoksa her dönem değişiminde çubuk sıfırlanıp yeniden dolardı); aynı imzada `.fill` / `.mark` / `.fcast` yerinde kalır, genişlikleri CSS geçişiyle taşınır. |
 | Harita | 81 il yolu bir kez kurulur (`haritaKur`), sonra yalnız `fill-opacity` güncellenir. |
-| Kanal payı halkası | Şube payı oranı akıtılır, yaylar her karede `payYaylari()` ile yeniden üretilir. |
+| Toplam kanal dağılımı halkası | Şube payı oranı akıtılır, yaylar her karede `payYaylari()` ile yeniden üretilir. |
 | Saha kartları | İmza = saha adları + dönem tipi. Aynı imzada kartlar yerinde kalır; olay dinleyicileri yalnız yeniden kurulunca bağlanır. |
 
 `ciz(neden)` çizimi neyin tetiklediğini taşır: `donem`, `kanal`, `seviye`,
@@ -418,6 +418,36 @@ olarak ayarlar.
 `requestAnimationFrame` arka plandaki sekmede durduğu için her akışın bir
 emniyet zamanlayıcısı vardır: süre dolduğunda son değer her hâlükârda yerine
 yazılır, ekranda eski rakam asılı kalmaz.
+
+### Ölçek sıçramasında akış kapanır
+
+Rakam akışı "aynı ölçü, başka tutar" der. Dönem ya da kırılım değişince
+bakılan büyüklük bir mertebe atlıyor ve arada interpole edilen değerler
+hiçbir şeye karşılık gelmiyordu. Ölçülen: Yıl → Gün geçişinde tahmin kutusu
+600 ms boyunca **%15.534 → %8.536 → %4.246 → %1.719 → %542 → %142 → %110**
+diye geri sayıyordu — ekran görüntüsünde hatalı veri gibi duruyor.
+
+`ciz()` her çizimde kapsamın gerçekleşenini bir öncekiyle karşılaştırıyor
+(`olcekBak`); oran **6 katı** aşarsa o çizim boyunca akış kapanır ve bütün
+KPI'lar aynı anda son değerine geçer. Karar kutu kutu değil çizim başına
+verilir, yoksa bazıları akıp bazıları sıçrardı.
+
+Ölçülen oranlar ve sonuç:
+
+| geçiş | oran | davranış |
+|---|---|---|
+| saha önizlemesi (hover) | 3,3 | **akar** — `ciz()`'den geçmediği için ölçüye hiç girmiyor |
+| Yıl ↔ Gün | 219 | sıçrar |
+| Hafta ↔ Ay | 23,6 | sıçrar |
+| Tüm Satış ↔ Alternatif kanal | 9,5 | sıçrar |
+
+Yani en sık görülen geçiş — kart ya da harita üstünde gezinmek — akmaya
+devam ediyor; sıçrayanlar dönem ve kapsam değişimleri. Bayrak tek
+çizimliktir, `BOLUMLER` döngüsünden hemen sonra sıfırlanır.
+
+**Not:** Hafta dilimi 28 Eylül – 4 Ekim, kesit ise 28 Eylül. Yani Hafta'da
+yalnız bir gün geçmiş; Gün ile Hafta'nın gerçekleşeni birebir aynı, Ay'a
+geçiş de bu yüzden 23 kat. Hata değil.
 
 ### Ciro çubuğu
 
@@ -608,6 +638,13 @@ sapma −1 px, Hafta'da +9 px — üç çubuklu hero biraz daha uzun).
 yapısal bir değişiklik istiyor; "Sıradaki adımlar"daki üç sütun fikri açık
 duruyor.
 
+## Sürüm kontrolü
+
+Klasör 30 Eylül 2026'da git deposuna çevrildi (`git init`, ilk commit dört
+dosyayı da kapsıyor). 250 KB'lık tek dosyada çalışıldığı için geri dönüş
+güvencesi gerekiyordu. Uzak depo yok; gerekirse
+`https://github.com/sualpsudas` altına açılır.
+
 ## Ortamlar
 
 Masaüstü ve telefon için ayrı düzen vardır. 720 px altında grafikler daha kare bir
@@ -675,10 +712,39 @@ yüzde ve hedefe çivilenmiş çubuk ölçeği.
   değişmedi.
 - **Bedel:** `.gdz` altı 933 → 967 px (Hafta 978). Bkz. "Ekrana sığma".
 
+**30 Eylül, dördüncü tur — Codex değerlendirmesinden alınan üç madde:**
+
+- **Ölçek sıçramasında rakam akışı kapanıyor** (gerçek hataydı): Yıl → Gün
+  geçişinde tahmin kutusu %15.534'ten %110'a geri sayıyordu. Bkz. "Ölçek
+  sıçramasında akış kapanır".
+- **Klasör git deposu oldu** (`git init` + ilk commit).
+- **"Kanal payı" → "Toplam kanal dağılımı"**: bloğun üstteki kanal
+  filtresini izlemediği dipnotta yazıyordu, başlığa taşındı. Saha
+  sayfasındaki aynı blok da tutarlılık için yeniden adlandırıldı (yalnız
+  başlık; blok içeriğine dokunulmadı).
+
+**Değerlendirmeden alınmayanlar ve sebebi:** "%80 ▲"nin ikiye bölünmesi
+(yüzde = hedefe ilerleme, renk ve ok = beklenen seyir; bilinçli karar —
+alternatif olarak kutunun alt satırına seyir farkını yazmak önerildi,
+karar bekliyor) · "dekoratif dönüşleri azaltın" (ekran genel müdürlükte
+duvarda dönecek, hareket kasıtlı) · "gösteride yarı eski–yarı yeni durum
+olmasın" (kutuların sahanın adetlerini, üstün cirosunu göstermesi
+anlatının adımı) · "tek dosya bölünsün" (dosyanın işi taşınabilir sunum
+aracı olmak). Bekleyenler: saat + veri yaşı, gösteri paketi
+(`prefers-reduced-motion`, durdurma bildirimi, sahne göstergesi), otomatik
+5×4 test betiği, veri talebi listesi, ekrana sığma ve dokunmatik paketi.
+
 **Kapsam Genel sayfasıdır.** Saha, Bölge, Şube ve Personel sayfaları hâlâ her
 çizimde baştan üretiliyor — geçiş katmanı oralara taşınmadı. Saha sayfasındaki
 blok içeriği hâlâ ara durumda ve kullanıcının farklı fikirleri var; sormadan
 üzerine ekleme yapılmamalı.
+
+**Son doğrulama (30 Eylül, dördüncü tur):** iki kanal × beş sayfa × dört
+dönem taraması temiz (40 görünüm; hata, boş bölüm, `NaN`/`undefined`, boş
+SVG yok). Ölçek sıçraması ölçüldü: Yıl↔Gün, Hafta↔Ay ve kanal değişimi
+sıçrıyor, saha önizlemesi akmaya devam ediyor. Gösteri etkilenmedi.
+
+Bir önceki tur:
 
 **Son doğrulama (30 Eylül, üçüncü tur):** beş sayfa × dört dönem taraması
 temiz; gösteri baştan sona izlendi (sıra doğru, kart boyu 201 px'te sabit,
