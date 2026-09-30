@@ -446,6 +446,26 @@ olarak ayarlar.
 emniyet zamanlayıcısı vardır: süre dolduğunda son değer her hâlükârda yerine
 yazılır, ekranda eski rakam asılı kalmaz.
 
+### Hero'nun üst bandı: etiket, rakam ve kapsam kutusu
+
+Kapsam kutusu ("Türkiye Geneli" / saha adı + teslimat) **akıştan çıkarıldı**
+(`position:absolute`). Eskiden "Gerçekleşen" etiketiyle aynı satırdaydı ve
+satırın boyunu o belirlediği için etiket ile büyük rakam arasında 45 px'lik
+bir delik açılıyordu. Şimdi:
+
+- sol sütunda akış sıkı: etiket → rakam (ölçülen ara **6 px**),
+- kutu sağda, dikey konumu `--kapsam-y` ile veriliyor.
+
+`--kapsam-y`'yi `kapsamHizala()` ölçüyor: kutunun tepesi sağdaki **üst KPI
+satırının** tepesine oturuyor. Bu hizayı CSS ifade edemiyor — KPI ızgarası
+kartın içinde ortalanıyor, üst satırın nereye düştüğü kartın boyuna bağlı.
+Kutu mutlak konumlu olduğu için yazmak yerleşimi değiştirmiyor; ölçüm
+`ekranaSigdir` içinde, pano son genişliğine geldikten sonra yapılıyor.
+
+Ölçülen: `.kapsamEt` ile `#hgBox .k` aynı piksele oturuyor (fark 0) — dört
+dönemde, saha önizlemesinde ve 1280×720'de de. KPI ızgarası dikeyde
+ortalandı (üst/alt boşluk eşit: 1920×940'ta 29/29, 1280×720'de 45/45).
+
 ### Dönemler arası boy sabitliği
 
 Tek-ekran ölçeklemesi geldikten sonra bu kural daha da kritik: panonun doğal
@@ -529,6 +549,26 @@ bitince bir kez daha ölçen emniyet turu (`ekranaSigdir(true)`, 1 sn sonra,
 kendini tekrar çağırmaz). Ölçülen: dönem, kırılım, kanal, hızlı tıklama ve
 `resize` — hepsinde ölçek 0,867 ve kart 190 px'te sabit (1280×720'de 0,760
 ve 137 px).
+
+### Seyrin açılışı soldan sağa
+
+Soldaki ciro seyri artık tek seferde belirmiyor, soldan sağa kuruluyor:
+
+1. gerçekleşen çizgi çizilir (`.cizgiAk`, 0,85 sn),
+2. noktalar, tutarlar ve saat etiketleri çizginin ucunu takip ederek sırayla
+   belirir — `--sira` her öğeye çizim sırasında yazılıyor,
+   gecikme `120ms + sıra × 62ms`,
+3. 0,82 sn'de "şu an" noktası ile akan saat,
+4. 0,92 sn'de **kesik tahmin çizgisi**, 1,42 sn'den itibaren onun noktaları.
+
+Kesik çizgi eskiden baştan duruyordu; gelecek zaten yazılmış gibi görünüyor
+ve soldan sağa okunan anlatıyı bozuyordu. Tur 1,84 sn'de bitiyor, 2,3 sn'lik
+pencerenin içinde.
+
+**Tuzak:** taban kuraldaki `:not(#suAnNokta)` seçiciyi iki kimlik ağırlığına
+çıkarıyor. `.tahmin` kuralı aynı şekli taşımayınca (`body.acilis #spark
+.tahmin`) sessizce geçersiz kalıyordu — tahmin noktaları hâlâ erken
+beliriyordu. Her iki kural da `:not(#…)` taşımalı.
 
 ### Açılış sayacı ilk boyamadan sonra başlar
 

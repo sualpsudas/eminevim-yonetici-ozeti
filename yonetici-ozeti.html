@@ -141,32 +141,29 @@ body.hazir:not(.gosteri-acik) .veri .dot{animation:veriIsigi 5.5s ease-out infin
    yeşilinden fıstığa giden, uçlarda sönen ince bir şerit. Altın bilerek
    kullanılmadı — bu ekranda altın "hedef" demek, kozmetik bir çizgide o
    anlamı taşımamalı. */
-/* İçerik yukarı yaslı: "Gerçekleşen" etiketi ile büyük rakam arasındaki
-   boşluğu kapatmak için rakam yukarı çekiliyor (aşağıdaki .big eksi üst
-   boşluğu); ortalama açık kalsaydı kazanılan yerin yarısı etiketi aşağı
-   iterek geri alınırdı. */
-.hero-l{padding:clamp(4px,0.7vh,8px) 20px;border-right:0;
+.hero-l{position:relative;padding:clamp(4px,0.7vh,8px) 20px;border-right:0;
   background:linear-gradient(to bottom,transparent 0%,var(--fistik) 16%,
     var(--brand) 50%,var(--fistik) 84%,transparent 100%) right center/2px 86% no-repeat;
-  display:flex;flex-direction:column;justify-content:flex-start}
+  display:flex;flex-direction:column;justify-content:center}
 .hero-r{padding:clamp(4px,0.7vh,8px) 20px;background:var(--surf-2);display:flex;flex-direction:column}
 .lbl{font-size:var(--f4);color:var(--mut);font-weight:600}
-.hl-ust{display:flex;align-items:flex-start;gap:12px}
-.hl-ust .lbl{align-self:flex-start;margin-top:4px}
+/* Üst satırda artık yalnız "Gerçekleşen" etiketi var; kapsam kutusu akıştan
+   çıkarıldı. Eskiden ikisi aynı satırdaydı ve satırın boyunu kapsam kutusu
+   belirlediği için etiket ile büyük rakam arasında 45 px'lik bir delik
+   açılıyordu. Kutu mutlak konumlanınca hem o delik kapanıyor hem de kutu,
+   sağdaki KPI satırının hizasına serbestçe oturtulabiliyor (--kapsam-y,
+   kapsamHizala() ile ölçülüyor). */
+.hl-ust{display:block}
+.hl-ust .lbl{margin-top:4px}
 /* Kapsam etiketi ve hemen altındaki teslimat adedi tek kutuda, sağa yaslı. */
-.kapsamKut{margin-left:auto;margin-right:clamp(12px,6%,64px);padding-top:4px;text-align:right;min-width:0}
+.kapsamKut{position:absolute;right:clamp(12px,6%,64px);top:var(--kapsam-y,10px);
+  text-align:right;min-width:0}
 .kapsamEt{display:block;font-size:clamp(20px,1.8vw,32px);font-weight:700;
   color:var(--brand);white-space:nowrap;line-height:1.1;letter-spacing:-.01em}
 .tesEt{display:block;margin-top:3px;font-size:var(--f3);font-weight:600;
   color:var(--mut);white-space:nowrap}
-/* Üstteki satırın boyunu sağdaki kapsam kutusu ("Türkiye Geneli" +
-   teslimat) belirliyor; "Gerçekleşen" etiketi o satırın tepesinde kalınca
-   etiket ile rakam arasında 45 px'lik bir uçurum oluşuyordu. Rakam yukarı
-   çekilir: kapsam kutusu sağda, rakam solda olduğu için çakışmıyorlar,
-   yalnız aynı yükseklik bandını paylaşıyorlar. Altındaki her şey (günlük
-   hedef, çubuk, gün sonu tahmini) onunla birlikte yukarı geliyor. */
 .big{font-size:clamp(30px,3.8vw,38px);font-weight:700;letter-spacing:-.02em;line-height:1.05;
-  margin:-26px 0 2px}
+  margin:6px 0 2px}
 .sub{font-size:clamp(14px,1.05vw,17px);color:var(--ink-2)}
 .sub b{font-size:1.06em}
 .bullet{margin:clamp(5px,0.8vh,9px) 0 0}
@@ -226,7 +223,7 @@ body.hazir:not(.gosteri-acik) .bullet .track::after{
 /* Sağdaki KPI bloğu da yukarı yaslı: solda rakam yukarı çekilince iki kart
    arasındaki denge bozulmasın. Eskiden space-evenly ile ortalanıyordu. */
 .pair{display:grid;grid-template-columns:1fr 1fr;gap:clamp(4px,1vh,10px) 16px;
-  flex:1 1 auto;align-content:start;justify-items:center;text-align:center}
+  flex:1 1 auto;align-content:center;justify-items:center;text-align:center}
 .pair > div{display:flex;flex-direction:column;justify-content:center;min-width:0}
 .pair > div[hidden]{display:none}   /* display:flex hidden özniteliğini ezmesin */
 /* Başlık ya da alt satır dar ekranda iki satıra düştüğünde KPI'lar kayıyordu;
@@ -700,8 +697,25 @@ body.acilis .bullet .fcast{transition-delay:.85s}
    Şu an noktası ile akan saat hariç — onların kendi animasyonu var. */
 .cizgiAk{stroke-dasharray:var(--uz);stroke-dashoffset:var(--uz);
   animation:cizgiCiz .85s cubic-bezier(.33,.9,.4,1) forwards}
+/* Soldaki seyir soldan sağa kurulur:
+   1) gerçekleşen çizgi çizilir (.cizgiAk, 0,85 sn),
+   2) noktalar, tutarlar ve saat etiketleri çizginin ucunu takip ederek
+      sırayla belirir (--sira),
+   3) "şu an" noktası çizginin bittiği yerde,
+   4) en sonda kesik tahmin çizgisi ile onun noktaları.
+   Kesik çizgi baştan duruyordu; gelecek zaten yazılmış gibi görünüyor ve
+   soldan sağa okunan anlatıyı bozuyordu. */
 body.acilis #spark circle:not(#suAnNokta),
-body.acilis #spark text:not(#suAnYazi){animation:yavasBelir .45s .5s backwards}
+body.acilis #spark text:not(#suAnYazi){
+  animation:yavasBelir .3s backwards;
+  animation-delay:calc(120ms + var(--sira,0) * 62ms)}
+body.acilis #suAnNokta,body.acilis #suAnYazi{animation:yavasBelir .4s .82s backwards}
+body.acilis #spark path.kesik{animation:yavasBelir .5s .92s backwards}
+/* :not(#...) seçicisi taban kuralın ağırlığını iki kimliğe çıkarıyor;
+   tahmin kuralı aynı şekli taşımazsa geçersiz kalıyordu. */
+body.acilis #spark circle.tahmin:not(#suAnNokta),
+body.acilis #spark text.tahmin:not(#suAnYazi){
+  animation-delay:calc(1000ms + var(--sira,0) * 60ms)}
 
 /* ---- telefon ---- */
 @media (max-width:1100px){
@@ -2157,20 +2171,23 @@ function cizSpark(kap,k,per){
     else { if(!kesik && i>0){ const o=nk[i-1]; kesik="M"+X(i-1).toFixed(1)+" "+Y(o.v).toFixed(1); } kesik+="L"+nokta; }
   });
   if(duz) g+='<path d="'+duz+'" fill="none" stroke="#00724C" stroke-width="2.5" stroke-linejoin="round"/>';
-  if(kesik) g+='<path d="'+kesik+'" fill="none" stroke="#2B8C8A" stroke-width="2.5" stroke-dasharray="6 5" stroke-linejoin="round"/>';
+  if(kesik) g+='<path class="kesik" d="'+kesik+'" fill="none" stroke="#2B8C8A" stroke-width="2.5" stroke-dasharray="6 5" stroke-linejoin="round"/>';
 
   nk.forEach(function(n,i){
     const x=X(i), y=Y(n.v), renk=n.tahmin?"#2B8C8A":"#00724C";
-    g+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="3.2" fill="'+(n.tahmin?"#fff":renk)+
+    /* --sira: açılışta noktalar ve tutarlar soldan sağa sırayla belirir,
+       çizilen çizginin ucunu takip eder. tahmin sınıfı olanlar en sonda. */
+    const sr=' style="--sira:'+i+'"'+(n.tahmin?' class="tahmin"':'');
+    g+='<circle'+sr+' cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="3.2" fill="'+(n.tahmin?"#fff":renk)+
        '" stroke="'+renk+'" stroke-width="'+(n.tahmin?2:1)+'"/>';
     /* Uzun TL etiketleri geniş/F11 görünümünde aynı hatta yaklaşabiliyor.
        İki yükseklikte dönüşümlü göstererek puntoyu küçültmeden çakışmayı önle. */
     const etiketY=Math.max(20,y-(i%2?24:10));
     const degerDayanak=i===0?"start":(i===nk.length-1?"end":"middle");
     const eksenDayanak=i===0?"start":(i===nk.length-1?"end":"middle");
-    g+='<text class="s-deger" x="'+x.toFixed(1)+'" y="'+etiketY.toFixed(1)+'" text-anchor="'+degerDayanak+'" '+
+    g+='<text class="s-deger'+(n.tahmin?" tahmin":"")+'" style="--sira:'+i+'" x="'+x.toFixed(1)+'" y="'+etiketY.toFixed(1)+'" text-anchor="'+degerDayanak+'" '+
        'font-weight="'+(n.tahmin?600:700)+'" fill="'+renk+'"'+(n.tahmin?' opacity=".85"':'')+'>'+TL(n.v)+'</text>';
-    g+='<text class="s-eksen" x="'+x.toFixed(1)+'" y="'+(H-6)+'" text-anchor="'+eksenDayanak+'">'+
+    g+='<text class="s-eksen" style="--sira:'+i+'" x="'+x.toFixed(1)+'" y="'+(H-6)+'" text-anchor="'+eksenDayanak+'">'+
        String(n.saat).padStart(2,"0")+':00</text>';
   });
 
@@ -3624,6 +3641,20 @@ function ustOlc(){
    Saha/Bölge/Şube/Personel sayfaları uzun listeler içerdiğinden onları tek
    kareye sıkıştırmak metni okunamaz hâle getirirdi. Genişliği ölçeğin tersi
    kadar açıp tamamını küçülterek ekranın yatay alanı da eksiksiz kullanılır. */
+/* Kapsam kutusu ("Türkiye Geneli" / saha adı + teslimat) sağdaki KPI
+   satırının hizasına oturtulur. İki sütunun içeriği farklı olduğu için bu
+   hizayı CSS ifade edemiyor: KPI ızgarası kartın içinde ortalanıyor, üst
+   satırın nereye düştüğü kartın boyuna bağlı. Ölçüp değişkene yazıyoruz.
+   Kutu mutlak konumlu, yani yazmak yerleşimi değiştirmiyor. */
+function kapsamHizala(){
+  const sol=document.querySelector(".hero-l"), kutu=document.querySelector(".kapsamKut");
+  const ust=document.querySelector("#hgBox .k");
+  if(!sol||!kutu||!ust) return;
+  const s=parseFloat(document.querySelector(".wrap").dataset.olcek)||1;
+  const y=(ust.getBoundingClientRect().top - sol.getBoundingClientRect().top)/s;
+  sol.style.setProperty("--kapsam-y", Math.max(0,y).toFixed(1)+"px");
+}
+
 let sigdirZaman=null;
 function ekranSigdirSifirla(){
   const sayfa=document.querySelector(".wrap");
@@ -3664,6 +3695,7 @@ function ekranaSigdir(tazeleme){
   sayfa.style.width=genislik.toFixed(1)+"px";
   /* Kartlar panonun son genişliğinde sığdırılır, ölçüm ondan sonra alınır. */
   kartSigdir();
+  kapsamHizala();
   yukseklik=sayfa.scrollHeight;
   /* Son genişlik ölçümünde kalan yuvarlama farkı taşma üretmesin. */
   olcek=Math.min(olcek,window.innerWidth/genislik,alan/Math.max(1,yukseklik));
