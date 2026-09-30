@@ -1,0 +1,798 @@
+# Eminevim — Satış Yönetici Özeti
+
+Satış raporlamasının yönetici katmanı için hazırlanan tek dosyalık ekran şablonu.
+Amaç iki yönlü: hem sunumda gösterilecek somut bir görsel, hem de ilgili birimlerden
+istenecek verinin listesini netleştiren bir gereksinim aracı.
+
+**Son güncelleme:** 29 Eylül 2026
+
+## Dosyalar
+
+| Dosya | Ne işe yarar |
+|---|---|
+| `yonetici-ozeti.html` | **Güncel prototip.** Tek dosya (~150 KB), HTML + CSS + JS, dış bağımlılık yok. Çift tıklayıp tarayıcıda açılır. |
+| `Yonetici-Ozeti-Proje-Notlari.md` | Metodoloji: MTD hedef ağırlıklandırma, gün içi projeksiyon formülü, iki katmanlı hesaplama mimarisi. |
+| `Satis-Raporlama-Arastirma-ve-HTML-Degerlendirme.md` | Satış raporlaması araştırması ve kaynaklar. 11. bölüm artık silinmiş olan eski `index.html`'i tarif eder. |
+
+## Ekranın yapısı
+
+Üç eksen bağımsız çalışır:
+
+- **Kanal:** Tüm Satış · Alternatif Satış Kanalı (SPY)
+- **Kırılım:** Genel · Saha · Bölge · Şube · Personel
+- **Dönem:** Gün · Hafta · Ay · Yıl (ileri/geri adımlanabilir)
+
+| Sayfa | İçerik | Filtre |
+|---|---|---|
+| **Genel** | Ciro kartı (hedefe göre, önceki döneme göre, hedefe kalan, randevu, tahmini kapanış) · seyir (Gün'de saatlik, diğerlerinde dönem içi) · Türkiye haritası + kanal payı halkası · sağ sütunda 4 saha kartı | Yok |
+| **Saha** | **Sahalar alt alta**, her blok Genel'in minyatürü: ciro + ilerleme çubuğu + tahmini kapanış + 4 KPI + dönem seyri + kanal payı halkası | Yok |
+| **Bölge** | Durum şeridi · hedefe göre dağılım · liste | Saha |
+| **Şube** | Öne çıkanlar · liste | Saha · Bölge |
+| **Personel** | Öne çıkanlar · tablo | Saha · Bölge · Şube |
+
+Genel ve Saha her zaman şirket geneline bakar. Listelerde arama ve sütun
+sıralama vardır.
+
+**Genel sayfası iki sütunludur:** solda ciro kartı → seyir → harita + kanal payı,
+sağda dar bir sütunda dört saha kartı. Sağ sütun soldakiyle **yatayda hizalıdır**:
+ilk kart ciro kartıyla başlar, son kart kanal payıyla biter. Kart içeriği bunun
+için sol sütunun boyuna göre ölçeklenir (`kartSigdir`, `--ko` değişkeni); ölçek
+bir kez bulunur, pencere boyutu değişene kadar korunur, böylece dönem
+değiştikçe boy oynamaz.
+
+Ciro kartının yanındaki dört KPI kutusunun (`.pair`) puntosu 30 Eylül'de bir
+kez daha büyütüldü: başlık `0,92vw → 1,04vw`, değer `1,8vw → 2,02vw`
+(ölçülen 28 → 31,6 px), alt satır `0,85vw → 0,96vw`. `.pair`
+`flex:1 1 auto` ile hero'nun boyuna esnediği ve içinde pay olduğu için
+**ciro bloğunun boyu değişmedi** (496 px, önce ve sonra).
+
+Kart içindeki KPI satırlarının (hedefe kalan · randevu · önceki dönem) puntosu
+büyütüldü: `clamp(11px,0.9vw,14px)` → `clamp(12px,1.08vw,17px)`. `kartSigdir`
+kartları sol sütuna sığdırdığı için `--ko` buna karşılık 0,91'den 0,85'e
+düştü; net sonuç KPI satırlarında **+%13**, kartın diğer öğelerinde **−%7**.
+Yani kartın içindeki denge KPI satırları lehine değişti.
+
+Kartların **arka yüzü** vardır (`.kart .arka`): gösterinin son aşamasında kart
+döner ve o sahanın bölgeleri dönem cirosuyla listelenir. Ön yüz `.kart.arkada`
+sınıfıyla gizlenir; iskelet bozulmadığı için `cizSahaKartlar` değer güncellemesi
+etkilenmez.
+
+## Gösteri (play) tuşu
+
+Gezinme şeridinde, dönem adımlayıcısının sağında. Yalnız **Genel** kırılımında
+görünür — ciro kartı ile saha kartlarını kullanıyor. Basılınca:
+
+1. Ciro kartının sağındaki dört KPI kutusu sırayla (sol üst · sağ üst · sol alt
+   · sağ alt, 620 ms arayla) yatay eksende dönerek organizasyonun adetlerini
+   gösterir: **4 saha · 22 bölge · 200 şube · 2.500 personel.** İçerik kutu yan
+   dönmüşken, animasyonun tam ortasında değişir. Personel adedi kanala duyarlı:
+   Alternatif Satış Kanalı seçiliyken 250 yazar.
+2. 1,8 sn durur, sonra aynı sırayla KPI değerlerine geri döner.
+3. Saha kartları **tek tek** dolaşılır; her kart kendi içinde üç adım —
+   sıra "önce sahayı tanı, sonra büyüklüğünü, sonra içini":
+   - **a) Sahaya gelinir** (`sahaVurgula`): haritada o sahanın illeri öne
+     çıkar, üstteki bloklar o sahaya filtrelenir ve **KPI kutularında
+     sahanın kendi KPI'ları okunur** (hedefe göre · önceki döneme göre ·
+     hedefe kalan · randevu). Rakamlar akarak geçer, **kutu dönmez**.
+     1,5 sn durur.
+   - **b) Kutular dönüp adetleri gösterir** (`gosteriAdetCevir`):
+     bölge · şube · personel · il. Kökte dördüncü kutu "saha"dır; bir
+     sahanın altında saha olmadığı için yerine o sahanın kapsadığı il
+     sayısı geliyor — haritayla da bağ kuruyor. Dördü birden, 0,44 sn.
+     1,5 sn durur.
+   - **c) Kartın kendisi arka yüzüne döner** (`kartCevir`): o sahanın
+     bölgeleri, dönem cirosuna göre sıralı. Dönüş 0,55 sn, içerik kart tam
+     yan dönmüşken (270 ms) değişir; 1,7 sn durur.
+
+   Kart **ön yüzüne dönmeden** sıra öbür sahaya geçer; dönmüş kartlar
+   birikir. Kart başına ~5,3 sn.
+4. Turun sonunda dört kart 90 ms arayla ön yüzlerine döner, kapsam
+   Türkiye geneline çıkar, sonra başa sarar. Tuşa yeniden basılınca durur;
+   dönen kutular, çevrilmiş kartlar, çivilenmiş kart boyları ve saha
+   vurgusu temizlenir.
+
+Bir tur yaklaşık 31 saniye (ölçülen: kart 1 → 7,2 sn · kart 4 → 23,2 sn ·
+kartlar öne 28,8 sn · başa sarma 31,2 sn).
+
+**Kart boyu dönüşte değişmez.** Arka yüz ön yüzden kısa; `#sahaKartlar`
+ızgarası `align-content:stretch` ile boşluğu satırlara dağıttığı için bir
+kart arkaya dönünce dördü birden oynuyordu. İlk dönüşte `kartlariSabitle()`
+her kartın o anki boyunu piksel olarak çiviliyor, gösteri bitince
+`kartlariCoz()` bırakıyor (ölçülen: dönüş öncesi ve sonrası 201 px; ara
+değerler yalnız `rotateX` animasyonunun kendisi).
+
+**Sıranın geçmişi.** Önce dört evre vardı (dört kart dolaşılır → dördü
+birden arkaya döner); sonra kart kart yapıldı ama vurgu ile adetler aynı
+anda geliyordu, sahanın kendi KPI'ları hiç görünmüyordu. Şimdiki üç adım
+bunu ayırıyor. Bunun bir sonucu: **kutu dönüşü artık `sahaVurgula`'nın
+içinde değil** — vurgulama her zaman (elle de, gösteride de) yalnız değer
+yazıp rakamları akıtıyor, dönüş gösterinin ayrı bir adımı. `GOSTERI.turda`
+bayrağı bu yüzden kaldırıldı.
+
+**Sıra bilinçli:** saha turunda `sahaVurgula()` doğrudan `cizCiro()` çağırıyor,
+yani kutulardaki adetleri ezerdi. Bu yüzden adetler önce gösterilip kutular
+geri döndürülüyor, tur ondan sonra başlıyor.
+
+Gösteri sırasında herhangi bir yeniden çizim (`ciz()`) gösteriyi durdurur —
+kırılım, dönem, kanal, arama ya da pencere boyutu değişimi. Yarıda kalan
+kutular KPI değerlerine geri yazılır, saha vurgusu kaldırılır.
+
+## Sayfa genişliği
+
+`--sayfa-en` tek yerden ayarlanır (`:root`), `.wrap` · `.top-in` · `.navbar-in`
+üçü de ona bağlı. Eskiden 1440 px'lik tavan vardı; genel müdürlükteki geniş
+ekranda iki yanda boşuna boşluk kaldığı için kaldırıldı, şimdi `100%`.
+Çok geniş ekranda tekrar bir tavan istenirse değiştirilecek tek yer orası.
+
+Genişlik yayılınca haritanın sütunu da genişledi: harita 660 px'lik kendi
+tavanında kalıyor, sağında boşluk oluşuyor. Harita satırının düzeni (harita ·
+kanal payı) bu yüzden yeniden ele alınacak — bkz. "Sıradaki adımlar".
+
+## Dönem içi seyir grafiği
+
+- **Dikey eksen yoktur.** Tutar etiketleri ve ızgara kaldırıldı; değerler
+  doğrudan noktaların üstünde yazılı. Yalnız taban çizgisi ve alttaki dönem
+  etiketleri kalır.
+- Etiketler sığdığı kadar yazılır (`etiketAdimi`), kalanı atlanır. **Son nokta
+  her zaman yazılır** — bakılan rakam odur; tahmin etiketiyle çakışmasın diye
+  çizginin altına alınır.
+- **Hafta ve Ay birikimlidir**: dönem başından o ana kadarki toplam, artı
+  bugünden dönem sonuna uzanan kesikli projeksiyon. Projeksiyonun bittiği
+  nokta, karttaki **tahmini kapanış** rakamıdır.
+- **Dilimleme:** Yıl → ay ay · **Ay → hafta hafta** · Hafta → gün gün ·
+  Gün → saat saat. Ay bir süre gün gün bakılıyordu (ayın nerede kırıldığı
+  okunsun diye); 30 nokta eğriyi gereksiz ayrıntıya boğduğu ve tutarların
+  çoğu sığmadığı için atlandığı için yedişer günlük öbeğe döndü
+  (`1–7`, `8–14`, … son öbek ay kaç güne bitiyorsa orada kesilir). Ciro ile
+  kayıt seyri artık dört dönemde de **aynı dilimlemeyi** kullanıyor, iki
+  grafik aynı x eksenini okuyor.
+- Birikimli grafikte **dilim sütunu yoktur**. Günlük ciro ile birikimli toplam
+  iki farklı büyüklük; tek eksene bindirilince ikisi de okunmuyordu.
+- **Birikimli hedef eğrisi de gösterilmez.** Hedef, ciro kartındaki ilerleme
+  çubuğunda ve yüzdelerde zaten var. (Hedef ağırlıkları hesapta kalır:
+  projeksiyonun kalan günlere dağıtımı `gunlukHedef` paylarına göre yapılır.)
+- **Yıl** görünümünde sütun asıldır (aylık ciro + geçen yıl çizgisi):
+  mevsimsellik dilim bazında okunur, birikimlide kaybolur.
+- **Gün** görünümünde büyük grafik yoktur; ciro kartı içindeki saatlik birikim
+  çizgisi kullanılır.
+- **Seyir tek bir alandır ve dört dönemde de aynı görünür.** Ciro kartının
+  altında, zeminsiz ve kenarlıksız; küçük başlık (Gün'de "Saatlik seyir",
+  diğerlerinde "Dönem içi seyir") ve sağda tek satır açıklama. Ayrı bölüm
+  (`secTr`) ve zeminli `.chart` kutusu kaldırıldı.
+- Ortak ölçü `SEYIR` sabitinde: 1000×120, L=R=46, T=B=24. Dönem değişince
+  grafik alanı yerinden oynamaz.
+- Lejant yerine sağ üstte tek satır not kullanılır ("kesik çizgi: tahmini
+  kapanış" / "kesik çizgi: geçen yıl"). Saha bloklarında lejant kalır —
+  çizim fonksiyonu `el.leg` verilmezse lejantı atlar.
+- Çizgi rengi dönemin tamamına ait **tek bir yargıdır** (hedefte / izleme /
+  risk). Saha bloklarında ise sahanın kendi kimlik rengi kullanılır — çizim
+  fonksiyonu hedef SVG'yi ve rengi parametre olarak alır.
+
+## Türkiye haritası
+
+Genel sayfada, seyrin altında. Harita **tek renktir** (marka yeşili); koyuluk o
+ilin dönem cirosunu **logaritmik ölçekte** gösterir. Saha bölünmesi renge
+değil etkileşime bırakıldı: bir ilin üstüne gelince o sahanın illeri öne çıkar.
+Şubesi olmayan iller boş (gri) kalır.
+
+- **Ciro ile ilin bağı şube üzerindendir.** `BOLGE_TANIM` içindeki her şube
+  `"Şube|plaka"` biçiminde yazılır (`Kadıköy|34`); şube kurulurken `su.il`
+  alanına geçer ve ciro şubeden ile toplanır. Gerçek şube listesi gelince
+  yalnız bu plakalar güncellenecek.
+- **Boyut ve ortalama:** viewBox 1,91:1 olduğu için çizilen boyu yükseklik
+  sınırı belirliyor. Sınır `clamp(218px, 32.2vh, 500px)`, genişlik tavanı
+  900 px. Genişlik tavanı 700'den 900'e çıkarıldı: yüksek ekranlarda
+  yükseklik sınırına varılmadan genişlik bağlanıyor ve harita boşuna küçük
+  kalıyordu. Sarmalayıcı (`.harita-sar`) flex ile hem yatay hem dikey
+  ortalar, iç boşluğu sıfırlandı.
+
+  **Harita satırın boyunu tek başına belirliyor** (huni 224 px, kanal payı
+  209 px doğal boy; harita 303 px). Yani haritayı büyütmek doğrudan sayfayı
+  uzatıyor. İki turda büyüdü: 271 → 287 px (gereken yer `.hsag` dikey iç
+  boşluğundan alındığı için bedavaydı), sonra 287 → **303 px**. İkinci
+  turda kart iç boşluğu da geri açıldı — içerik kartın tepesine yapışık
+  duruyordu — `clamp(4px,0.5vh,8px)` → `clamp(10px,1.45vh,18px)`. Ölçülen
+  (1920×940): harita satırı 297 → **331 px**, harita kartın içinde üstten
+  ve alttan 14 px boşlukla ortalı.
+
+  **Bunun bedeli katlamadır:** `.gdz` altı 933 → **967 px** (Hafta 944 →
+  **978 px**), katlama 940 px. Yani harita bloğunun altı 1080p tam ekran
+  tarayıcıda 27–38 px aşağıda kalıyor. Yer açmak gerekirse en yakın kaynak
+  seyir satırıdır (129 px) — bkz. "Ekrana sığma".
+- **Koyuluk ölçeği logaritmiktir:** `0,22 + 0,78 × log(ciro/en az) / log(en
+  yüksek/en az)`. Taban opaklık, en düşük cirolu ilin de haritada
+  seçilebilmesi için. Ciro ve koyuluk **seçili döneme göre** hesaplanır;
+  Gün / Hafta / Ay / Yıl arasında geçince harita yeniden çizilir.
+
+  Eskiden ölçek doğrusal orandı (`(ciro/en yüksek)^0,6`). Veri iki büyüklük
+  mertebesine yayıldığı için — İstanbul 32,3 M ₺ ile toplamın %30'u, ortanca
+  il 1,0 M ₺, yani en yüksek ilin **%2,7**'si; çünkü İstanbul'da ~57 şube var,
+  çoğu ilde 1 — 49 ilin çoğu 0,27–0,38 aralığına sıkışıp birbirinden ayırt
+  edilemiyordu. Log ölçek sıralamayı ve büyüklük hissini koruyarak aralığı
+  dengeli kullanır: ölçülen çeyrekler **0,28 / 0,38 / 0,51** (eskisi
+  0,28 / 0,31 / 0,38), dört dönemde de benzer.
+
+  Denenen diğer seçenekler: üssü 0,35'e indirmek (alt çeyrek hâlâ sıkışık
+  kalıyor, harita topyekûn koyulaşıyor) ve sıraya göre ölçeklemek (ayırt
+  etme gücü en yüksek ama büyüklük siliniyor — İstanbul 32,3 M ile İzmir
+  12,5 M neredeyse aynı tonda çıkıyor).
+
+  **Taban koruması:** ölçek en fazla 200 kat aralığa yayılır
+  (`enaz = max(gerçek en az, en yüksek/200)`). Tek bir satışsız il ölçeği
+  gereksiz yere gerip bütün haritayı koyulaştırmasın diye.
+- **Genel sayfası iki sütunludur** (`.gdz`): solda ciro bloğu, seyir ve harita;
+  sağda dar bir sütunda dört saha kartı, sayfanın en üstünden başlayarak.
+  Vurgulama üçünü birden etkilediği için aynı anda görünmeleri gerekiyor.
+  1000 px altında tek sütuna düşer.
+- **Karşılıklı vurgulama:** bir ilin üstüne gelince o sahanın illeri öne çıkar
+  (diğerleri %10 opaklığa düşer, seçililer koyu konturlanır) ve yanındaki saha
+  kartı vurgulanır. Tersi de geçerli. Saha rengi haritada kullanılmadığı için
+  ayrım yalnız bu etkileşimde görünür.
+- **Hover önizlemesi:** harita ya da kart üstündeyken **üstteki ciro bloğu ve
+  seyir o sahaya filtrelenir** (`S.onizleme`, `kapsam()` üzerinden). Fare
+  çekilince genele döner. Başlıkta "· önizleme" ibaresi çıkar ve ciro kartı
+  hafif çerçevelenir. Harita ile kartlar bu sırada **yeniden çizilmez**: fare
+  onların üstünde durduğu için yeniden üretim vurgulamayı düşürürdü.
+- Karta tıklamak eskisi gibi o sahanın bölgelerine iner.
+
+> **Açık risk:** filtreleme hover'a bağlı olduğu için dokunmatik ekranda
+> çalışmaz; genel müdürlükteki ekranın dokunmatik olacağı kararı duruyor.
+> Ekran gerçek ortamda denendiğinde tıklama ile seçime geçmek gerekebilir.
+- İlin üstünde küçük bir balon açılır: il adı, dönem cirosu ve şube sayısı.
+- Dinleyiciler tek tek illere değil **SVG'nin kendisine** bağlanır
+  (`mouseover` / `mouseout` delegasyonu); iller her çizimde yeniden üretildiği
+  için tek tek bağlamak hem pahalı hem kırılgan olurdu.
+- Harita genişliği 660 px ile sınırlı ve ortalıdır; sayfanın geri kalanını
+  ezmemesi için.
+- **İl sınırları:** [SVG Türkiye Haritası](https://github.com/dnomak/svg-turkiye-haritasi)
+  — Doğukan Güven Nomak, MIT lisansı. Path'ler Douglas-Peucker ile 0,5 birim
+  toleransla sadeleştirildi: 298 KB → 54 KB. Veri `IL_YOL` dizisinde
+  `[plaka, il adı, path]` biçiminde gömülüdür; dosya hâlâ tek parça ve dış
+  bağımlılığı yoktur.
+
+## Dönüşüm oranı
+
+Harita satırının orta sütununda. Satırın boyunu harita belirlediği için bu
+iki yan panelin (dönüşüm oranı · kanal payı) altında ölü boşluk kalıyordu —
+ölçülen 68 ve 83 px — ve içerik kartın tepesine yığılmış görünüyordu.
+Başlıkları yerinden oynatmadan içerik dağıtıldı: panel dikey flex, gövde
+(huni / halka + lejant) otomatik kenar boşluklarıyla ortalanır, açıklama
+satırı dibe oturur. Panel boyu değişmiyor, yalnız içerik yerleşiyor; iki
+açıklama satırı da haritanın alt kenarıyla aynı hizada (14 px) bitiyor. Üç kademe, hepsi adet:
+**Randevu → Kart → Kayıt.** Kademeler arasındaki yüzde bir üst kademeden
+dönüşüm. Ölçülen değerler (Gün): 6.613 randevu → %22 → 1.434 kart → %31 →
+446 kayıt.
+
+- **Kart**, randevu ile kayıt arasında duruyor: randevu alınmış müşterilerin
+  bir kısmında kart açılıyor, kartların bir kısmı kayıtla kapanıyor.
+- Sıralamanın hiçbir dilimde ve hiçbir kırılımda bozulmaması için kart
+  **kayıttan yukarı** türetilip **randevuyla tavanlanıyor**
+  (`min(randevu, kayıt × KART_KAT × dalgalanma)`, `KART_KAT = 3,3`).
+  Bağımsız üretilseydi bazı günlerde kart randevuyu aşabilir ya da kayıtın
+  altına düşebilirdi.
+- Blok saha önizlemesini izler: kart ya da il üstüne gelince o sahanın
+  değerlerine döner.
+- **Hizalama:** `.hunipan` ve `.paypan` satırın tepesine yaslanır
+  (`align-self:stretch`), böylece "Dönüşüm oranı" ile "Kanal payı" başlıkları
+  aynı satırda okunur ve aradaki ayırıcı çizgiler satırın tam boyunca iner.
+  Ortada kalsalardı içerik boyları farklı olduğu için başlıklar 39 px
+  kayıyordu.
+
+## Teslimat
+
+Ciro kartının sağ üstünde, kapsam etiketinin ("Türkiye Geneli") hemen altında:
+**"299 Teslimat"**. Önce kanal payının altındaydı, oradan buraya alındı;
+boşalttığı yer haritaya gitti.
+
+**Bilerek dönüşüm bloğunun dışında:** teslimat bugünün satışının değil,
+geçmişte satılanların sonucu; satış ölçüleriyle aynı blokta durursa yanlış
+okunur. Kompakt biçim için önceki döneme göre değişim gösterilmiyor.
+
+Veri, gecikmeli bir kayıt serisinden türer (`TES_GECIKME = 75` gün): yılın ilk
+günlerinde gecikmeli kaynak olmadığı için o aralık kısılarak doldurulur.
+Ölçülen: 299/gün · 8.190/ay · 67.487/yıl.
+
+## Kanal payı halkası
+
+Haritanın sağında. Cironun ne kadarının **şubeden**, ne kadarının **saha
+personelinden** (SPY) geldiğini gösterir — iki dilim, yanında tutar ve yüzde.
+
+- **Üstteki kanal seçiminden bilerek bağımsızdır.** "Alternatif Satış Kanalı"
+  seçiliyken pay %100 saha çıkardı, o da hiçbir şey anlatmazdı. Halka her zaman
+  iki kanalın toplamı üzerinden hesaplanır; panelin altında bu not yazılıdır.
+- **Saha önizlemesini izler:** haritada ya da bir saha kartında bir sahanın
+  üstüne gelince o sahanın kanal kırılımına iner (başlık "Kanal payı · Batı").
+- Terim çakışmasına dikkat: buradaki **"Saha"** satış kanalıdır (SPY), ekranın
+  geri kalanındaki **saha bölgesi** (İstanbul / Batı / Orta / Doğu) değildir.
+
+## Ciro bloğu ile KPI bloğu arasındaki ayırıcı
+
+Düz gri çizgi yerine markanın yeşilinden fıstığa giden, uçlarda sönen 2 px'lik
+bir şerit (`.hero-l` üstünde bir arka plan gradyanı, `border-right` değil).
+**Altın bilerek kullanılmadı:** bu ekranda altın "hedef" demek, kozmetik bir
+çizgi o anlamı taşımamalı. Dar ekranda `.hero` tek sütuna düştüğünde gradyan
+kapatılıp yerini yatay `border-bottom` alıyor.
+
+## Renk paleti
+
+Kurumsal renkler eminevim.com'dan alındı:
+
+| Değişken | Değer | Yer |
+|---|---|---|
+| `--brand` | `#00724C` | marka yeşili; başlıklar, seçili düğmeler, harita |
+| `--brand-deep` | `#00553A` | üst başlık şeridi |
+| `--ink` | `#1E3856` | kurumsal lacivert; ana metin |
+| `--fc` | `#2B8C8A` | turkuaz; tahmin/projeksiyon |
+| `--gold` | `#C9A961` | altın; hedef işareti |
+| `--fistik` | `#A1CB3A` | fıstık yeşili; dördüncü saha rengi |
+
+Durum renkleri ayrıdır: hedefte `--good` (marka yeşili), izleme `--watch`,
+risk `--bad`. Saha kimlik renkleri (`SAHA_RENK`) marka paletinden seçilir:
+yeşil · turkuaz · lacivert · fıstık.
+
+**Katman dili:** sayfa zemini kırık beyaz (`--surf`), bloklar beyaz + ince
+kenarlık + yumuşak gölge (`--golge`, `--golge-uf`). Tek zemine indirmek düzlemi
+yassılaştırdığı için bu üç seviye korunuyor.
+
+## Ölçüm kuralları
+
+- **Ciro**, seçili dönemde gerçekleşen satış tutarıdır.
+- **Hedef** her kırılım için ayrı tanımlıdır ve kırılımlar arasında toplanmaz.
+  En üst özette hedef, 4 saha bölgesi hedefinin toplamıdır.
+- Ekranda gösterilen yüzde, dönem hedefine göre **ilerlemedir**. Renk ve ok ise
+  dönemin geçen kısmına göre **beklenen seyre** bakar. Bu yüzden ayın başında
+  "%22 ▲ yeşil" görülebilir: ilerleme düşüktür ama tempo yerindedir.
+- **Yıl** görünümünde hedef sütunu yoktur; yerine **Ort.** (yıl başından bugüne
+  gerçekleşen ÷ bugüne kadarki hedef) gösterilir.
+- Karşılaştırmalar önceki dönemin **aynı kesitiyle** yapılır. Bugün yarım gün
+  olduğu için geçen haftanın aynı günü de aynı saate kadar kısaltılır.
+- Hafta Pazartesi–Pazar sayılır.
+- Eşikler: ≥%100 hedefte · %95–99,9 izleme · <%95 risk. Gerçek veriyle kalibre edilecek.
+
+## Veri durumu
+
+Ekran **temsili veriyle** çalışır; CRM veya veri ambarı bağlantısı yoktur.
+Bölge ve şube adları da temsilidir.
+
+Bugünün cirosu tam gün değil, **geçen saatlerin payı** kadardır (`GUN_PAY`).
+Gün içi saatlik dağılım tipik bir gün profilinden türetilir — satış kayıtlarında
+saat:dakika damgası bulunmadığı için. Gerçek saatlik takip bu alanın kaynaktan
+gelmesine bağlıdır ve veri talebi listesindedir.
+
+## Ayarlanabilir sabitler
+
+`<script>` bloğunun başında, tek yerde:
+
+| Sabit | Ne yapar |
+|---|---|
+| `KESIT` | Veri kesiti tarihi ve saati. Sunumda ekranın hep aynı görünmesi için sabittir. |
+| `OLCEK` | Ortalama personel aylık cirosu. Rakamların mertebesini buradan ayarlayın. |
+| `SPY_ADET` | Alternatif Satış Kanalı personel sayısı. |
+| `ESIK` | Hedefte / izleme eşik yüzdeleri. |
+| `SAHALAR`, `BOLGE_TANIM` | Organizasyon ağacı. Gerçek bölge ve şube listesi geldiğinde yalnız bu blok değiştirilir. |
+| `SAAT_W` | Gün içi saat ağırlık profili (09:00–19:00). |
+
+Tipografi CSS'te dört ölçeğe bağlıdır: `--f1` ana rakam, `--f2` ikincil rakam,
+`--f3` gövde, `--f4` etiket. Dar ekranda dördü birden küçülür.
+
+Şu anki varsayım: 4 saha bölgesi, 22 bölge, 200 şube, 2.500 personel (250'si SPY).
+
+**Ölçüler:** ciro (tutar) · kayıt (adet) · kart (adet) · randevu (adet) ·
+teslimat (adet). Hepsi aynı kırılım ağacında toplanır ve aynı kanal
+filtresinden geçer. Hedef yalnız ciro için tanımlıdır.
+
+## Sabit başlık
+
+Başlık şeridi ve gezinme çubuğu `position:sticky` ile yukarıda kalır. Gezinme
+çubuğu başlığın altına yapışır; başlığın yüksekliği satır kaydırmasıyla
+değiştiği için `ustOlc()` onu ölçüp `--top-h` değişkenine yazar (açılışta ve her
+yeniden boyutlandırmada). Şerit yükseklikleri daraltıldı: başlık 8 px, gezinme
+7/8 px iç boşluk, düğmeler 32 px.
+
+## Hareket katmanı
+
+Ekran iki tür hareket kullanır. İkisi de `prefers-reduced-motion: reduce`
+altında dosyanın başındaki `*{transition:none!important;animation:none!important}`
+kuralıyla topluca kapanır; JS tarafı ayrıca `SAKIN` ile aynı tercihi okur.
+
+### Geçişler — veri değiştiğinde
+
+Çizim fonksiyonları düğümleri her seferinde `innerHTML` ile yeniden üretmez.
+Yapı aynı kaldığı sürece yalnız değerler güncellenir; böylece CSS geçişleri
+çalışır ve çubuklar sıfırlanıp yeniden dolmak yerine eski orandan yeni orana
+kayar.
+
+| Parça | Nasıl |
+|---|---|
+| Rakamlar | `sayiAk(el, değer, biçim, tür)` — eski değerden yenisine akar. `tür` değişirse (yüzdeden TL'ye) akış yapılmaz, ara değer anlamsız olurdu. |
+| Ciro çubukları | `iskelet()` ile satır **sayısı** imzalanır (etiket metni imzaya girmez, yoksa her dönem değişiminde çubuk sıfırlanıp yeniden dolardı); aynı imzada `.fill` / `.mark` / `.fcast` yerinde kalır, genişlikleri CSS geçişiyle taşınır. |
+| Harita | 81 il yolu bir kez kurulur (`haritaKur`), sonra yalnız `fill-opacity` güncellenir. |
+| Kanal payı halkası | Şube payı oranı akıtılır, yaylar her karede `payYaylari()` ile yeniden üretilir. |
+| Saha kartları | İmza = saha adları + dönem tipi. Aynı imzada kartlar yerinde kalır; olay dinleyicileri yalnız yeniden kurulunca bağlanır. |
+
+`ciz(neden)` çizimi neyin tetiklediğini taşır: `donem`, `kanal`, `seviye`,
+`filtre` akıtır; `arama`, `boyut` ve `ilk` akıtmaz. Saha kartı üstüne gelince
+çalışan önizleme `ciz()` üzerinden geçmediği için `NEDEN`'i kendisi `filtre`
+olarak ayarlar.
+
+`requestAnimationFrame` arka plandaki sekmede durduğu için her akışın bir
+emniyet zamanlayıcısı vardır: süre dolduğunda son değer her hâlükârda yerine
+yazılır, ekranda eski rakam asılı kalmaz.
+
+### Ciro çubuğu
+
+Çubukta üç şey var, üçü de gerçek bir değer: **dolu kısım gerçekleşen**,
+**altın çizgi hedef**, **turkuaz kesik çizgi tahmin**. İkisi de dikey çizgi;
+tahmin kesikli, çünkü hedef kesin bir sayı, tahmin değil.
+
+Ölçek hedeften türer: `enb = hedef × 100 / 75`. Böylece altın çizgi her
+sahada ve her dönemde aynı yerde, **%75'te** durur; kartlar arası gezerken
+yalnız dolgu ile tahmin çizgisi hareket eder. Alanın kalan %25'i tahminin
+hedefi aşabilmesi için — tahmin hedefin %133'üne kadar çubuğa sığar, ötesi
+`yuzde()` ile kırpılır. Bu veride en yüksek taşma %117.
+
+Gelinen nokta üç denemenin sonucu:
+
+| | ölçek / tahminin gösterimi | neden bırakıldı |
+|---|---|---|
+| ilk | `max(hedef, gerçekleşen, tahmin) × 1,12`, tahmin taralı bant | tahmin hedefi aşınca ölçek büyüyor, altın çizgi sola kayıyordu — saha değiştikçe oynayan şey hedefmiş gibi görünüyordu |
+| ikinci | hedef %75'te sabit, tahmin taralı bant | hedef yerinde duruyordu; bant çubuğu kalabalıklaştırıyordu |
+| denendi, geri alındı | gri kutu hedefte bitiyor, taşma sinyal | sağ kenar anlam kazanıyordu ama görsel karmaşıklaşıyordu |
+| **şimdi** | hedef %75'te sabit, **tahmin de tek çizgi** | — |
+
+Denenip elenen bir seçenek daha: alanı `max(ciro, hedef, tahmin)` yapmak.
+Sağ kenar hep gerçek bir değere karşılık gelirdi ama hedef çizgisi Gün'de
+sahadan sahaya %86–%96 arasında oynuyor, Hafta'da ise hep sağ kenara yapışıp
+hedef işareti olmaktan çıkıyordu.
+
+**Hafta'daki üç çubuk** ana satırın hedefinden türeyen **tek ölçeği**
+paylaşır; her satırın altın çizgisi kendi hedefinde durur. Hafta içi ile
+hafta sonu çizgileri toplandığında hafta çizgisini verir — dağılım doğrudan
+okunur.
+
+### Seyir ikiye bölündü: ciro · kayıt sayısı
+
+`.spark` iki yarıya ayrıldı. **Solda ciro** (tutar, birikimli çizgi ya da
+çubuk — döneme göre), **sağda kayıt sayısı** (adet, çubuk). Aynı dönemin iki
+farklı ölçüsü yan yana durunca "tutar mı arttı, adet mi" sorusu doğrudan
+okunuyor.
+
+**Kayıt = gerçekleşen cironun adet karşılığı.** Ciro ÷ ortalama sözleşme
+tutarından türer (`ORT_SOZLESME = 228.000`); sözleşme tutarı kişiden kişiye
+(`sozKat`) ve günden güne değiştiği için iki seri birbirinin kopyası olmuyor.
+Ölçülen büyüklükler: **446 kayıt/gün · 10.625/ay · 98.295/yıl** (2.500 kişi).
+
+Kayıt grafiğinin hedefi ve tahmini yok — kayıt için hedef tanımlı değil — o
+yüzden çizgi değil çubuk; ciro tarafındaki birikimli çizgiyle karışmasın.
+`kayitDilim()` dilimler, `cizKayit()` çizer. **Her sütunun rakamı üstünde
+yazar**; dilimleme bunu mümkün kılacak şekilde seçildi, en çok 12 sütun:
+
+| dönem | sütun | okuma |
+|---|---|---|
+| Gün | 10 saat | birikimli — gün içinde nereye gelindi |
+| Hafta | 7 gün | gün gün, **hafta içi / hafta sonu iki öbek** (aralarında ayrım çizgisi) |
+| Ay | 5 haftalık dilim (1–7, 8–14 …) | birikimli |
+| Yıl | 12 ay | ay ay |
+
+Ay'da gün gün çizilirken 30 sütun oluyordu ve sütun başına ~31 px'e ~45 px'lik
+rakam sığmıyordu; haftalık dilim bu yüzden seçildi.
+
+**Dikkat: rastgele akışa dokunmayın.** Kayıt üretimi ilk denemede ana
+`PERSONEL.forEach` döngüsünün içine konmuştu; oraya fazladan bir `rnd()`
+çağrısı eklemek bütün diziyi kaydırdı ve ciro, randevu, hedef dahil daha önce
+konuşulmuş her rakam değişti. Üretim `kayitUret()` adlı ayrı bir geçişe ve
+ayrı tohumlu (`mulberry32(20260930)`) bir akışa alındı. **Yeni bir seri
+eklenecekse aynısı yapılmalı.**
+
+### Ciro çubuğunun ucundaki yüzde
+
+Ana çubuğun bittiği yerin üstünde küçük bir **gerçekleşen/hedef** yüzdesi
+durur (`.bullet .ucEt b`). Konumu dolgunun ucuyla aynı yüzdeye bağlı, rengi de
+durumla aynı; dolgu kaydıkça aynı geçişle birlikte kayar. Sol uca çok yakınken
+`translateX(-50%)` etiketi çubuğun dışına taşıracağı için orada sola yaslanır.
+Hafta'daki alt çubuklarda (hafta içi / hafta sonu) etiket yoktur.
+
+### Kutu dönüşü yalnız gösteride
+
+**Elle yapılan hiçbir değişiklikte KPI kutuları dönmez.** Bir süre saha
+kartlarının üstüne gelince de dönüyorlardı; kartlar arasında gezinirken dört
+kutunun sürekli dönmesi göz yorduğu için kaldırıldı. Orada değerler rakam
+akışıyla yumuşak geçiyor, dönmeye gerek yok.
+
+**Dönüş artık `sahaVurgula`'nın içinde değil.** Vurgulama — elle de,
+gösteride de — kutulara yalnız o sahanın KPI **değerlerini** yazar ve
+rakamlar akar. Dönüş gösterinin ayrı bir adımı oldu; böylece gösteri önce
+sahanın KPI'larını gösterip sonra adetlere çevirebiliyor.
+
+Dönüş iki yerde kalıyor, ikisi de gösterinin içinde:
+
+- **Adetler evresi** — dört kutu 620 ms arayla sırayla döner.
+- **Saha turu, b adımı** — `gosteriAdetCevir` ile dördü birden ve daha
+  hızlı döner (0,44 s). Değerler kutu tam yan dönmüşken, 220 ms'de yazılır.
+
+Dönen kutunun içindeki rakam ayrıca akmaz (`sayiAk` içinde
+`el.closest(".cevir")` kontrolü): dönüş zaten değişimi anlatıyor, ikisi üst
+üste binince kutu açıldığında rakam yarı yolda görünüyordu.
+
+### Saha önizlemesi
+
+Saha kartının ya da haritadaki bir ilin üstüne gelince üstteki ciro bloğu,
+seyir ve kanal payı o sahaya döner; rakamlar akarak geçer, çubuklar kayar.
+
+**Önizleme sızıntısı (düzeltildi).** `S.onizleme` yalnız fare kartın ya da
+ilin üstündeyken yaşayan geçici bir durumdur, ama hiçbir yerde
+sıfırlanmıyordu. Kart gizlendiğinde `mouseleave` her zaman gelmediği için
+`kapsam()` diğer sayfaları da sessizce o sahaya filtreliyordu — Bölge sayfası
+"Tüm satış · İstanbul" diye açılabiliyordu. `ciz()` artık `onizlemeSifirla()`
+ile durumu ve bağlı bütün sınıfları temizliyor.
+
+### Açılış — yalnız ilk yüklemede
+
+`ciz("ilk")` gövdeye `acilis` sınıfını koyar, 2,3 saniye sonra kaldırır.
+CSS tarafındaki açılış kuralları bu sınıfa bağlı olduğu için dönem
+değiştikçe tekrar etmez.
+
+- Tutar ve adet rakamları sıfırdan sayar (`SIFIRDAN` türleri). Yüzdeler
+  saymaz — "%0 ▼" diye başlamak bir şey anlatmıyor.
+- Ciro bloğu, seyir grafiği ve harita paneli sırayla aşağıdan belirir;
+  saha kartları 70 ms arayla (`--sira`).
+- Ciro çubuğu ile saha kartlarının çubukları sayan rakamla aynı tempoda
+  (0,95 s) dolar; hedef işareti baştan yerinde durur, çubuk ona doğru
+  ilerler, tahmin bandı dolgu bitince belirir.
+- Seyir çizgisi soldan sağa çizilir (`cizgiCizdir`, `stroke-dashoffset`).
+  Kesik tahmin çizgisine dokunulmaz; `stroke-dasharray`'ini ezmek desenini
+  kalıcı olarak bozardı.
+- Haritada iller batıdan doğuya koyulaşır; gecikme ilin `getBBox().x`
+  değerinden çıkar. Başlangıç sıfırı geçiş kapalıyken yazılır, yoksa
+  `getBBox()` biçemi zaten hesaplattığı için geçiş 1'den başlıyordu.
+- Kanal payı halkası tepeden saat yönünde yayılır (`payYaylari`'nin `dolum`
+  parametresi); yayılma bitmeden yüzde etiketleri yazılmaz.
+
+### İki tuzak
+
+Açılış animasyonlarında iki yerde aynı hata tekrar etti, ikisi de aynı
+kökten: **tarayıcı bir düğümün başlangıç değerini hesaplamadan geçiş
+başlatmaz.**
+
+- `width:auto` ya da `left:auto`'dan yüzdeye geçiş interpole edilemez.
+  Çubukların dolgusu bu yüzden iskelette açıkça `width:0` ile kurulur.
+- Yeni kurulan düğümün ilk biçem hesabı geçiş başlatmaz. `bicemiSabitle()`
+  bir yerleşim okuması zorlayarak sıfırı "başlangıç" yapar; ardından yazılan
+  gerçek değer artık geçişle taşınır. Haritada aynı sorunun tersi vardı:
+  `getBBox()` biçemi zaten hesaplattığı için geçiş 1'den başlıyordu, orada
+  sıfır geçiş kapalıyken yazılıyor.
+
+### Ölçümün akışa takılması
+
+`kartSigdir()` sağdaki dikey kartların ölçeğini soldaki blokların boyuna
+göre bulur; **kartların başı ve sonu soldaki blokların başı ve sonuyla
+hizalı olmalıdır.** Ölçüm bir akışın ortasına denk gelirse kutular yarım
+rakamla ölçülür ve ölçek yanlış donar — açılışta rakamlar sıfırdan saydığı
+için bu her zaman oluyordu. Ölçmeden hemen önce `sonDegerleriYaz()` akan
+her rakamı son değerine yazar, ölçüm bitince `metinleriGeriAl()` geri alır;
+boyama o görevin sonunda yapıldığı için ekranda görünmez.
+
+Ölçek yine bir kez ölçülüp sabitleniyor (dönemden döneme kart boyu
+oynamasın diye), ama artık **yalnız aşağı çekilebiliyor**: soldaki sütun
+Hafta ve Ay'da daha uzun olduğu için o dönemlerde kartların altı taşıyordu.
+Taşma görüldüğünde ölçek yeniden ölçülüp küçültülür, bir daha büyütülmez —
+yani en dar dönemin istediği ölçekte durulur. Kartlar kısa kaldığında
+`align-content:stretch` boşluğu doldurduğu için baş ve son dört dönemde de
+hizalı kalır (ölçülen sapma ≤ 1,5 px). Ekran boyu değişirse (`resize`)
+ölçek sıfırlanıp yeniden aranır.
+
+## Ekrana sığma
+
+1080p ekranda tam ekran tarayıcıda görünür alan ~940 px. Ölçülen yükseklikler
+o genişlikte:
+
+| | yükseklik |
+|---|---|
+| başlık + gezinme şeridi | 114 px |
+| ciro bloğu (`secCiro`) | 496 px — hero + seyir 129 |
+| harita bloğu (`secHarita`) | 331 px — harita 303 |
+| dipnot (`.dip`) | 71 px |
+
+**Güncel durum (30 Eylül, ikinci tur):** `.gdz` altı Gün/Ay/Yıl'da 967 px,
+Hafta'da 978 px — yani harita bloğunun altı katlamanın (940) **27–38 px
+aşağısında**. Harita büyütülüp kart iç boşluğu geri açılınca kabul edildi.
+Yer açmak gerekirse sıradaki kaynaklar: seyir satırı (129 px, `SEYIR.H`
+viewBox'tan kısılabilir), hero ile harita arasındaki 12 px ara, dipnot.
+
+Saha kartları soldaki iki bloğun boyuna hizalandığı için katlamaya sığıp
+sığmaması bu toplama bağlı. Harita 30vh'ye çıkarıldığında kartların altı
+60 px taşıyordu; harita 25vh + seyir 12vh ile kartlar tam oturuyor (ölçülen
+sapma −1 px, Hafta'da +9 px — üç çubuklu hero biraz daha uzun).
+
+**Dipnot hâlâ katlamanın altında kalıyor** (~110 px). Onu da sığdırmak
+yapısal bir değişiklik istiyor; "Sıradaki adımlar"daki üç sütun fikri açık
+duruyor.
+
+## Ortamlar
+
+Masaüstü ve telefon için ayrı düzen vardır. 720 px altında grafikler daha kare bir
+viewBox'a, personel tablosu 7 sütundan 3 sütuna geçer. Ayrı bir televizyon modu yoktur;
+genel müdürlükteki büyük ekran masaüstü düzenini kullanır.
+
+## Sıradaki adımlar
+
+**Kaldığımız yer (30 Eylül 2026).** Genel sayfası 29 Eylül'de "tam istenen
+gibi" onayını almıştı; o günden beri üstüne iki tur iş yapıldı.
+
+**29 Eylül — hareket katmanı** (bkz. "Hareket katmanı"): önce veri değişimi
+geçişleri, sonra açılış animasyonları, gösteri (play) tuşu, çubuk ucundaki
+yüzde ve hedefe çivilenmiş çubuk ölçeği.
+
+**30 Eylül — ölçüler ve düzen:**
+
+- Haritanın koyuluk ölçeği **logaritmik** oldu; altındaki açıklama satırı
+  kaldırıldı, harita büyütüldü (271 px boy, ~518 px çizilen genişlik).
+- **Sayfa genişliğindeki 1440 px tavan kalktı** (`--sayfa-en`), ekrana yayıldı.
+- **Seyir ikiye bölündü:** solda ciro, sağda kayıt sayısı. Kayıt grafiği
+  Gün ve Ay'da birikimli, Hafta'da hafta içi/hafta sonu iki öbek, her sütunun
+  rakamı üstünde.
+- **Üç yeni ölçü:** kayıt · kart · teslimat. Harita satırı üç sütuna çıktı
+  (harita · **dönüşüm oranı** · kanal payı); teslimat ciro kartının sağ üstüne
+  girdi.
+- Çubukta tahmin artık kesik çizgi; ciro ile KPI bloğu arasına kozmetik
+  ayırıcı kondu.
+- **Gösteri dört aşamaya çıktı:** adetler → KPI'lara dönüş → saha turu (KPI
+  kutuları o sahanın adetlerine döner) → saha kartları arka yüzlerine dönüp
+  bölgeleri listeler. Bir tur ~21 sn.
+- Kart içi KPI puntosu büyütüldü.
+- Elle yapılan değişikliklerde **kutu dönüşü kapatıldı** (göz yoruyordu);
+  dönüş yalnız gösteride.
+
+**30 Eylül, ikinci tur — gösteri sırası · ay dilimi · harita:**
+
+- **Gösterinin sırası kart odaklı oldu.** Eski akış: adetler → KPI'lara dönüş
+  → dört kartın turu → dördü birden arka yüze. Yeni akış: adetler →
+  KPI'lara dönüş → **her kart için sırayla** vurgu + KPI dönüşü → o kartın
+  arka yüzü → önüne dönüş → sonraki kart → başa sar. Bir sahanın adetleri ile
+  bölgeleri artık aynı kartta arka arkaya okunuyor. Bir tur ~26 sn.
+  (`kartlariCevir` → `kartCevir`, tek kart.)
+- **Ay seyri gün gün değil hafta hafta.** 30 nokta yerine 5 haftalık öbek
+  (`1–7`, `8–14`, …); ciro ile kayıt seyri artık aynı x eksenini okuyor.
+- **Harita büyütüldü ve kart içinde ortalandı**: 271 → 287 px. Gereken yer
+  `.hsag` dikey iç boşluğundan alındığı için satır boyu ve katlama
+  değişmedi. Genişlik tavanı 700 → 900 px, sarmalayıcı flex ile ortalıyor.
+
+**30 Eylül, üçüncü tur — gösteri sırası (2) · yerleşim · punto:**
+
+- **Gösteride her saha üç adımda okunuyor:** sahaya gelinir ve **sahanın
+  kendi KPI'ları** görünür (kutu dönmez, rakamlar akar) → kutular dönüp
+  **adetleri** gösterir → **kart arka yüzüne dönüp bölgeleri** listeler.
+  Kart ön yüzüne dönmeden sıra öbür sahaya geçer; dönenler birikir, turun
+  sonunda hepsi birden öne çevrilir. Bir tur ~31 sn.
+- **Kart boyu dönüşte sabitlendi** (`kartlariSabitle` / `kartlariCoz`);
+  eskiden arka yüz kısa olduğu için dört kart birden oynuyordu.
+- **Kutu dönüşü `sahaVurgula`'dan çıkarıldı**, gösterinin ayrı adımı oldu
+  (`gosteriAdetCevir`); `GOSTERI.turda` bayrağı kalktı.
+- **Harita satırının içeriği aşağı alındı:** kart iç boşluğu geri açıldı ve
+  iki yan panelin altındaki ölü boşluk, içeriği dikeyde dağıtarak kapatıldı.
+- **Harita 287 → 303 px.**
+- **Ciro yanındaki KPI puntosu** bir kademe daha büyüdü; ciro bloğunun boyu
+  değişmedi.
+- **Bedel:** `.gdz` altı 933 → 967 px (Hafta 978). Bkz. "Ekrana sığma".
+
+**Kapsam Genel sayfasıdır.** Saha, Bölge, Şube ve Personel sayfaları hâlâ her
+çizimde baştan üretiliyor — geçiş katmanı oralara taşınmadı. Saha sayfasındaki
+blok içeriği hâlâ ara durumda ve kullanıcının farklı fikirleri var; sormadan
+üzerine ekleme yapılmamalı.
+
+**Son doğrulama (30 Eylül, üçüncü tur):** beş sayfa × dört dönem taraması
+temiz; gösteri baştan sona izlendi (sıra doğru, kart boyu 201 px'te sabit,
+dönenler birikiyor, sonda hepsi öne dönüyor, kapsam genele çıkıyor); gösteri
+ortasında dönem değiştirilerek kesinti yolu denendi — gösteri durdu, kart
+boyları çözüldü, `arkada`/`cevir` artığı kalmadı. Saha kartlarının başı ve
+sonu soldaki blokların başı ve sonuyla tam hizalı (sapma 0 px).
+
+Bir önceki tur:
+
+**Son doğrulama (30 Eylül, ikinci tur):** beş sayfa × dört dönem taraması
+temiz (hata, boş bölüm, `NaN`/`undefined`, boş SVG yok). Gösteri Gün ve
+Yıl'da baştan sona izlendi: sıra doğru, tur sonunda kutular KPI değerlerine
+döndü, Yıl'da gizli "Hedefe kalan" yeniden gizlendi, `.cevir` / `.arkada`
+artığı kalmadı. Ölçülen `.gdz` altı: Gün/Ay/Yıl 933 px, Hafta 944 px
+(değişiklikten önce 932 / 943). Saha, Bölge, Şube ve Personel
+sayfalarının metin çıktıları bütün bu turlar boyunca **birebir değişmedi**
+(fark 0) — değişen yalnız Genel. Saha kartlarının başı ve sonu dört dönemde de
+soldaki blokların başı ve sonuyla **tam hizalı** (sapma 0 px); kartlar Gün, Ay
+ve Yıl'da katlamanın 8 px içinde, Hafta'da 3 px taşıyor.
+
+**Varsayılan sabitler (gerçek oranlar gelince değişecek, hepsi dosyanın
+başında):** `ORT_SOZLESME = 228.000` (ciro ÷ bu = kayıt), `KART_KAT = 3,3`
+(kart = kayıt × bu, randevuyla tavanlı), `TES_GECIKME = 75` gün.
+Ölçülen büyüklükler: 446 kayıt · 1.434 kart · 6.613 randevu · 299 teslimat
+(günlük, 2.500 kişi).
+
+**Saha sayfasında yarım kalan iş:** karşılaştırmalı seyir grafiği kaldırıldı ve
+bloklar Genel'in minyatürü olacak şekilde zenginleştirildi (ciro + ilerleme
+çubuğu + tahmini kapanış + 4 KPI + dönem seyri + kanal payı halkası).
+**Kullanıcının bu blokların içeriği için farklı fikirleri var, sonra ele
+alınacak** — mevcut hâl ara durumdur, üzerine ekleme yapmadan önce sorulmalı.
+
+1. **Saha sayfası** — kullanıcının fikirleri alınıp blok içeriği yeniden
+   kurgulanacak. Saha haritası da buraya planlanıyor (her blokta o sahanın illeri).
+2. **Bölge sayfası** — KPI şeridi (`.ozet`) Genel'deki `.pair` gibi eşit yayılsın,
+   ortalansın, punto `clamp()` ile büyüsün.
+3. **Şube ve Personel** — "Öne çıkanlar" kutuları için aynısı.
+4. **Haritanın sütunu hâlâ geniş.** Satır üç sütuna çıktı (harita · dönüşüm
+   oranı · kanal payı) ve harita satırdaki bütün boş payı aldı (254 px boy,
+   çizilen genişlik ~485 px). Sütun ise 995 px: harita yatayda hâlâ yerini
+   dolduramıyor, çünkü boyu satırın boyuna bağlı. Daha büyük bir harita
+   isteniyorsa satırın kendisi uzamalı, o da katlamayı taşırır.
+5. **Hareket katmanının diğer sayfalara taşınması** — Saha, Bölge, Şube ve
+   Personel bloklarında da düğüm kalıcılığı kurulacak. Ayrıca henüz
+   yapılmayan fikirler: dönem adımlarken yönlü kayma, kırılım düğmelerinde
+   kayan pill, canlı veri bağlanınca yeni satış parlaması.
+6. **Sunum modu** — tam ekran, otomatik geçiş, büyük punto.
+7. **Veri talebi dokümanı** — ekrandaki her bloğun arkasında hangi tablo, hangi
+   alan, hangi yenilenme sıklığı gerektiğini çıkaran liste. Birimlere bu gidecek.
+8. **Gerçek bölge ve şube listesi** alınınca `BOLGE_TANIM` güncellenecek
+   (şube adlarının yanındaki plaka kodlarıyla birlikte).
+9. Ciro tanımının kilitlenmesi: iptal/iade kapsamı ve tarih alanı (sözleşme mi,
+   onay mı).
+
+### Çalışma kuralı (kullanıcının uyarısı)
+
+Bir sayfa düzenlenirken başka sayfaların bozulmaması gerekiyor. Bu oturumda üç
+kez oldu:
+
+- `display:flex` verilen kaplarda `hidden` özniteliği ezildi (iki kez) →
+  gizli bölümler görünür kaldı. Bir elemana `display` verilirken
+  `[hidden]{display:none}` kuralı da birlikte yazılmalı.
+- CSS'te iki yorum satırı arası blok komple değiştirildi; o aralıkta başka
+  sayfaya ait kurallar vardı → Genel'in kart düzeni silindi.
+
+**Kural:** CSS'e hedefli dokunulacak (aralık silme yok) ve her değişiklikten
+sonra beş sayfa × dört dönem taraması çalıştırılacak (hata, boş bölüm,
+`NaN`/`undefined` kontrolü).
+
+### Bu oturumda yapılanlar
+
+- **Türkiye haritası** eklendi (81 il, MIT lisanslı sınır verisi, 54 KB),
+  tek yeşil tonlamalı, hover ile saha vurgulama ve **hover ile filtreleme**.
+- **Kanal payı halkası** — şube / saha (SPY) kırılımı, kanal filtresinden bağımsız.
+- **Başlık ve gezinme şeridi sabitlendi**, satırlar daraltıldı; dönem adı
+  gezinme şeridinin ortasına alındı.
+- **Kurumsal renk paletine** geçildi (bkz. "Renk paleti").
+- Ciro kartının kapsam etiketi ("Türkiye Geneli" / saha adı) kartın sağ üstünde,
+  büyük puntoyla.
+- Gün grafiğinde **yanıp sönen kırmızı nokta + akan saat** (KESIT'ten başlar,
+  gerçek zamanla ilerler; yalnız göstergedir, rakamları etkilemez).
+- Hafta seyri gün gün çubuklara döndü, hafta içi / hafta sonu iki öbek;
+  ciro kartındaki çubuk Hafta'da üçe çıkıyor (hafta · hafta içi · hafta sonu).
+- Rapor **Gün** dönemiyle açılıyor.
+- Kaldırılanlar: karar cümlesi, "Ciro" ve harita başlıkları, sayfa üstü dönem
+  başlığı, "Hedef · Gerçekleşen · Tahmini kapanış" tablosu (özete uygun
+  bulunmadı), Saha'daki karşılaştırmalı seyir grafiği.
+
+## Bilinen açık konular
+
+- **Saha sayfasındaki ilerleme çubukları görünmüyor.** `.sdet-bar .track` gri
+  zemini çiziyor ama içindeki `.fill` / `.fcast` / `.mark` için hiçbir kural
+  yok: bu sınıflar yalnız `.bullet` altında tanımlı, `.sdet-bar` ise `.bullet`
+  içinde değil. Ölçüldü: dolgu `position:static`, yüksekliği 0 px. Yani Saha
+  sayfasında çubukların yalnız boş zemini görünüyor. Eski bir hata, hareket
+  katmanıyla ilgisi yok. Saha sayfası zaten yeniden kurgulanacak, düzeltme
+  oraya bırakıldı.
+
+- **Şube başına ciro haritası** ayrı bir seçenek olarak duruyor. Mevcut harita
+  "hacim nerede" sorusunu cevaplıyor; çarpıklığın asıl sebebi şube sayısı
+  (İstanbul ~57, çoğu ilde 1). Şube başına normalize edilmiş bir harita
+  "nerede verim var" sorusunu cevaplardı — farklı bir harita olur, mevcudun
+  yerine değil yanına düşünülmeli.
+
+- Ciro büyüklükleri temsilidir; gerçek mertebe `OLCEK` ile ayarlanacak.
+- Hedef toplamları kırılımlar arasında farklıdır (saha toplamı ≠ şube toplamı).
+  Bu bilinçlidir — her kırılımın kendi hedefi vardır.
+- Versiyon kontrolü yoktur (git repo değil).
+- **Hover ile filtreleme dokunmatikte çalışmaz.** Genel müdürlükteki ekranın
+  dokunmatik olacağı kararı duruyor; ekran gerçek ortamda denendiğinde tıklama
+  ile seçime geçmek gerekebilir.
+- Genel sayfası 1080p'de tek ekrana sığmıyor (yaklaşık 1200 px). Sığdırmak için
+  denenen otomatik ölçekleme her şeyi %30 küçülttüğü için geri alındı; yapısal
+  çözüm (üç sütun) açık duruyor.
+- Telefon düzeni artık hedeflenmiyor — masaüstü ve büyük ekran önceliklidir.
+  Dosyadaki dar ekran kuralları duruyor ama bakımı yapılmıyor.
