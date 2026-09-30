@@ -141,6 +141,7 @@ body.sekme-pasif .big{animation-play-state:paused}
 
 /* ---- ana blok ---- */
 .sec.onizleme .sec-h h2::after{content:" · önizleme";color:var(--brand);font-weight:600}
+.sec.onizleme.sabit .sec-h h2::after{content:" · seçili"}
 .sec.onizleme .hero{box-shadow:0 0 0 2px var(--brand-soft)}
 .hero{display:grid;grid-template-columns:7fr 5fr;border:1px solid var(--rule);border-radius:var(--r);overflow:hidden;background:var(--surf-2)}
 /* Ciro bloğu ile KPI bloğu arasındaki ayırıcı: düz gri çizgi yerine markanın
@@ -532,17 +533,26 @@ body:not(.genel-tek-ekran) .yilan{visibility:hidden}
 /* Satırın altındaki 3 px'lik şerit hem ayırıcı hem çubuk: dolu kısmı o
    satırın gösterilen ölçüdeki göreli payı. Eski 1 px kenarlığın yerine
    geçiyor, satır boyu değişmesin diye satır yüksekliği kısıldı. */
-.bolge-liste .bsat{display:flex;align-items:baseline;gap:8px;min-width:0;
-  padding:0 0 3px;position:relative}
-.bolge-liste .bsat::after{content:"";position:absolute;left:0;right:0;bottom:0;
-  height:3px;border-radius:2px;
-  background:linear-gradient(to right,var(--brand) 0 calc(var(--p,0)*100%),
-    var(--rule-soft) calc(var(--p,0)*100%) 100%);
-  transition:background .5s cubic-bezier(.22,.61,.36,1)}
+.bolge-liste .bsat{display:flex;align-items:center;gap:5px;min-width:0;
+  width:100%;padding:0;border:0;background:transparent;text-align:left;
+  font:inherit;line-height:1.18;cursor:pointer;position:relative}
+.bolge-liste .bsat:hover,.bolge-liste .bsat.sec{background:var(--brand-soft)}
+.bolge-liste .bsat:focus-visible{outline:2px solid var(--brand);outline-offset:1px}
 .bolge-liste .bad{flex:1 1 auto;min-width:0;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2);font-weight:600}
 .bolge-liste .btl{margin-left:auto;font-weight:700;white-space:nowrap;color:var(--ink);
   padding:0 7px;border-radius:3px;transition:background .45s cubic-bezier(.22,.61,.36,1)}
+.bolge-liste .hg-iz{display:none;position:relative;width:96px;height:10px;
+  border-radius:3px;background:#E1EBE5;overflow:visible}
+.bolge-liste .bsat.hg-yuz .hg-iz{display:block}
+.bolge-liste .bsat.hg-yuz .btl{width:96px;padding:0;background:none}
+.bolge-liste .hg-dol{display:block;height:100%;width:var(--hg-p,0%);
+  border-radius:3px;background:var(--hg-renk,#00724C);transition:width .45s}
+.bolge-liste .hg-deger{position:absolute;z-index:1;top:-3px;
+  left:clamp(17px,var(--hg-p,0%),calc(100% - 17px));transform:translateX(-50%);
+  padding:0 2px;border-radius:2px;background:#fff;color:var(--brand-deep)}
+.bolge-liste .ciro-deger{display:block}
+.bolge-liste .bsat.hg-yuz .ciro-deger{display:none}
 /* Dönüşte yalnız değerler döner, satırların sırası hiç değişmez. */
 .bolge-liste .btl.cevir{animation:kutuCevir .55s cubic-bezier(.45,0,.25,1)}
 .bolge-liste .bbos{border-bottom:0}
@@ -737,14 +747,14 @@ body.gosteri-acik .yuz-tus{display:none}
 .tes-yuz[hidden]{display:none}
 .tes-yuz b{font-family:Georgia,"Times New Roman",serif;font-weight:700;
   font-size:clamp(46px,6vw,84px);line-height:1;letter-spacing:-.02em;
-  color:#8FE04A;text-shadow:0 0 18px rgba(143,224,74,.55),0 1px 0 rgba(0,0,0,.05)}
+  color:#26764F;text-shadow:0 2px 10px rgba(38,118,79,.12)}
 .tes-yuz span{font-family:Georgia,"Times New Roman",serif;font-style:italic;
-  font-size:clamp(17px,1.6vw,26px);letter-spacing:.06em;color:#6FBE33}
+  font-size:clamp(17px,1.6vw,26px);letter-spacing:.06em;color:#8B7034}
 @keyframes tesNabiz{
-  0%,100%{transform:scale(1);opacity:.9;filter:brightness(1)}
-  50%{transform:scale(1.09);opacity:1;filter:brightness(1.45)}
+  0%,100%{transform:scale(1);opacity:.94}
+  50%{transform:scale(1.025);opacity:1}
 }
-body.hazir .tes-yuz{animation:tesNabiz 2.4s ease-in-out infinite;
+body.hazir .tes-yuz{animation:tesNabiz 3.4s ease-in-out infinite;
   transform-origin:center}
 body.sekme-pasif .tes-yuz{animation-play-state:paused}
 @media (prefers-reduced-motion:reduce){.tes-yuz{animation:none}}
@@ -1599,6 +1609,7 @@ function degisimSinif(v){return v===null?"":(v>=0?"ok":"no");}
 const SEVIYELER=["genel","saha","bolge","sube","personel"];
 const SEV_AD={saha:{c:"Saha",t:"saha"},bolge:{c:"Bölge",t:"bölge"},sube:{c:"Şube",t:"şube"},personel:{c:"Personel",t:"personel"}};
 const S={ sagSeyir:"kyt",kpiYuz:"kpi",bolgeYuz:"hg",kanal:"tum",per:"gun",ofs:0,seviye:"genel",onizleme:null,
+         secimSabit:null,secimHover:null,bolgeListeKap:null,
          filtre:{saha:null,bolge:null,sube:null},
          sirala:"donemCiro",yon:-1,ara:"",limit:60,
          listeSirala:"ciro",listeYon:-1,listeAra:"",listeLimit:40};
@@ -1812,6 +1823,8 @@ function bicemiSabitle(kap){ if(kap) void kap.offsetWidth; }
 
 let acilisZaman=null;
 function ciz(neden){
+  /* F11/yeniden boyutlandırma tıklama değildir: sabit seçimi koru. */
+  const korunanSecim=(neden==="boyut"||neden==="veri")?S.secimSabit:null;
   /* Önce önceki ekran ölçeğini kaldır: bütün çizim ve kart ölçümleri doğal
      boyutta yapılır, yeni ölçek çizimin sonunda tekrar hesaplanır. */
   ekranSigdirSifirla();
@@ -1850,6 +1863,10 @@ function ciz(neden){
     $(b.id).hidden = !acik;
     if(acik) b.ciz(kap,k,per,o);
   });
+  if(korunanSecim && S.seviye==="genel"){
+    S.secimSabit=korunanSecim;
+    secimUygula();
+  }
   /* Sıçrama bayrağı yalnız bu çizim için; sonraki önizleme akmaya devam etsin. */
   olcekSicradi=false;
   /* rAF geri çağrısı zaman damgası geçirir; doğrudan verilirse yeniden
@@ -2872,25 +2889,37 @@ function cizGrafikBirikim(kap,k,per,o,el){
 
 
 
-/* Harita ile saha kartları karşılıklı vurgulanır: hangi ilin üstündeysek o
-   sahanın kartı, hangi kartın üstündeysek o sahanın illeri öne çıkar. */
-function sahaVurgula(si){
+/* Saha ve bölge için aynı önizleme: hover geçici, tıklama sabittir.
+   Bölge seçiliyken harita ilin toplamını göstermeye devam eder; bölgenin
+   şubesi olan iller seçili çizilir. Liste kaynağı ayrıca tutulur ki bir
+   bölgeye geçince satırlar kaybolup başka bölge seçimi zorlaşmasın. */
+function secimGoster(hedef,listeKap){
+  const saha=hedef && (hedef.tip==="bolge"?hedef.ust:hedef);
+  const si=saha?KOK.cocuk.indexOf(saha):-1;
+  const bolgeIlleri=new Set();
+  if(hedef && hedef.tip==="bolge") hedef.cocuk.forEach(function(s){ if(s.il) bolgeIlleri.add(s.il); });
   const sar=$("haritaSar");
-  sar.classList.toggle("vurgu", si!==null);
+  sar.classList.toggle("vurgu", !!hedef);
   sar.querySelectorAll(".il").forEach(function(el){
-    el.classList.toggle("sec", si!==null && +el.dataset.saha===si);
+    el.classList.toggle("sec", !!hedef && (hedef.tip==="bolge"
+      ? bolgeIlleri.has(+el.dataset.plaka) : +el.dataset.saha===si));
   });
   document.querySelectorAll("#sahaKartlar .kart").forEach(function(el,i){
-    el.classList.toggle("vurgu", si!==null && i===si);
+    el.classList.toggle("vurgu", !!hedef && i===si);
+    el.setAttribute("aria-pressed",!!S.secimSabit && S.secimSabit.node===KOK.cocuk[i]?"true":"false");
+  });
+  document.querySelectorAll("#bolgeListe .bsat").forEach(function(el,i){
+    const v=$("bolgeListe").__veri;
+    el.classList.toggle("sec", !!hedef && hedef.tip==="bolge" && v && v[i] && v[i].n===hedef);
+    el.setAttribute("aria-pressed",!!S.secimSabit && v && v[i] && v[i].n===S.secimSabit.node?"true":"false");
   });
 
-  /* Üstteki ciro bloğu ve seyir seçili sahaya döner. Harita ile kartlar
-     yeniden çizilmez: fare onların üstünde duruyor, yeniden üretim
-     vurgulamayı düşürürdü. */
-  const hedef = si===null ? null : KOK.cocuk[si];
-  /* Ciro kartının sağ üstü hangi kapsama bakıldığını söyler */
   $("kapsamEt").textContent = hedef ? hedef.ad : "Türkiye Geneli";
-  if(hedef===S.onizleme) return;
+  $("secCiro").classList.toggle("onizleme", !!hedef);
+  $("secCiro").classList.toggle("sabit", !!S.secimSabit && !S.secimHover);
+  const eskiKap=S.bolgeListeKap;
+  S.bolgeListeKap=listeKap||KOK;
+  if(hedef===S.onizleme && eskiKap===S.bolgeListeKap) return;
   S.onizleme=hedef;
   /* Önizleme de bir veri değişimidir: rakamlar Türkiye genelinden o sahaya
      akar, sıçramaz. ciz() üzerinden geçmediği için neden burada verilir. */
@@ -2905,7 +2934,31 @@ function sahaVurgula(si){
      dönüş gösterinin ayrı bir adımıdır (gosteriAdetCevir): önce sahanın
      kendi KPI'ları okunuyor, sonra kutular dönüp adetleri gösteriyor. */
   yaz();
-  $("secCiro").classList.toggle("onizleme", si!==null);
+}
+function secimUygula(){
+  const s=S.secimHover||S.secimSabit;
+  secimGoster(s?s.node:null,s?s.listeKap:null);
+}
+function secimHover(node,listeKap){
+  if(GOSTERI.acik) return;
+  S.secimHover=node?{node:node,listeKap:listeKap||KOK}:null;
+  secimUygula();
+}
+function secimSabitle(node,listeKap){
+  if(GOSTERI.acik) return;
+  beklemeTemizle();
+  S.secimSabit={node:node,listeKap:listeKap||KOK};
+  S.secimHover=null;
+  secimUygula();
+}
+function secimBosalt(){
+  if(!S.secimSabit && !S.secimHover) return;
+  S.secimSabit=null; S.secimHover=null;
+  secimUygula();
+}
+/* Gösteri mevcut saha sırasını doğrudan sürer. */
+function sahaVurgula(si){
+  secimGoster(si===null?null:KOK.cocuk[si],si===null?null:KOK.cocuk[si]);
 }
 
 /* Dört kutuyu birden çevirir — yalnız gösterinin saha turunda kullanılır.
@@ -2932,14 +2985,18 @@ function onizlemeCevir(yaz,sonra){
    kapsam() diğer sayfaları da sessizce o sahaya filtreliyor — Bölge sayfası
    "Tüm satış · İstanbul" diye açılıyordu. Yeniden çizimde sıfırlanır. */
 function onizlemeSifirla(){
-  if(!S.onizleme) return;
+  S.secimSabit=null; S.secimHover=null; S.bolgeListeKap=null;
   S.onizleme=null;
   clearTimeout(onizlemeZaman); clearTimeout(onizlemeBitir);
   const et=$("kapsamEt"); if(et) et.textContent="Türkiye Geneli";
   const sc=$("secCiro"); if(sc) sc.classList.remove("onizleme");
+  if(sc) sc.classList.remove("sabit");
   const sar=$("haritaSar"); if(sar) sar.classList.remove("vurgu");
   document.querySelectorAll("#harita .il.sec").forEach(function(x){ x.classList.remove("sec"); });
-  document.querySelectorAll("#sahaKartlar .kart.vurgu").forEach(function(x){ x.classList.remove("vurgu"); });
+  document.querySelectorAll("#sahaKartlar .kart").forEach(function(x){
+    x.classList.remove("vurgu"); x.setAttribute("aria-pressed","false"); });
+  document.querySelectorAll("#bolgeListe .bsat").forEach(function(x){
+    x.classList.remove("sec"); x.setAttribute("aria-pressed","false"); });
   document.querySelectorAll(".pair > div.cevir").forEach(function(x){
     x.classList.remove("cevir"); x.style.removeProperty("--cs"); });
 }
@@ -3242,6 +3299,8 @@ setInterval(beklemeTik, BEKLE_ARA);
 
 function gosteriBaslat(){
   if(GOSTERI.acik || S.seviye!=="genel") return;
+  S.secimSabit=null; S.secimHover=null;
+  secimGoster(null,null);
   GOSTERI.acik=true;
   document.body.classList.add("gosteri-acik");
   const b=$("gosteri");
@@ -3322,7 +3381,7 @@ function cizTeslimat(kap,k,per){
 const BOLGE_SATIR = 11;
 function cizBolgeListe(per){
   const kutu=$("bolgeListe"); if(!kutu) return;
-  const kap = S.onizleme || KOK;
+  const kap = S.bolgeListeKap || KOK;
   const k=S.kanal, sonG=Math.min(per.bit,BUGUN);
   const bl=[];
   (function gez(n){
@@ -3334,48 +3393,55 @@ function cizBolgeListe(per){
      hedef tanımlı değil, orada H/G yüzü kendiliğinden ciroya düşer. */
   const veri=bl.map(function(n){
     const o=olcum(n,k,per);
-    return {ad:n.ad, c: sonG>=per.bas ? topArr(n.ciro[k],per.bas,sonG) : 0, hg:o.hg};
+    return {n:n,ad:n.ad, c: sonG>=per.bas ? topArr(n.ciro[k],per.bas,sonG) : 0, hg:o.hg};
   });
   const hgVar = veri.some(function(v){ return v.hg!==null && isFinite(v.hg); });
   const yuz = (S.bolgeYuz==="hg" && hgVar) ? "hg" : "ciro";
 
   /* SIRA HER ZAMAN H/G'ye göre (yoksa ciroya). Değer yüzü değişince sıra
      bozulmaz — yalnız rakamlar döner, göz aynı satırı takip eder. */
-  veri.sort(hgVar ? function(a,b){ return (b.hg||-1e9)-(a.hg||-1e9); }
+  veri.sort(hgVar ? function(a,b){ return (Number.isFinite(b.hg)?b.hg:-1e9)-(Number.isFinite(a.hg)?a.hg:-1e9); }
                   : function(a,b){ return b.c-a.c; });
-
-  const deg=function(v){ return yuz==="hg" ? (v.hg||0) : v.c; };
-  const bic=function(v){ return yuz==="hg"
-      ? (v.hg===null||!isFinite(v.hg) ? "—" : PCT(v.hg))
-      : TL(v.c); };
+  kutu.__veri=veri;
 
   const sutun=Math.max(1,Math.ceil(veri.length/BOLGE_SATIR));
   const satir=Math.ceil(veri.length/sutun);
   kutu.style.gridTemplateRows="repeat("+satir+",auto)";
 
   const yeniIskelet=iskelet(kutu, veri.map(v=>v.ad).join("|"), function(){
-    return veri.map(function(v){
-      return '<div class="bsat"><span class="bad">'+v.ad+'</span><b class="btl"></b></div>';
+    return veri.map(function(v,i){
+      return '<button type="button" class="bsat" data-i="'+i+'"><span class="bad">'+v.ad+
+        '</span><span class="btl"><span class="hg-iz"><i class="hg-dol"></i><span class="hg-deger"></span></span>'+
+        '<span class="ciro-deger"></span></span></button>';
     }).join("");
   });
   if(yeniIskelet) bicemiSabitle(kutu);
 
-  /* Koşullu biçimlendirme gösterilen ölçüye göre, KENDİ ARALARINDA: zemin
-     koyuluğu ve satır altındaki çubuğun dolu payı. Ölçek her çizimde
-     yeniden kuruluyor, saha önizlemesinde o sahanın bölgeleri kendi
-     arasında dağılıyor. */
-  const d=veri.map(deg);
-  const enAz=Math.min.apply(null,d), enCok=Math.max.apply(null,d);
+  /* H/G çubuğu mutlak 0–100 ölçeğindedir; yazı gerçek yüzdeyi korur.
+     Ciroda çubuk yoktur, renkler görünen bölgelerin cirosunu kıyaslar. */
+  const cirolar=veri.map(v=>v.c);
+  const enAz=Math.min.apply(null,cirolar), enCok=Math.max.apply(null,cirolar);
   const aralik=(enCok-enAz)||1;
+  const secili=S.secimHover||S.secimSabit;
   const sat=kutu.querySelectorAll(".bsat");
   veri.forEach(function(v,i){
     const el=sat[i]; if(!el) return;
-    const b=el.querySelector(".btl");
-    sayiAk(b, deg(v), function(){ return bic(v); }, yuz);
-    const t=Math.max(0,Math.min(1,(deg(v)-enAz)/aralik));
-    b.style.background="rgba(0,114,76,"+(0.05+0.30*t).toFixed(3)+")";
-    b.style.color = t>0.62 ? "var(--brand-deep)" : "var(--ink)";
-    el.style.setProperty("--p",(0.1+0.9*t).toFixed(3));
+    const hg=el.querySelector(".hg-deger"), ciro=el.querySelector(".ciro-deger");
+    el.classList.toggle("hg-yuz",yuz==="hg");
+    el.classList.toggle("sec",!!secili && secili.node===v.n);
+    el.setAttribute("aria-pressed",!!S.secimSabit && S.secimSabit.node===v.n?"true":"false");
+    el.setAttribute("aria-label",v.ad+" bölgesi, "+(yuz==="hg"
+      ? (v.hg===null||!isFinite(v.hg)?"hedef yok":PCT(v.hg)) : TL(v.c)));
+    el.title=v.ad;
+    sayiAk(hg,v.hg,x=>(x===null?"—":PCT(x)),"hg");
+    sayiAk(ciro,v.c,TL,"tl");
+    const dol=Math.max(0,Math.min(1,(v.hg||0)/100));
+    el.style.setProperty("--hg-p",(dol*100).toFixed(2)+"%");
+    el.style.setProperty("--hg-renk","hsl(153 52% "+(68-36*dol).toFixed(1)+"%)");
+    const t=Math.max(0,Math.min(1,(v.c-enAz)/aralik));
+    const renk=t<.34?[163,62,55]:(t<.67?[150,105,26]:[22,111,72]);
+    ciro.style.color="rgb("+renk.join(",")+")";
+    ciro.style.background="rgba("+renk.join(",")+",.12)";
   });
 }
 
@@ -3498,7 +3564,7 @@ function haritaOlaylari(){
   sv.addEventListener("mouseover",function(ev){
     const el=il(ev.target);
     if(!el){ return; }
-    sahaVurgula(+el.dataset.saha);
+    secimHover(KOK.cocuk[+el.dataset.saha],KOK.cocuk[+el.dataset.saha]);
     balon.innerHTML="<b>"+el.dataset.ad+"</b><br>"+el.dataset.ciro+
                     " · "+el.dataset.sube+" şube";
     balon.classList.add("acik");
@@ -3511,10 +3577,10 @@ function haritaOlaylari(){
     /* aynı il içinde alt parçalar arası geçişte kapanmasın */
     const yeni=il(ev.relatedTarget);
     if(yeni && yeni.dataset.ad===(il(ev.target)||{dataset:{}}).dataset.ad) return;
-    if(!yeni){ sahaVurgula(null); balon.classList.remove("acik"); }
+    if(!yeni){ secimHover(null); balon.classList.remove("acik"); }
     });
   sv.addEventListener("mouseleave",function(){
-    sahaVurgula(null); balon.classList.remove("acik");
+    secimHover(null); balon.classList.remove("acik");
   });
 }
 
@@ -3600,6 +3666,7 @@ function cizHarita(k,per){
   if(!IL_DUGUM) haritaKur();
   IL_YOL.forEach(function(il,i){
     const yol=IL_DUGUM[i], v=m[il[0]];
+    yol.dataset.plaka=il[0];
     /* class'a setAttribute ile dokunulmuyor: vurgulamanın koyduğu .sec
        sınıfı düşmesin. */
     yol.classList.toggle("bos", !v);
@@ -3896,7 +3963,8 @@ function cizSahaKartlar(k,per){
      anlama gelmesin. Çubuğun varlığı yapıyı değiştirdiği için imzaya girer. */
   const yeni = iskelet(kutu, veri.map(v=>v.n.ad).join("|")+"|"+(yilMi?"yil":"donem"), function(){
     return veri.map(function(v,i){
-      return '<button type="button" class="kart" data-i="'+i+'" style="--sira:'+i+'">'+
+      return '<button type="button" class="kart" data-i="'+i+'" aria-pressed="false" '+
+        'title="Tek tık: seç · çift tık: bölgelerine in" style="--sira:'+i+'">'+
         '<div class="ad"><span class="kad"></span><span class="pay"></span></div>'+
         '<div class="v"></div>'+
         '<div class="hg"><span class="hgv"></span>'+(yilMi?'<span class="ort">ort.</span>':'')+'</div>'+
@@ -3958,10 +4026,15 @@ function cizSahaKartlar(k,per){
 
   if(yeni) kartlar.forEach(function(b,i){
     /* Kartın üstüne gelince haritada o sahanın illeri öne çıkar. */
-    b.onmouseenter=function(){ if($("secHarita") && !$("secHarita").hidden) sahaVurgula(i); };
-    b.onmouseleave=function(){ if($("secHarita") && !$("secHarita").hidden) sahaVurgula(null); };
-    /* Kart tıklanınca o sahanın bölgelerine inilir. */
-    b.onclick=function(){
+    b.onmouseenter=function(){ if($("secHarita") && !$("secHarita").hidden) secimHover(kutu.__veri[i].n,kutu.__veri[i].n); };
+    b.onmouseleave=function(){ if($("secHarita") && !$("secHarita").hidden) secimHover(null); };
+    /* Tek tıklama sabitler; çift tıklama ayrıntıya iner. */
+    b.onclick=function(ev){
+      ev.stopPropagation();
+      const n=kutu.__veri[+b.dataset.i].n;
+      secimSabitle(n,n);
+    };
+    b.ondblclick=function(){
       S.filtre.saha=kutu.__veri[+b.dataset.i].n; S.filtre.bolge=null; S.filtre.sube=null;
       S.seviye="bolge"; S.limit=60; S.listeLimit=40;
       window.scrollTo({top:0,behavior:"smooth"}); ciz("seviye");
@@ -3991,6 +4064,30 @@ $("gosteri").onclick=function(){ GOSTERI.acik ? gosteriDurdur() : gosteriBaslat(
 $("kpiTus").onclick=function(){ if(!GOSTERI.acik) kpiYuzCevir(); };
 $("sagTus").onclick=function(){ if(!GOSTERI.acik) sagYuzCevir(); };
 $("bolTus").onclick=function(){ if(!GOSTERI.acik) bolgeYuzCevir(); };
+/* Bölge satırları yeniden üretilebildiği için olaylar listeye bağlanır. */
+const bolgeOlayKutu=$("bolgeListe");
+function bolgeOlaySatir(t){ return t && t.closest ? t.closest("#bolgeListe .bsat") : null; }
+bolgeOlayKutu.addEventListener("mouseover",function(ev){
+  const sat=bolgeOlaySatir(ev.target);
+  if(!sat || sat===bolgeOlaySatir(ev.relatedTarget)) return;
+  const v=this.__veri && this.__veri[+sat.dataset.i];
+  if(v) secimHover(v.n,S.bolgeListeKap||KOK);
+});
+bolgeOlayKutu.addEventListener("mouseout",function(ev){
+  const sat=bolgeOlaySatir(ev.target);
+  if(sat && !bolgeOlaySatir(ev.relatedTarget)) secimHover(null);
+});
+bolgeOlayKutu.addEventListener("click",function(ev){
+  const sat=bolgeOlaySatir(ev.target);
+  const v=sat && this.__veri && this.__veri[+sat.dataset.i];
+  if(v){ ev.stopPropagation(); secimSabitle(v.n,S.bolgeListeKap||KOK); }
+});
+/* Seçim alanlarının dışına yapılan tek tıklama Genel görünümüne döner. */
+document.addEventListener("click",function(ev){
+  if(!S.secimSabit) return;
+  if(ev.target.closest("#sahaKartlar .kart,#bolgeListe .bsat")) return;
+  secimBosalt();
+});
 $("prev").onclick=function(){S.ofs--;ciz("donem");};
 $("next").onclick=function(){if(ileriVar()){S.ofs++;ciz("donem");}};
 $("altAra").oninput=function(){S.listeAra=this.value;S.listeLimit=40;ciz("arama");};

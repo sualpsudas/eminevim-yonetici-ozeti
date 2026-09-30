@@ -242,14 +242,15 @@ kanal payı) bu yüzden yeniden ele alınacak — bkz. "Sıradaki adımlar".
 ## Harita satırı: harita solda, bölgeler sağında
 
 Harita kendi sütununda **sola dayalı**; sağında kalan yere **"Bölgeler"**
-başlığı ve bölge listesi girdi (ad + dönem cirosu, ciroya göre sıralı).
+başlığı ve bölge listesi girdi (ad + H/G veya dönem cirosu). Liste hedef
+olan dönemlerde H/G'ye, Yıl'da ciroya göre sıralıdır.
 Başlık "Dönüşüm oranı" ve "Toplam kanal dağılımı" ile aynı biçimde ve aynı
 hizada (ölçülen fark 0 px). Harita yükseklik sınırına
 göre ölçeklendiği için yanında her zaman epey boşluk kalıyordu.
 
-- Kapsam neyse onun bölgeleri: kökte 22 bölgenin tamamı, bir saha kartının
-  üstüne gelinince yalnız o sahanın bölgeleri — `cizPay` ile aynı mantık,
-  `S.onizleme` izleniyor (ölçülen: hover'da 6 satır, bırakınca 22).
+- Genel kapsamda 22 bölge, saha önizlemesinde o sahanın bölgeleri görünür.
+  Bölge satırının üstüne gelince ya da satıra tıklayınca üst metrikler o
+  bölgeye geçer; liste yerinde kalır ki başka bölge seçilebilsin.
 - **Satır boyu sıkı (20 px):** 11 satır + başlık haritanın boyuna sığmalı.
   Gevşek bırakıldığında harita satırı 323 → **369 px**'e çıkıyor ve tek-ekran
   ölçeği bütün panoyu küçültüyordu (0,864 → 0,824).
@@ -258,12 +259,12 @@ göre ölçeklendiği için yanında her zaman epey boşluk kalıyordu.
   taşma yok.
 - Rakamlar akarak geçiyor (`iskelet` + `sayiAk`), liste değişmedikçe
   yeniden kurulmuyor.
-- **Koşullu biçimlendirme:** tutarlar kendi aralarında renkleniyor —
-  zemin `rgba(0,114,76, 0,05 → 0,35)`, üst uçta yazı da koyulaşıyor.
-  Ölçek her çizimde yeniden kuruluyor, yani saha önizlemesinde o sahanın
-  altı bölgesi kendi arasında yeniden dağılıyor (ölçülen: 22 satırda ve
-  6 satırda da uçlar 0,05 ↔ 0,35). Ölçek **doğrusal**: bölgeler birbirine
-  yakın (3,9 – 5,8 M ₺), haritadaki gibi logaritmik olsa fark silinirdi.
+- **H/G yüzü:** çubuk yüzdeyle aynı satırda; doluluk `H/G ÷ 100` ve en çok
+  %100. Yazı gerçek değeri gösterir, %100'ü aşsa da çubuk taşmaz. Renk
+  yalnız açık–koyu yeşil tonlarıyla 0–1 aralığında değişir.
+- **Ciro yüzü:** çubuk yoktur. Görünen bölgelerin ciroları kendi arasında
+  doğrusal olarak kıyaslanır; düşük ciro kırmızı, orta sarı, yüksek yeşildir.
+  Bu renk hedef başarısını değil yalnız göreli ciro büyüklüğünü anlatır.
 
 **İki tuzak:**
 
@@ -373,11 +374,14 @@ değil etkileşime bırakıldı: bir ilin üstüne gelince o sahanın illeri ön
   çekilince genele döner. Başlıkta "· önizleme" ibaresi çıkar ve ciro kartı
   hafif çerçevelenir. Harita ile kartlar bu sırada **yeniden çizilmez**: fare
   onların üstünde durduğu için yeniden üretim vurgulamayı düşürürdü.
-- Karta tıklamak eskisi gibi o sahanın bölgelerine iner.
+- Saha kartına tek tıklama önizlemeyi sabitler; başka sahaya tıklamak seçimi
+  değiştirir, ekranın başka yerine tıklamak genele döner. Çift tıklama o
+  sahanın Bölge sayfasına iner. Bölge satırları da hover ve tek tıklamayla
+  kendi verisine geçer/sabitlenir.
 
-> **Açık risk:** filtreleme hover'a bağlı olduğu için dokunmatik ekranda
-> çalışmaz; genel müdürlükteki ekranın dokunmatik olacağı kararı duruyor.
-> Ekran gerçek ortamda denendiğinde tıklama ile seçime geçmek gerekebilir.
+> Dokunmatik kullanım için tek tıklamayla sabitleme eklendi. Saha ayrıntısına
+> inmek için çift tıklama kullanılır; gerçek dokunmatik ekranda bu hareketin
+> rahatlığı ayrıca denenmelidir.
 - İlin üstünde küçük bir balon açılır: il adı, dönem cirosu ve şube sayısı.
 - Dinleyiciler tek tek illere değil **SVG'nin kendisine** bağlanır
   (`mouseover` / `mouseout` delegasyonu); iller her çizimde yeniden üretildiği
@@ -698,8 +702,9 @@ kartları dönmez**, kartlar yerinde kalır.
    6,5 sn duruyor.
 
    **Teslimat yüzü** karta ortalı tek satır: iri rakam + "teslimat", Georgia
-   ile ve parlak yeşille (`#8FE04A`, ışımalı), yanıp sönerek ve büyüyüp
-   küçülerek. Dört kutudan bilerek ayrışıyor — teslimat 75 gün gecikmeli bir
+   ile. Rakam sakin koyu yeşil (`#26764F`), etiket sıcak altın kahve
+   (`#8B7034`); yavaş ve çok hafif büyüme kutlama hissini korur.
+   Dört kutudan bilerek ayrışıyor — teslimat 75 gün gecikmeli bir
    kohorttan geliyor, güncel ciroyla aynı dilde okunmamalı. Ciro kartının sağ
    üstündeki eski teslimat satırı (`.tesEt`) kaldırıldı.
 
@@ -731,8 +736,8 @@ basılmalı; önce basılınca son kutu üstüne yazılıyordu.
 3. **Bölge değerleri ciroya döner** — sıra bozulmadan yalnız rakamlar döner
    (`.btl` dönüşü, satır başına 16 ms gecikmeyle dalga gibi), sonra H/G'ye
    geri. Liste **her zaman H/G'ye göre sıralı**; ciro yüzünde de aynı sırada
-   kalıyor ki göz aynı satırı takip etsin. Koşullu biçimlendirme ve satır
-   altındaki 3 px'lik çubuk gösterilen ölçüye göre yeniden kuruluyor.
+   kalıyor ki göz aynı satırı takip etsin. H/G yüzünde çubuk yüzde yanında
+   ve en fazla %100 dolu; ciro yüzünde çubuk yok, göreli ciro rengi var.
    Yıl'da hedef tanımlı olmadığı için H/G yüzü kendiliğinden ciroya düşüyor.
 
 Sıra 20 sn'de bir sırayla biri, yani her etki **60 sn'de bir**. Aralar
@@ -1055,6 +1060,9 @@ dosyayı da kapsıyor). 250 KB'lık tek dosyada çalışıldığı için geri d�
 güvencesi gerekiyordu. Uzak depo yok; gerekirse
 `https://github.com/sualpsudas` altına açılır.
 
+Saha/bölge sabitlemesi ve yeni koşullu biçimlendirme öncesi temiz sürüm
+`oncesi-etkilesim-2026-09-30` etiketiyle (`c412b19`) korunuyor.
+
 ## Ortamlar
 
 Masaüstü ve telefon için ayrı düzen vardır. 720 px altında grafikler daha kare bir
@@ -1264,9 +1272,8 @@ sonra beş sayfa × dört dönem taraması çalıştırılacak (hata, boş böl�
 - Hedef toplamları kırılımlar arasında farklıdır (saha toplamı ≠ şube toplamı).
   Bu bilinçlidir — her kırılımın kendi hedefi vardır.
 - Versiyon kontrolü yoktur (git repo değil).
-- **Hover ile filtreleme dokunmatikte çalışmaz.** Genel müdürlükteki ekranın
-  dokunmatik olacağı kararı duruyor; ekran gerçek ortamda denendiğinde tıklama
-  ile seçime geçmek gerekebilir.
+- Saha ve bölge önizlemesi tek tıklamayla sabitlenebilir; çift tıklamayla saha
+  ayrıntısına giriş gerçek dokunmatik ekranda ayrıca doğrulanmalıdır.
 - Genel sayfası kullanılabilir ekran yüksekliği ve genişliğine otomatik,
   orantılı olarak sığdırılıyor. Dar görünümde de masaüstü kompozisyonu
   korunuyor; pano en az 1180 px doğal genişlikte kurulup bütün olarak
