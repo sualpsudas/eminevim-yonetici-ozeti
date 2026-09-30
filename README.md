@@ -728,7 +728,14 @@ kırılım veya kanal değişince yüz başa dönüyor.
 yüzden adet yüzü `cizCiro`'nun değil **`cizRandevu`'nun** sonunda
 basılmalı; önce basılınca son kutu üstüne yazılıyordu.
 
-Sıra 20 sn'de bir sırayla biri, yani her etki **40 sn'de bir**. Aralar
+3. **Bölge değerleri ciroya döner** — sıra bozulmadan yalnız rakamlar döner
+   (`.btl` dönüşü, satır başına 16 ms gecikmeyle dalga gibi), sonra H/G'ye
+   geri. Liste **her zaman H/G'ye göre sıralı**; ciro yüzünde de aynı sırada
+   kalıyor ki göz aynı satırı takip etsin. Koşullu biçimlendirme ve satır
+   altındaki 3 px'lik çubuk gösterilen ölçüye göre yeniden kuruluyor.
+   Yıl'da hedef tanımlı olmadığı için H/G yüzü kendiliğinden ciroya düşüyor.
+
+Sıra 20 sn'de bir sırayla biri, yani her etki **60 sn'de bir**. Aralar
 bilerek uzun: ekrana sürekli bakılmıyor, ara ara göz atılıyor. Ölçülen tur:
 21 sn adetler → 27 sn geri · 41 sn randevu → 50 sn geri, saha kartları hiç
 dönmedi.

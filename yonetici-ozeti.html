@@ -519,23 +519,32 @@ body:not(.genel-tek-ekran) .yilan{visibility:hidden}
 /* Başlık satırın tepesinde, "Dönüşüm oranı" ve "Toplam kanal dağılımı"
    başlıklarıyla aynı biçim ve aynı hizada; liste altında kalan yerde
    dikeyde ortalanıyor. */
-.bolge-kol{flex:1 1 auto;min-width:0;display:flex;flex-direction:column}
+.bolge-kol{position:relative;flex:1 1 auto;min-width:0;display:flex;flex-direction:column}
 .bolge-kol h3{font-size:clamp(13px,1vw,16px);font-weight:650;color:var(--mut);
   margin-bottom:6px}
 .bolge-liste{flex:1 1 auto;min-width:0;max-width:100%;display:grid;
   align-content:center;
   grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);
-  gap:0 clamp(12px,1.2vw,24px);font-size:clamp(11px,0.9vw,15px);line-height:1.32}
+  gap:0 clamp(12px,1.2vw,24px);font-size:clamp(11px,0.9vw,15px);line-height:1.18;perspective:600px}
 /* Satır boyu sıkı: 11 satır + "Bölgeler" başlığı haritanın boyuna sığmalı,
    yoksa harita satırı uzuyor ve tek-ekran ölçeği bütün panoyu küçültüyor
    (ölçülen: gevşek hâlde satır 369 px, ölçek 0,824). */
+/* Satırın altındaki 3 px'lik şerit hem ayırıcı hem çubuk: dolu kısmı o
+   satırın gösterilen ölçüdeki göreli payı. Eski 1 px kenarlığın yerine
+   geçiyor, satır boyu değişmesin diye satır yüksekliği kısıldı. */
 .bolge-liste .bsat{display:flex;align-items:baseline;gap:8px;min-width:0;
-  padding:0;border-bottom:1px solid var(--rule-soft)}
-.bolge-liste .bsat:last-child{border-bottom:0}
+  padding:0 0 3px;position:relative}
+.bolge-liste .bsat::after{content:"";position:absolute;left:0;right:0;bottom:0;
+  height:3px;border-radius:2px;
+  background:linear-gradient(to right,var(--brand) 0 calc(var(--p,0)*100%),
+    var(--rule-soft) calc(var(--p,0)*100%) 100%);
+  transition:background .5s cubic-bezier(.22,.61,.36,1)}
 .bolge-liste .bad{flex:1 1 auto;min-width:0;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2);font-weight:600}
 .bolge-liste .btl{margin-left:auto;font-weight:700;white-space:nowrap;color:var(--ink);
   padding:0 7px;border-radius:3px;transition:background .45s cubic-bezier(.22,.61,.36,1)}
+/* Dönüşte yalnız değerler döner, satırların sırası hiç değişmez. */
+.bolge-liste .btl.cevir{animation:kutuCevir .55s cubic-bezier(.45,0,.25,1)}
 .bolge-liste .bbos{border-bottom:0}
 /* Harita sütunun yarısını geçmiyor: geniş ekranda zaten kendi yüksekliğine
    sığıyor, dar ekranda ise bütün yeri alıp listeye yer bırakmıyordu. */
@@ -1026,6 +1035,8 @@ body.acilis #spark text.tahmin:not(#suAnYazi){
           <div class="il-balon" id="ilBalon"></div>
         </div>
         <div class="bolge-kol">
+          <button type="button" class="yuz-tus" id="bolTus"
+                  title="H/G ↔ ciro" aria-label="Bölge değerlerini çevir">&#10227;</button>
           <h3>Bölgeler</h3>
           <div class="bolge-liste" id="bolgeListe" aria-label="Bölgelere göre ciro"></div>
         </div>
@@ -1587,7 +1598,7 @@ function degisimSinif(v){return v===null?"":(v>=0?"ok":"no");}
 /* ===== DURUM ===== */
 const SEVIYELER=["genel","saha","bolge","sube","personel"];
 const SEV_AD={saha:{c:"Saha",t:"saha"},bolge:{c:"Bölge",t:"bölge"},sube:{c:"Şube",t:"şube"},personel:{c:"Personel",t:"personel"}};
-const S={ sagSeyir:"kyt",kpiYuz:"kpi",kanal:"tum",per:"gun",ofs:0,seviye:"genel",onizleme:null,
+const S={ sagSeyir:"kyt",kpiYuz:"kpi",bolgeYuz:"hg",kanal:"tum",per:"gun",ofs:0,seviye:"genel",onizleme:null,
          filtre:{saha:null,bolge:null,sube:null},
          sirala:"donemCiro",yon:-1,ara:"",limit:60,
          listeSirala:"ciro",listeYon:-1,listeAra:"",listeLimit:40};
@@ -3158,7 +3169,8 @@ function beklemeTemizle(){ BEKLE.zaman.forEach(clearTimeout); BEKLE.zaman=[]; }
 function beklemeSifirla(){
   beklemeTemizle(); yariTemizle();
   BEKLE.kpiKar=null;
-  S.sagSeyir="kyt"; S.kpiYuz="kpi";
+  S.sagSeyir="kyt"; S.kpiYuz="kpi"; S.bolgeYuz="hg";
+  bolTemizle();
   const sg=document.querySelector(".hero-r"); if(sg) sg.classList.remove("tes");
   const ty=$("tesYuz"); if(ty) ty.hidden=true;
   document.querySelectorAll("#sparkSatir .s-yari.cevir").forEach(function(x){
@@ -3172,7 +3184,13 @@ function beklemeUygun(){
 function beklemeTik(){
   if(!beklemeUygun()) return;
   beklemeSayac++;
-  if(beklemeSayac%2===1) beklemeKpi(); else beklemeSagSeyir();
+  const n=beklemeSayac%3;
+  if(n===1) beklemeKpi(); else if(n===2) beklemeSagSeyir(); else beklemeBolge();
+}
+/* Bölge değerleri ciroya döner, sonra H/G'ye geri. */
+function beklemeBolge(){
+  bolgeYuzCevir();
+  beklemeBekle(BEKLE_RND, function(){ bolgeYuzCevir(); beklemeTemizle(); });
 }
 /* Üç yüz sırayla: KPI değerleri → organizasyon adetleri → teslimat.
    Yüz S.kpiYuz'da durduğu için yeniden çizim onu bozmuyor. Hem sağ üstteki
@@ -3311,39 +3329,73 @@ function cizBolgeListe(per){
     if(n.tip==="bolge"){ bl.push(n); return; }
     (n.cocuk||[]).forEach(gez);
   })(kap);
+
+  /* Her bölge için iki ölçü: hedefe göre yüzde ve dönem cirosu. Yıl'da
+     hedef tanımlı değil, orada H/G yüzü kendiliğinden ciroya düşer. */
   const veri=bl.map(function(n){
-    return {ad:n.ad, c: sonG>=per.bas ? topArr(n.ciro[k],per.bas,sonG) : 0};
-  }).sort(function(a,b){ return b.c-a.c; });
+    const o=olcum(n,k,per);
+    return {ad:n.ad, c: sonG>=per.bas ? topArr(n.ciro[k],per.bas,sonG) : 0, hg:o.hg};
+  });
+  const hgVar = veri.some(function(v){ return v.hg!==null && isFinite(v.hg); });
+  const yuz = (S.bolgeYuz==="hg" && hgVar) ? "hg" : "ciro";
+
+  /* SIRA HER ZAMAN H/G'ye göre (yoksa ciroya). Değer yüzü değişince sıra
+     bozulmaz — yalnız rakamlar döner, göz aynı satırı takip eder. */
+  veri.sort(hgVar ? function(a,b){ return (b.hg||-1e9)-(a.hg||-1e9); }
+                  : function(a,b){ return b.c-a.c; });
+
+  const deg=function(v){ return yuz==="hg" ? (v.hg||0) : v.c; };
+  const bic=function(v){ return yuz==="hg"
+      ? (v.hg===null||!isFinite(v.hg) ? "—" : PCT(v.hg))
+      : TL(v.c); };
 
   const sutun=Math.max(1,Math.ceil(veri.length/BOLGE_SATIR));
   const satir=Math.ceil(veri.length/sutun);
   kutu.style.gridTemplateRows="repeat("+satir+",auto)";
 
-  /* İskelet yalnız liste değişince kurulur; rakamlar akarak geçsin. */
-  const yeni=iskelet(kutu, veri.map(v=>v.ad).join("|"), function(){
+  const yeniIskelet=iskelet(kutu, veri.map(v=>v.ad).join("|"), function(){
     return veri.map(function(v){
       return '<div class="bsat"><span class="bad">'+v.ad+'</span><b class="btl"></b></div>';
     }).join("");
   });
-  if(yeni) bicemiSabitle(kutu);
-  /* Koşullu biçimlendirme: tutarlar KENDİ ARALARINDA renklenir. Ölçek her
-     çizimde yeniden kurulur, yani saha önizlemesinde o sahanın altı bölgesi
-     kendi arasında yeniden dağılır. En düşük bölge de görünür kalsın diye
-     taban bir zemin var; üst uçta yazı da koyulaşıyor.
-     Ölçek doğrusal: bölgeler birbirine yakın (ölçülen 3,9 – 5,8 M ₺),
-     haritadaki gibi logaritmik olsaydı aradaki fark silinirdi. */
-  const enAz=Math.min.apply(null,veri.map(v=>v.c));
-  const enCok=Math.max.apply(null,veri.map(v=>v.c));
+  if(yeniIskelet) bicemiSabitle(kutu);
+
+  /* Koşullu biçimlendirme gösterilen ölçüye göre, KENDİ ARALARINDA: zemin
+     koyuluğu ve satır altındaki çubuğun dolu payı. Ölçek her çizimde
+     yeniden kuruluyor, saha önizlemesinde o sahanın bölgeleri kendi
+     arasında dağılıyor. */
+  const d=veri.map(deg);
+  const enAz=Math.min.apply(null,d), enCok=Math.max.apply(null,d);
   const aralik=(enCok-enAz)||1;
   const sat=kutu.querySelectorAll(".bsat");
   veri.forEach(function(v,i){
     const el=sat[i]; if(!el) return;
     const b=el.querySelector(".btl");
-    sayiAk(b, v.c, TL, "tl");
-    const t=Math.max(0,Math.min(1,(v.c-enAz)/aralik));
+    sayiAk(b, deg(v), function(){ return bic(v); }, yuz);
+    const t=Math.max(0,Math.min(1,(deg(v)-enAz)/aralik));
     b.style.background="rgba(0,114,76,"+(0.05+0.30*t).toFixed(3)+")";
     b.style.color = t>0.62 ? "var(--brand-deep)" : "var(--ink)";
+    el.style.setProperty("--p",(0.1+0.9*t).toFixed(3));
   });
+}
+
+/* Bölge değerlerini öbür ölçüye çevirir; sıra bozulmadan yalnız rakamlar
+   döner. Tuş ve bekleme modu aynı yolu kullanıyor. */
+let bolZaman=[];
+function bolTemizle(){ bolZaman.forEach(clearTimeout); bolZaman=[];
+  document.querySelectorAll("#bolgeListe .btl.cevir").forEach(function(x){ x.classList.remove("cevir"); }); }
+function bolgeYuzCevir(){
+  S.bolgeYuz = S.bolgeYuz==="hg" ? "ciro" : "hg";
+  if(SAKIN.matches){ cizBolgeListe(donem()); return; }
+  bolTemizle();
+  const b=[].slice.call(document.querySelectorAll("#bolgeListe .btl"));
+  b.forEach(function(x,i){
+    bolZaman.push(setTimeout(function(){
+      x.classList.remove("cevir"); void x.offsetWidth; x.classList.add("cevir");
+    }, i*16));
+  });
+  bolZaman.push(setTimeout(function(){ cizBolgeListe(donem()); }, 230));
+  bolZaman.push(setTimeout(bolTemizle, 700+b.length*16));
 }
 
 /* Kanal payı: cironun ne kadarı şubeden, ne kadarı saha personelinden (SPY).
@@ -3938,6 +3990,7 @@ $("gosteri").onclick=function(){ GOSTERI.acik ? gosteriDurdur() : gosteriBaslat(
    yapar. Bekleme sayacına dokunmuyor, bir sonraki tur normal işliyor. */
 $("kpiTus").onclick=function(){ if(!GOSTERI.acik) kpiYuzCevir(); };
 $("sagTus").onclick=function(){ if(!GOSTERI.acik) sagYuzCevir(); };
+$("bolTus").onclick=function(){ if(!GOSTERI.acik) bolgeYuzCevir(); };
 $("prev").onclick=function(){S.ofs--;ciz("donem");};
 $("next").onclick=function(){if(ileriVar()){S.ofs++;ciz("donem");}};
 $("altAra").oninput=function(){S.listeAra=this.value;S.listeLimit=40;ciz("arama");};
