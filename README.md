@@ -4,7 +4,7 @@ Satış raporlamasının yönetici katmanı için hazırlanan tek dosyalık ekra
 Amaç iki yönlü: hem sunumda gösterilecek somut bir görsel, hem de ilgili birimlerden
 istenecek verinin listesini netleştiren bir gereksinim aracı.
 
-**Son güncelleme:** 29 Eylül 2026
+**Son güncelleme:** 30 Eylül 2026
 
 ## Dosyalar
 
@@ -13,6 +13,77 @@ istenecek verinin listesini netleştiren bir gereksinim aracı.
 | `yonetici-ozeti.html` | **Güncel prototip.** Tek dosya (~150 KB), HTML + CSS + JS, dış bağımlılık yok. Çift tıklayıp tarayıcıda açılır. |
 | `Yonetici-Ozeti-Proje-Notlari.md` | Metodoloji: MTD hedef ağırlıklandırma, gün içi projeksiyon formülü, iki katmanlı hesaplama mimarisi. |
 | `Satis-Raporlama-Arastirma-ve-HTML-Degerlendirme.md` | Satış raporlaması araştırması ve kaynaklar. 11. bölüm artık silinmiş olan eski `index.html`'i tarif eder. |
+
+## Çalışma kuralları — ÖNCE BUNU OKU
+
+Bu dosya üstünde Claude ve Codex dönüşümlü çalışıyor. Aşağıdakiler tahmin
+değil, hepsi bu ekranda bir şeyi bozduğu için yazıldı.
+
+### Ölç, göze güvenme
+
+- **Her değişiklikten sonra beş sayfa × dört dönem taraması** (Genel · Saha ·
+  Bölge · Şube · Personel × Gün · Hafta · Ay · Yıl): konsol hatası, boş
+  bölüm, `NaN`/`undefined`/`Infinity`, boş SVG. İki kanalla da (Tüm Satış /
+  Alternatif) geçilmeli.
+- Ayrıca her turda ölçülmesi gerekenler: **pano ölçeği** (`.wrap`
+  `data-olcek`), **hero boyu**, **saha kartı boyu**, **kart hizası** (ilk
+  kartın tepesi soldaki ilk bloğun tepesiyle, son kartın altı son bloğun
+  altıyla — ikisi de 0 px olmalı).
+- "Düzelttim" demeden önce sayıyı göster. Bu dosyadaki her düzeltme ölçülmüş
+  bir öncesi/sonrası taşıyor.
+
+### Hizalama
+
+- **Kutu değil metin hizalanır.** Yer tutucusu olan (`min-height`) ya da
+  içinde dikey yaslama olan kutuların tepesi, yazının tepesi değildir.
+  `Range.selectNodeContents(el).getBoundingClientRect()` ile yazının kendi
+  kutusu ölçülür. Örnek: `kapsamHizala()`.
+- **İki sütun arasındaki hizayı CSS ifade edemiyorsa JS ile ölç ve
+  değişkene yaz.** Hizalanacak öğe akıştan çıkarılır (`position:absolute`)
+  ki yazmak yerleşimi değiştirmesin.
+- Aynı anlam düzeyindeki iki yazı **aynı puntoda** olmalı (kapsam adı ile
+  gerçekleşen tutar: ikisi de `clamp(34px,4.5vw,48px)`).
+- Yan yana duran panellerin başlıkları aynı hizada bitmeli — yeni bir panel
+  eklenirse başlığı diğerleriyle aynı `h3` biçimini almalı.
+
+### Ölçek (tek ekran sığdırma) — en sık kırılan yer
+
+- Pano `.wrap`'e `transform:scale()` uygulanarak ekrana sığdırılıyor. Bunun
+  iki sonucu var ve ikisi de tekrar tekrar hata üretti:
+  1. **`getBoundingClientRect` ölçeklenmiş değer verir.** Yerleşim pikseli
+     gerekiyorsa `offsetWidth/offsetHeight/offsetLeft/offsetTop` kullan, ya
+     da `.wrap` `data-olcek`'e böl. Kart boyu çivileme ve harita balonu tam
+     bu yüzden bozulmuştu.
+  2. **Bir blok tek bir dönemde uzarsa BÜTÜN EKRAN o dönemde küçülür.**
+     Dönemler arası boy sabitliği artık yalnız hizalama değil, ölçek
+     meselesi. En geniş hâle göre yer ayrılır (örn. `.btablo` Hafta'daki üç
+     çubuğa göre).
+- Yeni bir şey eklerken **önce/sonra ölçeği karşılaştır**. Ölçek düştüyse
+  ekrandaki her şey küçülmüştür; kazancın bedelini söyle.
+
+### Tekrar eden tuzaklar
+
+- `:not(#id)` seçicinin ağırlığını iki kimliğe çıkarır; aynı öğeyi hedefleyen
+  ikinci kural aynı şekli taşımazsa sessizce geçersiz kalır.
+- `:not(body.x) .y` yazma — ara katmanlar da body değildir, kural her zaman
+  tutar. Doğrusu `body:not(.x) .y`.
+- `grid-auto-columns:max-content` ızgarayı kutusundan taşırır; komşu panelin
+  üstüne biner. Kutuya uymak için `minmax(0,1fr)`.
+- Esnek kutu içinde `width:auto` + `max-height` verilen SVG sıfıra iner
+  (döngüsel ölçüm). Boyu açıkça ver, eni viewBox oranından çıksın.
+- **SVG'de kesik deseni her alt yolda baştan başlar** — tek `<path>` ile
+  kesintisiz dolaşan ışık yapılamaz, blok başına ayrı path gerekir.
+- **Çizim fonksiyonu kendi `viewBox`'ını kurmalı.** `cizSpark` kurmadığı için
+  Gün grafiği ilk yüklemede yarısı kesik çiziliyordu.
+- `display:flex` verilen kapta `[hidden]` ezilir; `display` verirken
+  `[hidden]{display:none}` kuralını da yaz.
+- CSS'e **hedefli** dokun. İki yorum satırı arasını komple değiştirme; o
+  aralıkta başka sayfaya ait kurallar olabiliyor.
+- **Rastgele akışa dokunma.** Ana `PERSONEL.forEach` döngüsüne yeni bir
+  `rnd()` çağrısı eklemek bütün diziyi kaydırır ve daha önce konuşulmuş her
+  rakam değişir. Yeni seri ayrı tohumlu ayrı geçişte üretilir.
+- Dört KPI kutusunun **sonuncusunu `cizRandevu` yazar**; kutulara topluca bir
+  şey basılacaksa onun sonunda basılmalı.
 
 ## Ekranın yapısı
 
