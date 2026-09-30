@@ -414,8 +414,13 @@ body.sekme-pasif .kart::after{animation-play-state:paused}
    panel dikey flex, gövde otomatik kenar boşluklarıyla ortalanır, açıklama
    satırı dibe oturur. Boy değişmiyor, yalnız içerik yerleşiyor. */
 .hunipan,.paypan{align-self:stretch;display:flex;flex-direction:column}
-.huni{width:100%;margin:4px 0 auto}
-.paypan svg{margin-top:4px}
+/* Satırın boyunu harita belirliyor (303 px); huni ve kanal dağılımı ondan
+   kısa kalıyor. Artan yer tek bir yerde toplanınca açıklama satırının
+   hemen üstünde delik açılıyordu — ölçülen 66 px (huni) ve 42 px (kanal).
+   Çözüm boşluğu bir yere yığmak değil, içeriğe dağıtmak: huni kademeleri
+   sütunun tamamına yayılıyor, halka da sütunun verdiği kadar büyüyor. */
+.huni{width:100%;flex:1 1 auto;display:flex;flex-direction:column;
+  justify-content:space-between;margin:4px 0 0}
 .pay-leg{margin-bottom:auto}
 .hunipan{min-width:0;border-left:1px solid var(--rule);padding-left:var(--gap)}
 .hunipan h3{font-size:clamp(13px,1vw,16px);font-weight:650;color:var(--mut);margin-bottom:6px}
@@ -436,7 +441,7 @@ body.sekme-pasif .kart::after{animation-play-state:paused}
 /* Halkanın boyu, teslimat bloğu eklenince kısıldı: kanal payı sütunu
    uzayınca saha kartlarının altı katlamayı taşıyordu. */
 .paypan svg{display:block;width:min(100%,210px);height:auto;
-  max-height:clamp(108px,14vh,160px);margin-left:auto;margin-right:auto}
+  max-height:clamp(120px,18vh,200px);margin:auto auto 0}
 .pay-leg{margin-top:clamp(6px,0.9vh,10px);display:grid;gap:clamp(4px,0.7vh,7px)}
 .pay-leg div{display:flex;align-items:baseline;gap:8px;font-size:clamp(12px,0.98vw,15px);min-width:0}
 .pay-leg i{width:10px;height:10px;border-radius:2px;flex:0 0 auto;align-self:center}

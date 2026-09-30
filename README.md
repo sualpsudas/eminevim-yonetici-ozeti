@@ -168,6 +168,19 @@ kanal payı) bu yüzden yeniden ele alınacak — bkz. "Sıradaki adımlar".
   risk). Saha bloklarında ise sahanın kendi kimlik rengi kullanılır — çizim
   fonksiyonu hedef SVG'yi ve rengi parametre olarak alır.
 
+## Harita satırının dikey dağılımı
+
+Satırın boyunu harita belirliyor (ölçülen 303 px); dönüşüm oranı ve toplam
+kanal dağılımı ondan kısa kalıyor. Artan yer tek bir yerde toplanınca
+açıklama satırının hemen üstünde delik açılıyordu — **ölçülen 66 px (huni)
+ve 42 px (kanal)**. Boşluğu bir yere yığmak yerine içeriğe dağıtıldı:
+
+- `.huni` dikey flex + `space-between`: üç kademe sütunun tamamına yayılır
+  (ölçülen kademe üstleri 44 · 140 · 236).
+- Halka sütunun verdiği kadar büyür (`max-height` 160 → 200 px tavan,
+  ölçülen 132 → 169 px), lejant hemen altında.
+- Üç sütunun da alt kenarı artık aynı hizada bitiyor (10 px).
+
 ## Türkiye haritası
 
 Genel sayfada, seyrin altında. Harita **tek renktir** (marka yeşili); koyuluk o
@@ -418,6 +431,26 @@ olarak ayarlar.
 `requestAnimationFrame` arka plandaki sekmede durduğu için her akışın bir
 emniyet zamanlayıcısı vardır: süre dolduğunda son değer her hâlükârda yerine
 yazılır, ekranda eski rakam asılı kalmaz.
+
+### Seyir başlıkları
+
+Solda **Ciro**, sağda **Kayıt sayısı**; ikisinin de altında silik dönem
+yazısı (`.s-don`, `seyirBaslik(per)`). Eskiden başlık dönemin kendisini
+söylüyordu ("Eylül 2026 (9. ay)") ve yanında bir açıklama satırı duruyordu
+("kesik çizgi: tahmini kapanış" gibi) — iki grafiğin üstünde dört ayrı
+metin oluyor, hangi grafiğin ne olduğu başlıktan okunmuyordu. Açıklama
+satırları kaldırıldı; `sparkSon` ve `kytSon` artık yok, `cizGrafik` ve
+`cizKayit` Genel'de `not:null` ile çağrılıyor. Saha sayfasındaki bloklar
+kendi `sdNot` alanlarını kullanmaya devam ediyor.
+
+### Ciro grafiğinin ekseni
+
+Taban çizgisi ve eksen etiketleri kayıt grafiğiyle **aynı ağırlıkta**:
+çizgi `#AEB7B1` 1,2 px, etiketler `.s-eksen` (koyu, kalın, 15 px). Bir
+süre ciro tarafı `#C9CFC9` 1 px ve `#58645F` normal etiketle kalmıştı;
+kayıt grafiği yeni biçime geçince ikisi yan yana durunca ciro tarafının
+ekseni **yokmuş gibi** görünüyordu. Gün görünümü (`cizSpark`) zaten yeni
+biçimdeydi, eksik olan `eksen()` ve `cizGrafikHafta` idi.
 
 ### Ölçek sıçramasında akış kapanır
 
