@@ -168,6 +168,25 @@ kanal payı) bu yüzden yeniden ele alınacak — bkz. "Sıradaki adımlar".
   risk). Saha bloklarında ise sahanın kendi kimlik rengi kullanılır — çizim
   fonksiyonu hedef SVG'yi ve rengi parametre olarak alır.
 
+## Harita satırı: harita solda, bölgeler sağında
+
+Harita kendi sütununda **sola dayalı**; sağında kalan yere **bölge listesi**
+girdi (ad + dönem cirosu, ciroya göre sıralı). Harita yükseklik sınırına
+göre ölçeklendiği için yanında her zaman epey boşluk kalıyordu.
+
+- Kapsam neyse onun bölgeleri: kökte 22 bölgenin tamamı, bir saha kartının
+  üstüne gelinince yalnız o sahanın bölgeleri — `cizPay` ile aynı mantık,
+  `S.onizleme` izleniyor (ölçülen: hover'da 6 satır, bırakınca 22).
+- Sütun sayısı satır sayısına göre: 11 satırdan uzun liste ikiye bölünüyor
+  (`BOLGE_SATIR`). Ölçülen: 1920×940'ta ve 1280×720'de 22 satır, 2 sütun,
+  taşma yok.
+- Rakamlar akarak geçiyor (`iskelet` + `sayiAk`), liste değişmedikçe
+  yeniden kurulmuyor.
+
+**Tuzak:** esnek kutu içinde `width:auto` + `max-height` verilen SVG
+sıfıra iniyor (döngüsel ölçüm). Haritanın **boyu açıkça** veriliyor, eni
+viewBox oranından çıkıyor.
+
 ## Harita satırının dikey dağılımı
 
 **viewBox'taki ölü şerit (düzeltildi).** Harita kutusu özgün dosyadan gelen
@@ -448,16 +467,20 @@ yazılır, ekranda eski rakam asılı kalmaz.
 
 ### Hero'nun üst bandı: etiket, rakam ve kapsam kutusu
 
-**Puntolar ve aralıklar (30 Eylül, son tur).** Gerçekleşen tutar, günlük
+**Puntolar ve aralıklar.** Gerçekleşen tutar, günlük
 hedef ve çubuk tek bir öbek gibi okunsun diye aralar kısıldı, kaybolan
 hiyerarşi punto ile geri verildi: `.big` 38 → **48 px**, `.sub` 17 →
 **21 px**, aralar rakam–hedef **1 px**, hedef–çubuk **4 px**. Sağdaki ilk
 KPI'nın etiketi "Hedefe göre" yerine **"H/G"** (alt satır zaten "günlük
-hedefe göre" diye açıyor) ve değeri bir kademe büyük (**40 px**, diğer üç
-kutu 32 px) — dört kutunun başı olduğu için. Yıl'da o kutu "Aylık
-ortalama" tutarını gösteriyor; en uzun hâli 239 px, kutu 314 px, taşma yok.
+hedefe göre" diye açıyor). Puntosu diğer üç kutuyla **aynı**; dört kutunun
+başı olduğunu büyüklükle değil hareketle söylüyor — rakam yavaşça büyüyüp
+küçülerek odak oluyor (`hgOdak`, 3,2 sn).
 
-Bedeli: hero 317 → 328 px, sayfa ölçeği 0,876 → 0,864.
+**Kapsam adı** ("Türkiye Geneli" / saha adı) soldaki gerçekleşen tutarla
+**aynı puntoda** (48 px, `.big` ile birebir aynı clamp): ekranın "neye
+bakıyoruz" cevabı o.
+
+Bedeli: hero 317 → 329 px, sayfa ölçeği 0,876 → 0,864.
 
 
 
@@ -567,13 +590,40 @@ kendini tekrar çağırmaz). Ölçülen: dönem, kırılım, kanal, hızlı tık
 `resize` — hepsinde ölçek 0,867 ve kart 190 px'te sabit (1280×720'de 0,760
 ve 137 px).
 
+## Bekleme modu — kendi kendine dönen iki değişim
+
+Ekran duvarda dururken çalışan iki değişim. **Gösteriden farkı: saha
+kartları dönmez**, kartlar yerinde kalır.
+
+1. **KPI kutuları adetlere döner** — ciro kartının sağındaki dört kutu
+   saha · bölge · şube · personel adetlerine çevrilir, 6,5 sn durur, sonra
+   KPI değerlerine geri döner. Gösterinin `gosteriAdetCevir` /
+   `gosteriAnlik` / `gosteriGeriYaz` altyapısı yeniden kullanılıyor.
+2. **Seyrin sağ yarısı randevu sayısına döner** — "Kayıt sayısı" yarısı
+   aynı biçimde (`kutuCevir`) dönüp "Randevu sayısı"nı gösterir, 9 sn
+   durur, kayda geri döner. Renk de değişiyor (lacivert → turkuaz), iki
+   ölçü bakışta ayrılsın diye. `kayitDilim` ve `cizKayit` artık alan
+   parametresi alıyor (`kyt` / `rnd`), seri yapıları aynı.
+
+Sıra 20 sn'de bir sırayla biri, yani her etki **40 sn'de bir**. Aralar
+bilerek uzun: ekrana sürekli bakılmıyor, ara ara göz atılıyor. Ölçülen tur:
+21 sn adetler → 27 sn geri · 41 sn randevu → 50 sn geri, saha kartları hiç
+dönmedi.
+
+Gösteri açıkken, Genel dışındaki kırılımlarda, saha önizlemesi sırasında,
+sekme arka plandayken ve hareket azaltma tercihinde hiç çalışmıyor.
+`ciz()` başında `beklemeSifirla()` yarıda kalan geri yazmaları iptal edip
+sağ yarıyı kayda döndürüyor.
+
 ## Bekleme hareketleri
 
 Açılış bittikten sonra (`body.hazir`) ve gösteri kapalıyken çalışan sürekli
 hareketler. Hepsi sekme arka plana geçince duruyor (`body.sekme-pasif`) ve
 `prefers-reduced-motion` altında kapalı.
 
-- **Kartların etrafında dolaşan ışın.** Panodaki her blok (ciro kartı ·
+- **Kartların etrafında dolaşan ışın — ŞİMDİLİK KAPALI** (`ISIN_ACIK=false`;
+  kullanıcı isteği, ileride geri açılacak. Yol kurma ve CSS olduğu gibi
+  duruyor, tek satır yeter.) Panodaki her blok (ciro kartı ·
   dört saha kartı · harita · seyir) **kendi** ışınını taşıyor ve kendi
   kenarında, kendi içinde kesintisiz dolanıyor. Bloklar arasında hiçbir şey
   çizilmiyor ve hiçbir sıra yok. Ara aşamalar: önce dört kartı tek şeritle
