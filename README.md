@@ -182,6 +182,12 @@ göre ölçeklendiği için yanında her zaman epey boşluk kalıyordu.
   taşma yok.
 - Rakamlar akarak geçiyor (`iskelet` + `sayiAk`), liste değişmedikçe
   yeniden kurulmuyor.
+- **Koşullu biçimlendirme:** tutarlar kendi aralarında renkleniyor —
+  zemin `rgba(0,114,76, 0,05 → 0,35)`, üst uçta yazı da koyulaşıyor.
+  Ölçek her çizimde yeniden kuruluyor, yani saha önizlemesinde o sahanın
+  altı bölgesi kendi arasında yeniden dağılıyor (ölçülen: 22 satırda ve
+  6 satırda da uçlar 0,05 ↔ 0,35). Ölçek **doğrusal**: bölgeler birbirine
+  yakın (3,9 – 5,8 M ₺), haritadaki gibi logaritmik olsa fark silinirdi.
 
 **İki tuzak:**
 

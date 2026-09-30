@@ -527,7 +527,8 @@ body:not(.genel-tek-ekran) .yilan{visibility:hidden}
 .bolge-liste .bsat:last-child{border-bottom:0}
 .bolge-liste .bad{flex:1 1 auto;min-width:0;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2);font-weight:600}
-.bolge-liste .btl{margin-left:auto;font-weight:700;white-space:nowrap;color:var(--ink)}
+.bolge-liste .btl{margin-left:auto;font-weight:700;white-space:nowrap;color:var(--ink);
+  padding:1px 7px;border-radius:3px;transition:background .45s cubic-bezier(.22,.61,.36,1)}
 .bolge-liste .bbos{border-bottom:0}
 /* Harita sütunun yarısını geçmiyor: geniş ekranda zaten kendi yüksekliğine
    sığıyor, dar ekranda ise bütün yeri alıp listeye yer bırakmıyordu. */
@@ -3248,9 +3249,23 @@ function cizBolgeListe(per){
     }).join("");
   });
   if(yeni) bicemiSabitle(kutu);
+  /* Koşullu biçimlendirme: tutarlar KENDİ ARALARINDA renklenir. Ölçek her
+     çizimde yeniden kurulur, yani saha önizlemesinde o sahanın altı bölgesi
+     kendi arasında yeniden dağılır. En düşük bölge de görünür kalsın diye
+     taban bir zemin var; üst uçta yazı da koyulaşıyor.
+     Ölçek doğrusal: bölgeler birbirine yakın (ölçülen 3,9 – 5,8 M ₺),
+     haritadaki gibi logaritmik olsaydı aradaki fark silinirdi. */
+  const enAz=Math.min.apply(null,veri.map(v=>v.c));
+  const enCok=Math.max.apply(null,veri.map(v=>v.c));
+  const aralik=(enCok-enAz)||1;
   const sat=kutu.querySelectorAll(".bsat");
   veri.forEach(function(v,i){
-    if(sat[i]) sayiAk(sat[i].querySelector(".btl"), v.c, TL, "tl");
+    const el=sat[i]; if(!el) return;
+    const b=el.querySelector(".btl");
+    sayiAk(b, v.c, TL, "tl");
+    const t=Math.max(0,Math.min(1,(v.c-enAz)/aralik));
+    b.style.background="rgba(0,114,76,"+(0.05+0.30*t).toFixed(3)+")";
+    b.style.color = t>0.62 ? "var(--brand-deep)" : "var(--ink)";
   });
 }
 
