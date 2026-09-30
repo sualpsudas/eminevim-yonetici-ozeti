@@ -183,9 +183,21 @@ göre ölçeklendiği için yanında her zaman epey boşluk kalıyordu.
 - Rakamlar akarak geçiyor (`iskelet` + `sayiAk`), liste değişmedikçe
   yeniden kurulmuyor.
 
-**Tuzak:** esnek kutu içinde `width:auto` + `max-height` verilen SVG
-sıfıra iniyor (döngüsel ölçüm). Haritanın **boyu açıkça** veriliyor, eni
-viewBox oranından çıkıyor.
+**İki tuzak:**
+
+1. Esnek kutu içinde `width:auto` + `max-height` verilen SVG sıfıra iniyor
+   (döngüsel ölçüm). Haritanın **boyu açıkça** veriliyor, eni viewBox
+   oranından çıkıyor.
+2. `grid-auto-columns:max-content` ızgarayı kutusundan taşırıyor. Dar
+   ekranda liste sağdaki "Dönüşüm oranı" panelinin üstüne biniyordu —
+   ölçülen 1600×900'de **183 px**, 1366×768'de **114 px**. Sütunlar artık
+   `minmax(0,1fr)`, yani kutuya göre boyutlanıyor; ad sığmazsa üç noktayla
+   kısalıyor. Harita da sütunun yarısını geçmiyor (`max-width:52%`) ki
+   listeye her zaman yer kalsın, ve `preserveAspectRatio="xMinYMid meet"`
+   ile kutusu daralınca sola yaslı kalıyor.
+
+Ölçülen (çakışma yok, ad kısalması yok): 1920×940 harita 686 / liste 636 ·
+1600×900 harita 515 / liste 456 · 1366×768 harita 462 / liste 410.
 
 ## Harita satırının dikey dağılımı
 

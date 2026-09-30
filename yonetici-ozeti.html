@@ -514,18 +514,25 @@ body:not(.genel-tek-ekran) .yilan{visibility:hidden}
    zaman epey boşluk kalıyordu. */
 .hrt-kol{min-width:0;align-self:stretch;display:flex;align-items:stretch;
   gap:clamp(10px,1.2vw,22px)}
+/* Sütunlar içeriğe göre değil KUTUYA göre boyutlanır (minmax(0,1fr)).
+   max-content denendi: dar ekranda ızgara kutusunu dinlemeyip taşıyor ve
+   yanındaki "Dönüşüm oranı" panelinin üstüne biniyordu — ölçülen 1600×900'de
+   183 px, 1366×768'de 114 px. Ad sığmazsa üç noktayla kısalır. */
 .bolge-liste{flex:1 1 auto;min-width:0;max-width:100%;display:grid;
-  align-content:center;justify-content:start;
-  grid-auto-flow:column;grid-auto-columns:max-content;
-  gap:2px clamp(14px,1.5vw,28px);font-size:clamp(11px,0.92vw,15px)}
+  align-content:center;
+  grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);
+  gap:2px clamp(12px,1.2vw,24px);font-size:clamp(11px,0.92vw,15px)}
 .bolge-liste .bsat{display:flex;align-items:baseline;gap:8px;min-width:0;
   padding:1px 0;border-bottom:1px solid var(--rule-soft)}
 .bolge-liste .bsat:last-child{border-bottom:0}
-.bolge-liste .bad{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  color:var(--ink-2);font-weight:600}
+.bolge-liste .bad{flex:1 1 auto;min-width:0;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2);font-weight:600}
 .bolge-liste .btl{margin-left:auto;font-weight:700;white-space:nowrap;color:var(--ink)}
 .bolge-liste .bbos{border-bottom:0}
-.harita-sar{padding:0;position:relative;flex:0 0 auto;display:flex;align-items:center;justify-content:flex-start}
+/* Harita sütunun yarısını geçmiyor: geniş ekranda zaten kendi yüksekliğine
+   sığıyor, dar ekranda ise bütün yeri alıp listeye yer bırakmıyordu. */
+.harita-sar{padding:0;position:relative;flex:0 1 auto;max-width:52%;
+  display:flex;align-items:center;justify-content:flex-start}
 /* Haritanın çizilen boyunu yükseklik sınırı belirliyor: viewBox 1,91:1
    olduğu için max-height, genişlik sınırından önce bağlanıyor ve yanlarda
    boşluk kalıyordu. Sınır açıldı (eski hâli 20vh); harita kendi sütununda
@@ -540,6 +547,8 @@ body:not(.genel-tek-ekran) .yilan{visibility:hidden}
    width:auto + max-height ile sarmalayıcı sıfıra iniyordu (döngüsel ölçüm). */
 .harita-sar svg{display:block;height:clamp(218px,32.2vh,500px);width:auto;
   max-width:min(100%,900px);margin:0}
+/* Kutu daralınca harita sola yaslı kalsın, ortaya kaçmasın. */
+#harita{preserveAspectRatio:xMinYMid meet}
 /* Harita ara ara soldan sağa parlar. Tarama SVG'nin İÇİNDE, viewBox'ı
    kaplayan bir dikdörtgen olarak duruyor — CSS ile sarmalayıcıya konunca
    haritanın iki yanındaki boş sütunu da katediyor ve "tüm genişliğe
@@ -963,7 +972,7 @@ body.acilis #spark text.tahmin:not(#suAnYazi){
     <div class="hsag">
       <div class="hrt-kol">
         <div class="harita-sar" id="haritaSar">
-          <svg id="harita" role="img" aria-label="İllere göre ciro"></svg>
+          <svg id="harita" preserveAspectRatio="xMinYMid meet" role="img" aria-label="İllere göre ciro"></svg>
           <div class="il-balon" id="ilBalon"></div>
         </div>
         <div class="bolge-liste" id="bolgeListe" aria-label="Bölgelere göre ciro"></div>
