@@ -170,13 +170,27 @@ kanal payı) bu yüzden yeniden ele alınacak — bkz. "Sıradaki adımlar".
 
 ## Harita satırının dikey dağılımı
 
+**viewBox'taki ölü şerit (düzeltildi).** Harita kutusu özgün dosyadan gelen
+`0 0 1007.478 527.323` idi, ama yolların gerçek sınırı **1007,5 × 443,5**:
+altta %16'lık boş bir şerit taşınıyordu. Harita yükseklik sınırına göre
+ölçeklendiği için o şerit doğrudan haritayı küçültüyordu — ölçülen: 900×303
+kutunun içinde harita 578×254 çiziliyor, **altta 49 px ölü alan** kalıyordu
+(kartın içindeki boşluk üstte 10, altta 59 px). Kutu yolların sınırına
+çekildi (`-1 -1 1009.5 445.5`, 1 birim pay `.il` konturu için). Sonuç:
+harita **685×301** (+%18), üst ve alt boşluk 11/11 px, satır boyu ve sayfa
+ölçeği değişmedi.
+
+
 Satırın boyunu harita belirliyor (ölçülen 303 px); dönüşüm oranı ve toplam
 kanal dağılımı ondan kısa kalıyor. Artan yer tek bir yerde toplanınca
 açıklama satırının hemen üstünde delik açılıyordu — **ölçülen 66 px (huni)
 ve 42 px (kanal)**. Boşluğu bir yere yığmak yerine içeriğe dağıtıldı:
 
-- `.huni` dikey flex + `space-between`: üç kademe sütunun tamamına yayılır
-  (ölçülen kademe üstleri 44 · 140 · 236).
+- `.huni` dikey flex + `space-between`, **çubuklar kalın**
+  (`clamp(13px,2.2vh,24px)`, ölçülen 9 → 21 px). Önce yalnız `space-between`
+  denendi: boşluk kademe aralarına dağılıp 18 px'lik açıklıklar bırakıyordu
+  ve göze batıyordu. Artan yeri aralığa değil çubuğa vermek hem huniyi
+  dolduruyor hem kademe farkını okunur kılıyor — aralık **9 px**.
 - Halka sütunun verdiği kadar büyür (`max-height` 160 → 200 px tavan,
   ölçülen 132 → 169 px), lejant hemen altında.
 - Üç sütunun da alt kenarı artık aynı hizada bitiyor (10 px).
@@ -431,6 +445,16 @@ olarak ayarlar.
 `requestAnimationFrame` arka plandaki sekmede durduğu için her akışın bir
 emniyet zamanlayıcısı vardır: süre dolduğunda son değer her hâlükârda yerine
 yazılır, ekranda eski rakam asılı kalmaz.
+
+### Açılış sayacı ilk boyamadan sonra başlar
+
+`body.acilis` sabit 2,3 sn sonra kaldırılıyor, ama **CSS animasyonları
+elemanın kendisi yaratıldığı anda başlıyor**. Sayaç çizimin başında
+kuruluyordu; ilk yükleme yavaş olduğunda (235 KB ayrıştırma + 81 il yolu +
+`ekranaSigdir`'in yerleşim döngüsü) aradaki fark pencereyi yiyor ve en geç
+başlayan animasyonlar — saha kartları 1,59 sn, huni dolguları 1,43 sn —
+bitmeden sınıf kalkabiliyordu. Sayaç artık `ekranaSigdir`'den sonraki
+rAF'ta kuruluyor: 2,3 sn her zaman animasyonların tamamını kapsıyor.
 
 ### Seyir başlıkları
 

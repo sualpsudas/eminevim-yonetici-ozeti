@@ -427,7 +427,11 @@ body.sekme-pasif .kart::after{animation-play-state:paused}
 .huni .kad .ust{display:flex;align-items:baseline;gap:8px}
 .huni .kad .ust .ad{font-size:clamp(12px,0.98vw,15px);font-weight:650;color:var(--ink)}
 .huni .kad .ust .sy{margin-left:auto;font-size:clamp(14px,1.12vw,18px);font-weight:700}
-.huni .kad .cub{position:relative;height:clamp(9px,1vh,11px);background:var(--surf-3);
+/* Çubuklar kalın: sütunun boyunu harita belirlediği için huni ondan kısa
+   kalıyor ve artan yer kademe aralarına dağılıyordu (ölçülen 18 px, göze
+   batıyordu). Boşluğu aralığa değil çubuğa vermek hem huniyi dolduruyor
+   hem de kademe farkını daha okunur kılıyor. */
+.huni .kad .cub{position:relative;height:clamp(13px,2.2vh,24px);background:var(--surf-3);
   border-radius:2px;margin-top:3px}
 .huni .kad .cub i{position:absolute;left:0;top:0;bottom:0;border-radius:2px;
   background:var(--brand);transition:width var(--ge)}
@@ -1028,7 +1032,14 @@ const MEVSIM=[0.86,0.90,1.02,1.05,1.00,1.06,0.94,0.88,1.05,1.10,1.12,1.02];
    (github.com/dnomak/svg-turkiye-haritasi). Path'ler Douglas-Peucker ile
    0,5 birim toleransla sadeleştirildi; 298 KB'lik özgün veri 54 KB'ye indi.
    Biçim: [plaka, il adı, path]. */
-const HARITA_KUTU="0 0 1007.478 527.323";
+/* viewBox, özgün dosyadan gelen kutuydu ve altta %16'lık boş bir şerit
+   taşıyordu: yolların gerçek sınırı 1007,5 x 443,5 iken kutu 527,3 yüksekti.
+   Harita yükseklik sınırına göre ölçeklendiği için o boş şerit doğrudan
+   haritayı küçültüyordu — ölçülen: 900x303'lük kutunun içinde harita
+   578x254 çiziliyor, altta 49 px ölü alan kalıyordu. Kutu yolların gerçek
+   sınırına çekildi (1 birim pay: .il konturu 0,6 birim). Aynı yükseklik
+   bütçesinde harita %19 büyüyor, sayfaya hiçbir şey eklemiyor. */
+const HARITA_KUTU="-1 -1 1009.5 445.5";
 const IL_YOL=[
 [1,"Adana","M545.4,271.8 540,275.8 535.7,282.6 531.9,290.7 512.7,300.9 512.3,302.7 513.2,311.6 511.3,314.8 509.6,315.7 503.5,313.9 492.9,312.9 488.9,316 482.7,318.5 475.4,318.7 474.3,319.9 473.7,322.4 474,326.8 473.2,332.3 469.4,336.1 467.3,336.9 470.4,342.5 474.3,342.5 476.8,343.7 478.8,346.3 478.7,349.8 476.7,353.2 479.5,358.7 482.7,358.7 486.8,361.5 486.2,365 485,366.4 485,368.9 488.7,373.6 488.3,378.4 483.6,379 477.9,381 491.8,389.5 499.5,393.1 501.7,390.8 512.9,390 513.9,382.6 515.5,380.2 524,377.7 531.1,368.2 533.1,367.9 533.4,366.2 536.6,361.3 536.6,355.7 535.8,351.7 533.8,350.7 529.4,353.4 526.2,353.2 527.6,347.3 525.9,344.7 526.5,342 530.1,337.5 532.8,325.5 538.1,316.5 545.8,316.1 548.6,315.2 551.8,307.8 551.3,301.1 553,295.4 553.5,288.9 555.7,283.3 553.1,275.7 551.2,273.9 545.4,271.8Z"],
 [2,"Adıyaman","M705.5,280.3 701.4,282 696,288.8 684.7,293.9 678.2,288.9 675.1,288.7 664.4,283.5 660.3,282.4 656.8,282.6 651.1,287.4 646.6,288.1 645.9,289.5 648.7,292.8 649.7,296.2 645.1,299.7 633.9,303.1 627.2,302.9 621.8,301.2 621.2,305.9 614.2,311.6 613.8,314.8 611.2,320.6 614.9,323.8 619.1,324.3 621,328.7 623.4,328.9 626.2,326.8 628.3,326.8 630.8,329.4 636.5,329.8 641.7,331.1 642.1,332.9 645.6,332.9 647.8,334.3 650.5,333.9 656.8,330.4 656.4,328 652.2,324.4 653.5,321.8 650.4,319.2 650.4,316.5 655.3,315.9 659.4,310.2 662.4,315.1 664.9,312.6 666.1,314.6 668.6,312.1 670,314.7 671.5,315.4 668.3,319.8 667.7,322.5 675.7,316.3 678.5,316.8 675.6,312.9 675.4,308.3 673.7,301.7 677.3,304.7 678.3,307.4 682.7,310.6 683.2,312.9 686.7,309.3 687.8,304.4 690.6,303.5 692,300.4 695.4,297.8 693.5,295.1 693.8,292.4 698.4,292.1 703,290.4 702.6,288.7 706.6,284.7 706.6,281.9 705.5,280.3Z"],
@@ -1629,10 +1640,13 @@ function ciz(neden){
     document.body.classList.remove("hazir");
     document.body.classList.add("acilis");
     clearTimeout(acilisZaman);
-    acilisZaman=setTimeout(function(){
-      document.body.classList.remove("acilis");
-      document.body.classList.add("hazir");
-    }, 2300);
+    /* Sayaç burada BAŞLAMAZ; ilk boyamadan sonra kurulur. Sebebi: CSS
+       animasyonları elemanın kendisi yaratıldığı anda başlıyor, sayaç ise
+       çizimin başında kuruluyordu. İlk yükleme yavaş olduğunda (235 KB
+       ayrıştırma + 81 il yolu + ekranaSigdir'in yerleşim döngüsü) aradaki
+       fark 2,3 sn'lik pencereyi yiyor ve en geç başlayan animasyonlar —
+       saha kartları 1,59 sn, huni dolguları 1,43 sn — daha bitmeden
+       body.acilis kalkıyordu. */
   } else if(NEDEN==="ilk"){
     document.body.classList.add("hazir");
   }
@@ -1657,7 +1671,18 @@ function ciz(neden){
   requestAnimationFrame(function(){
     kartSigdir();
     /* Kartların doğal yüksekliği kesinleştikten sonra panoyu ekrana oturt. */
-    requestAnimationFrame(ekranaSigdir);
+    requestAnimationFrame(function(){
+      ekranaSigdir();
+      /* Açılış sayacı ancak yerleşim oturduktan sonra işlemeye başlar;
+         böylece 2,3 sn her zaman animasyonların tamamını kapsar. */
+      if(document.body.classList.contains("acilis")){
+        clearTimeout(acilisZaman);
+        acilisZaman=setTimeout(function(){
+          document.body.classList.remove("acilis");
+          document.body.classList.add("hazir");
+        }, 2300);
+      }
+    });
   });
 }
 
