@@ -170,13 +170,18 @@ kanal payı) bu yüzden yeniden ele alınacak — bkz. "Sıradaki adımlar".
 
 ## Harita satırı: harita solda, bölgeler sağında
 
-Harita kendi sütununda **sola dayalı**; sağında kalan yere **bölge listesi**
-girdi (ad + dönem cirosu, ciroya göre sıralı). Harita yükseklik sınırına
+Harita kendi sütununda **sola dayalı**; sağında kalan yere **"Bölgeler"**
+başlığı ve bölge listesi girdi (ad + dönem cirosu, ciroya göre sıralı).
+Başlık "Dönüşüm oranı" ve "Toplam kanal dağılımı" ile aynı biçimde ve aynı
+hizada (ölçülen fark 0 px). Harita yükseklik sınırına
 göre ölçeklendiği için yanında her zaman epey boşluk kalıyordu.
 
 - Kapsam neyse onun bölgeleri: kökte 22 bölgenin tamamı, bir saha kartının
   üstüne gelinince yalnız o sahanın bölgeleri — `cizPay` ile aynı mantık,
   `S.onizleme` izleniyor (ölçülen: hover'da 6 satır, bırakınca 22).
+- **Satır boyu sıkı (20 px):** 11 satır + başlık haritanın boyuna sığmalı.
+  Gevşek bırakıldığında harita satırı 323 → **369 px**'e çıkıyor ve tek-ekran
+  ölçeği bütün panoyu küçültüyordu (0,864 → 0,824).
 - Sütun sayısı satır sayısına göre: 11 satırdan uzun liste ikiye bölünüyor
   (`BOLGE_SATIR`). Ölçülen: 1920×940'ta ve 1280×720'de 22 satır, 2 sütun,
   taşma yok.

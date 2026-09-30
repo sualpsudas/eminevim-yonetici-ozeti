@@ -518,17 +518,26 @@ body:not(.genel-tek-ekran) .yilan{visibility:hidden}
    max-content denendi: dar ekranda ızgara kutusunu dinlemeyip taşıyor ve
    yanındaki "Dönüşüm oranı" panelinin üstüne biniyordu — ölçülen 1600×900'de
    183 px, 1366×768'de 114 px. Ad sığmazsa üç noktayla kısalır. */
+/* Başlık satırın tepesinde, "Dönüşüm oranı" ve "Toplam kanal dağılımı"
+   başlıklarıyla aynı biçim ve aynı hizada; liste altında kalan yerde
+   dikeyde ortalanıyor. */
+.bolge-kol{flex:1 1 auto;min-width:0;display:flex;flex-direction:column}
+.bolge-kol h3{font-size:clamp(13px,1vw,16px);font-weight:650;color:var(--mut);
+  margin-bottom:6px}
 .bolge-liste{flex:1 1 auto;min-width:0;max-width:100%;display:grid;
   align-content:center;
   grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);
-  gap:2px clamp(12px,1.2vw,24px);font-size:clamp(11px,0.92vw,15px)}
+  gap:0 clamp(12px,1.2vw,24px);font-size:clamp(11px,0.9vw,15px);line-height:1.32}
+/* Satır boyu sıkı: 11 satır + "Bölgeler" başlığı haritanın boyuna sığmalı,
+   yoksa harita satırı uzuyor ve tek-ekran ölçeği bütün panoyu küçültüyor
+   (ölçülen: gevşek hâlde satır 369 px, ölçek 0,824). */
 .bolge-liste .bsat{display:flex;align-items:baseline;gap:8px;min-width:0;
-  padding:1px 0;border-bottom:1px solid var(--rule-soft)}
+  padding:0;border-bottom:1px solid var(--rule-soft)}
 .bolge-liste .bsat:last-child{border-bottom:0}
 .bolge-liste .bad{flex:1 1 auto;min-width:0;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2);font-weight:600}
 .bolge-liste .btl{margin-left:auto;font-weight:700;white-space:nowrap;color:var(--ink);
-  padding:1px 7px;border-radius:3px;transition:background .45s cubic-bezier(.22,.61,.36,1)}
+  padding:0 7px;border-radius:3px;transition:background .45s cubic-bezier(.22,.61,.36,1)}
 .bolge-liste .bbos{border-bottom:0}
 /* Harita sütunun yarısını geçmiyor: geniş ekranda zaten kendi yüksekliğine
    sığıyor, dar ekranda ise bütün yeri alıp listeye yer bırakmıyordu. */
@@ -976,7 +985,10 @@ body.acilis #spark text.tahmin:not(#suAnYazi){
           <svg id="harita" preserveAspectRatio="xMinYMid meet" role="img" aria-label="İllere göre ciro"></svg>
           <div class="il-balon" id="ilBalon"></div>
         </div>
-        <div class="bolge-liste" id="bolgeListe" aria-label="Bölgelere göre ciro"></div>
+        <div class="bolge-kol">
+          <h3>Bölgeler</h3>
+          <div class="bolge-liste" id="bolgeListe" aria-label="Bölgelere göre ciro"></div>
+        </div>
       </div>
       <div class="hunipan">
         <h3>Dönüşüm oranı</h3>
