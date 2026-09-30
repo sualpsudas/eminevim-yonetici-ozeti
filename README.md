@@ -632,6 +632,21 @@ kartları dönmez**, kartlar yerinde kalır.
    ölçü bakışta ayrılsın diye. `kayitDilim` ve `cizKayit` artık alan
    parametresi alıyor (`kyt` / `rnd`), seri yapıları aynı.
 
+**Elle çevirme.** Dönen iki yüzün sağ üstünde birer tuş var (`.yuz-tus`,
+sönük durur, üstüne gelince belirir, gösteri açıkken gizlenir). Aynı
+işlevleri çağırıyorlar (`kpiYuzCevir` / `sagYuzCevir`), yani elle ve
+kendiliğinden dönüş tek yoldan geçiyor.
+
+Yüz bir **durum** olarak tutuluyor (`S.kpiYuz`, `S.sagSeyir`), anlık görüntü
+alıp geri yazarak değil: böylece yüz açıkken yapılan yeniden çizim onu
+bozmuyor (ölçülen: adet yüzündeyken saha kartına gelince kutular o sahanın
+adetlerine dönüyor — Bölge 6 · Şube 55 · Personel 715 · İl 1). Dönem,
+kırılım veya kanal değişince yüz başa dönüyor.
+
+**Tuzak:** dört kutunun sonuncusunu (randevu) `cizRandevu` yazıyor, bu
+yüzden adet yüzü `cizCiro`'nun değil **`cizRandevu`'nun** sonunda
+basılmalı; önce basılınca son kutu üstüne yazılıyordu.
+
 Sıra 20 sn'de bir sırayla biri, yani her etki **40 sn'de bir**. Aralar
 bilerek uzun: ekrana sürekli bakılmıyor, ara ara göz atılıyor. Ölçülen tur:
 21 sn adetler → 27 sn geri · 41 sn randevu → 50 sn geri, saha kartları hiç

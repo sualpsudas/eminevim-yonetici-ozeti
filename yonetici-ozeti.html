@@ -151,7 +151,7 @@ body.sekme-pasif .big{animation-play-state:paused}
   background:linear-gradient(to bottom,transparent 0%,var(--fistik) 16%,
     var(--brand) 50%,var(--fistik) 84%,transparent 100%) right center/2px 86% no-repeat;
   display:flex;flex-direction:column;justify-content:center}
-.hero-r{padding:clamp(4px,0.7vh,8px) 20px;background:var(--surf-2);display:flex;flex-direction:column}
+.hero-r{position:relative;padding:clamp(4px,0.7vh,8px) 20px;background:var(--surf-2);display:flex;flex-direction:column}
 .lbl{font-size:var(--f4);color:var(--mut);font-weight:600}
 /* Üst satırda artık yalnız "Gerçekleşen" etiketi var; kapsam kutusu akıştan
    çıkarıldı. Eskiden ikisi aynı satırdaydı ve satırın boyunu kapsam kutusu
@@ -263,7 +263,7 @@ body.sekme-pasif #hgBox .v{animation-play-state:paused}
    dönemin iki farklı ölçüsü yan yana durunca "tutar mı arttı, adet mi"
    sorusu doğrudan okunuyor. */
 .spark{display:grid;grid-template-columns:1fr 1fr;gap:0 clamp(14px,1.4vw,26px)}
-.spark .s-yari{min-width:0}
+.spark .s-yari{min-width:0;position:relative}
 .spark .s-yari + .s-yari{border-left:1px solid var(--rule);padding-left:clamp(14px,1.4vw,26px)}
 @media (max-width:1000px){
   .spark{grid-template-columns:1fr}
@@ -709,6 +709,17 @@ body.sekme-pasif #harita .hrt-parla{animation-play-state:paused}
 .pair > div.cevir{animation:kutuCevir var(--cs,.62s) cubic-bezier(.45,0,.25,1)}
 /* Seyrin sağ yarısı da aynı biçimde dönüyor: kayıt sayısı ↔ randevu sayısı. */
 .spark{perspective:1100px}
+/* Dönen iki yüzün sağ üstünde elle çevirme tuşu. Bekleme modu kendiliğinden
+   çeviriyor; bu tuş istenildiği anda öbür yüze geçmeyi sağlıyor. Sönük
+   duruyor, üstüne gelince beliriyor — sunumda göze batmasın. */
+.yuz-tus{position:absolute;top:5px;right:7px;z-index:4;appearance:none;
+  width:25px;height:25px;border-radius:50%;cursor:pointer;line-height:1;
+  border:1px solid var(--rule);background:#fff;color:var(--mut);
+  font-size:14px;display:flex;align-items:center;justify-content:center;
+  opacity:.4;transition:opacity .15s,background .15s,color .15s}
+.yuz-tus:hover{opacity:1;background:var(--brand-soft);color:var(--brand);
+  border-color:var(--brand)}
+body.gosteri-acik .yuz-tus{display:none}
 .spark .s-yari.cevir{animation:kutuCevir var(--cs,.66s) cubic-bezier(.45,0,.25,1)}
 
 /* ---- geçişler ----
@@ -942,6 +953,9 @@ body.acilis #spark text.tahmin:not(#suAnYazi){
         </div>
       </div>
       <div class="hero-r">
+        <button type="button" class="yuz-tus" id="kpiTus"
+                title="KPI değerleri ↔ organizasyon adetleri"
+                aria-label="Kutuları çevir">&#10227;</button>
         <div class="pair">
           <div id="hgBox">
             <div class="k" id="hgK">Hedefe göre</div>
@@ -972,6 +986,9 @@ body.acilis #spark text.tahmin:not(#suAnYazi){
         <svg id="spark" viewBox="0 0 1000 200" role="img" aria-label="Dönem içi ciro seyri"></svg>
       </div>
       <div class="s-yari">
+        <button type="button" class="yuz-tus" id="sagTus"
+                title="Kayıt sayısı ↔ randevu sayısı"
+                aria-label="Grafiği çevir">&#10227;</button>
         <div class="s-head"><h3 id="kytBas">Kayıt sayısı</h3><span class="s-don" id="kytDon"></span></div>
         <svg id="kytSpark" viewBox="0 0 1000 200" role="img" aria-label="Dönem içi kayıt sayısı"></svg>
       </div>
@@ -1547,7 +1564,7 @@ function degisimSinif(v){return v===null?"":(v>=0?"ok":"no");}
 /* ===== DURUM ===== */
 const SEVIYELER=["genel","saha","bolge","sube","personel"];
 const SEV_AD={saha:{c:"Saha",t:"saha"},bolge:{c:"Bölge",t:"bölge"},sube:{c:"Şube",t:"şube"},personel:{c:"Personel",t:"personel"}};
-const S={ sagSeyir:"kyt",kanal:"tum",per:"gun",ofs:0,seviye:"genel",onizleme:null,
+const S={ sagSeyir:"kyt",kpiYuz:"kpi",kanal:"tum",per:"gun",ofs:0,seviye:"genel",onizleme:null,
          filtre:{saha:null,bolge:null,sube:null},
          sirala:"donemCiro",yon:-1,ara:"",limit:60,
          listeSirala:"ciro",listeYon:-1,listeAra:"",listeLimit:40};
@@ -2333,6 +2350,12 @@ function cizRandevu(kap,k,per,o){
   sayiAk($("rDon"), o.randevu, AD, "ad");
   $("rDonD").textContent = fark===null ? per.ad.toLocaleLowerCase("tr")+" toplamı"
     : (fark>=0?"▲ ":"▼ ")+PCT(Math.abs(fark))+" "+kucult(oncekiGore[per.tip]);
+  /* Kutuların hangi yüzde olduğu S.kpiYuz'da: KPI değerleri mi, organizasyon
+     adetleri mi. Değerler her çizimde yazılıyor; adet yüzündeysek üstüne
+     adetler basılıyor. BURADA yazılmalı, cizCiro'nun sonunda değil: dört
+     kutunun sonuncusunu (randevu) cizRandevu yazıyor, önce basılsa onun
+     üstüne biniyordu. */
+  if(S.kpiYuz==="adet") adetleriYaz(adetler(S.onizleme||KOK));
 }
 
 /* Önceki dönemin aynı kesiti (randevu karşılaştırması için) */
@@ -3110,9 +3133,9 @@ function beklemeTemizle(){ BEKLE.zaman.forEach(clearTimeout); BEKLE.zaman=[]; }
 /* Yeniden çizim her şeyi baştan yazıyor; yarıda kalan geri yazmalar iptal
    edilir ve durum başlangıç hâline döner. */
 function beklemeSifirla(){
-  beklemeTemizle();
+  beklemeTemizle(); yariTemizle();
   BEKLE.kpiKar=null;
-  S.sagSeyir="kyt";
+  S.sagSeyir="kyt"; S.kpiYuz="kpi";
   document.querySelectorAll("#sparkSatir .s-yari.cevir").forEach(function(x){
     x.classList.remove("cevir"); });
 }
@@ -3126,34 +3149,42 @@ function beklemeTik(){
   beklemeSayac++;
   if(beklemeSayac%2===1) beklemeKpi(); else beklemeSagSeyir();
 }
-/* KPI kutuları organizasyonun adetlerine döner, sonra değerlere geri. */
-function beklemeKpi(){
+/* Kutuları öbür yüze çevirir: KPI değerleri ↔ organizasyon adetleri.
+   Hem sağ üstteki tuş hem bekleme modu bunu çağırıyor; yüz S.kpiYuz'da
+   durduğu için yeniden çizim onu bozmuyor. */
+function kpiYuzCevir(){
+  S.kpiYuz = S.kpiYuz==="adet" ? "kpi" : "adet";
   akislariBitir();
-  BEKLE.kpiKar=gosteriAnlik();
-  gosteriAdetCevir(KOK);
-  beklemeBekle(BEKLE_ADET, function(){
-    const kar=BEKLE.kpiKar; BEKLE.kpiKar=null;
-    if(!kar) return;
-    if(SAKIN.matches) kar.forEach(gosteriGeriYaz);
-    else onizlemeCevir(function(){ kar.forEach(gosteriGeriYaz); });
-    beklemeTemizle();
-  });
+  const yaz=function(){
+    const per=donem(), kap=kapsam(), k=S.kanal, o=olcum(kap,k,per);
+    cizCiro(kap,k,per,o); cizRandevu(kap,k,per,o);
+  };
+  if(SAKIN.matches) yaz(); else onizlemeCevir(yaz);
+}
+function beklemeKpi(){
+  kpiYuzCevir();
+  beklemeBekle(BEKLE_ADET, function(){ kpiYuzCevir(); beklemeTemizle(); });
 }
 /* Seyrin sağ yarısı randevu sayısına döner, sonra kayda geri. */
+/* Dönüş kendi zamanlayıcısını kullanıyor: elle çevirme bekleme modunun
+   sırasını kilitlemesin. */
+let yariZaman=[];
+function yariTemizle(){ yariZaman.forEach(clearTimeout); yariZaman=[]; }
 function seyirYariCevir(sonra){
   const yari=document.querySelector("#sparkSatir .s-yari + .s-yari");
   if(!yari){ sonra(); return; }
+  yariTemizle();
   yari.classList.remove("cevir"); void yari.offsetWidth; yari.classList.add("cevir");
-  beklemeBekle(300, sonra);
-  beklemeBekle(700, function(){ yari.classList.remove("cevir"); });
+  yariZaman.push(setTimeout(sonra,300));
+  yariZaman.push(setTimeout(function(){ yari.classList.remove("cevir"); },700));
+}
+function sagYuzCevir(){
+  S.sagSeyir = S.sagSeyir==="rnd" ? "kyt" : "rnd";
+  if(SAKIN.matches) sagSeyirCiz(); else seyirYariCevir(sagSeyirCiz);
 }
 function beklemeSagSeyir(){
-  seyirYariCevir(function(){ S.sagSeyir="rnd"; sagSeyirCiz(); });
-  beklemeBekle(BEKLE_RND, function(){
-    beklemeTemizle();
-    seyirYariCevir(function(){ S.sagSeyir="kyt"; sagSeyirCiz(); });
-    beklemeBekle(900, beklemeTemizle);
-  });
+  sagYuzCevir();
+  beklemeBekle(BEKLE_RND, function(){ sagYuzCevir(); beklemeTemizle(); });
 }
 setInterval(beklemeTik, BEKLE_ARA);
 
@@ -3869,6 +3900,10 @@ document.querySelectorAll(".tabs button").forEach(function(b){
   b.onclick=function(){S.per=b.dataset.p;S.ofs=0;S.limit=60;S.listeLimit=40;ciz("donem");};
 });
 $("gosteri").onclick=function(){ GOSTERI.acik ? gosteriDurdur() : gosteriBaslat(); };
+/* Elle çevirme tuşları: bekleme modunun yaptığı dönüşü istenildiği anda
+   yapar. Bekleme sayacına dokunmuyor, bir sonraki tur normal işliyor. */
+$("kpiTus").onclick=function(){ if(!GOSTERI.acik) kpiYuzCevir(); };
+$("sagTus").onclick=function(){ if(!GOSTERI.acik) sagYuzCevir(); };
 $("prev").onclick=function(){S.ofs--;ciz("donem");};
 $("next").onclick=function(){if(ileriVar()){S.ofs++;ciz("donem");}};
 $("altAra").oninput=function(){S.listeAra=this.value;S.listeLimit=40;ciz("arama");};
