@@ -175,8 +175,18 @@ body.hazir:not(.gosteri-acik) .veri .dot{animation:veriIsigi 5.5s ease-out infin
    aynı ölçeği paylaşır — hafta içi + hafta sonu, hafta çubuğuyla hizalı. */
 /* Üç satırlık yer her dönemde ayrılır: Hafta'da üç çubuk çıkınca kart
    büyüyordu, dönem değiştikçe boy oynamasın. */
+/* Hafta'da çubuk üçe çıkıyor (hafta · hafta içi · hafta sonu); üç satırlık
+   yer HER dönemde ayrılır, yoksa Hafta'ya geçince ciro kartı uzuyor ve
+   pano tek-ekran ölçeklemesi yüzünden topyekûn küçülüyor — ölçülen: hero
+   295 → 326 px, sayfa ölçeği 0,896 → 0,867, yani bütün ekran dönem
+   değiştikçe boy değiştiriyordu.
+
+   Ayrılan yer tahmin değil hesap: üç satırın ikisi etiket boyunda (18 px),
+   satır araları 2x5 px, ilki ana çubuk + uç etiketi. Ana çubuk yükseklikle
+   birlikte değiştiği için aynı clamp buraya da giriyor:
+   65 = 18 + 18 + 10 + 19 (uç etiketi). */
 .btablo{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;align-items:center;
-  min-height:clamp(46px,6.2vh,60px);align-content:center}
+  min-height:calc(65px + clamp(18px,2.6vh,24px));align-content:center}
 .btablo.tekli{grid-template-columns:1fr}
 .btablo .bet{font-size:var(--f4);color:var(--mut);font-weight:600;white-space:nowrap}
 .btablo .bet.ana{color:var(--ink);font-weight:700}

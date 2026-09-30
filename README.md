@@ -446,6 +446,32 @@ olarak ayarlar.
 emniyet zamanlayıcısı vardır: süre dolduğunda son değer her hâlükârda yerine
 yazılır, ekranda eski rakam asılı kalmaz.
 
+### Dönemler arası boy sabitliği
+
+Tek-ekran ölçeklemesi geldikten sonra bu kural daha da kritik: panonun doğal
+boyu bir dönemde uzarsa **bütün ekran** o dönemde küçülüyor. Ölçülen kaçak:
+Hafta'da ciro çubuğu üçe çıkıyor (hafta · hafta içi · hafta sonu) ve
+`.btablo` 58 px yerine 89 px oluyordu — hero 295 → 326, `.gdz` 881 → 913,
+sayfa ölçeği **0,896 → 0,867**. Yani Hafta'ya basınca bütün pano %3
+küçülüyordu.
+
+Üç satırlık yer artık her dönemde ayrılıyor ve ayrılan yer tahmin değil
+hesap: `calc(65px + clamp(18px,2.6vh,24px))` — 65 = iki etiket satırı
+(2×18) + iki satır arası (2×5) + uç etiketi (19); son terim ana çubuğun
+kendi clamp'i, yükseklikle birlikte değişiyor.
+
+Ölçülen sonuç — dört dönem, üç ekran boyu, hepsi birebir aynı:
+
+| ekran | ölçek | `.btablo` | hero | saha kartı (ekranda) |
+|---|---|---|---|---|
+| 1920×940 | 0,867 | 89 | 326 | 190 px |
+| 1280×720 | 0,751 | 84 | 298 | 137 px |
+| 1920×1080 | 0,969 | 89 | 330 | 223 px |
+
+Bedeli: Gün/Ay/Yıl'da 31 px boş yer ayrıldığı için ölçek 0,896'dan
+0,867'ye iniyor. Alternatifi yok — Hafta'nın üç çubuğu gerçekten o yeri
+istiyor; boy sabitliği istendiği için herkes Hafta'nın boyunda.
+
 ### Gün seyrinin viewBox'ı (düzeltildi)
 
 `cizSpark` — Gün görünümünün saatlik ciro grafiği — **viewBox'ı hiç
