@@ -448,6 +448,19 @@ yazılır, ekranda eski rakam asılı kalmaz.
 
 ### Hero'nun üst bandı: etiket, rakam ve kapsam kutusu
 
+**Puntolar ve aralıklar (30 Eylül, son tur).** Gerçekleşen tutar, günlük
+hedef ve çubuk tek bir öbek gibi okunsun diye aralar kısıldı, kaybolan
+hiyerarşi punto ile geri verildi: `.big` 38 → **48 px**, `.sub` 17 →
+**21 px**, aralar rakam–hedef **1 px**, hedef–çubuk **4 px**. Sağdaki ilk
+KPI'nın etiketi "Hedefe göre" yerine **"H/G"** (alt satır zaten "günlük
+hedefe göre" diye açıyor) ve değeri bir kademe büyük (**40 px**, diğer üç
+kutu 32 px) — dört kutunun başı olduğu için. Yıl'da o kutu "Aylık
+ortalama" tutarını gösteriyor; en uzun hâli 239 px, kutu 314 px, taşma yok.
+
+Bedeli: hero 317 → 328 px, sayfa ölçeği 0,876 → 0,864.
+
+
+
 Kapsam kutusu ("Türkiye Geneli" / saha adı + teslimat) **akıştan çıkarıldı**
 (`position:absolute`). Eskiden "Gerçekleşen" etiketiyle aynı satırdaydı ve
 satırın boyunu o belirlediği için etiket ile büyük rakam arasında 45 px'lik
@@ -462,8 +475,12 @@ kartın içinde ortalanıyor, üst satırın nereye düştüğü kartın boyuna 
 Kutu mutlak konumlu olduğu için yazmak yerleşimi değiştirmiyor; ölçüm
 `ekranaSigdir` içinde, pano son genişliğine geldikten sonra yapılıyor.
 
-Ölçülen: `.kapsamEt` ile `#hgBox .k` aynı piksele oturuyor (fark 0) — dört
-dönemde, saha önizlemesinde ve 1280×720'de de. KPI ızgarası dikeyde
+Hizalanan **kutu değil metin**: `.k`'nın 2,7em'lik yer tutucusu var ve yazı
+onun dibine yaslı (`align-items:flex-end`), o yüzden kutu tepelerini
+eşitlemek gözle hizalı görünmüyordu. `kapsamHizala()` iki yazının kendi
+kutusunu `Range` ile ölçüp farkı kapatıyor. Ölçülen: "Türkiye Geneli" ile
+"H/G" yazıları aynı piksele oturuyor (fark 0) — dört dönemde, saha
+önizlemesinde ve 1280×720'de de. KPI ızgarası dikeyde
 ortalandı (üst/alt boşluk eşit: 1920×940'ta 29/29, 1280×720'de 45/45).
 
 ### Dönemler arası boy sabitliği
@@ -556,37 +573,40 @@ Açılış bittikten sonra (`body.hazir`) ve gösteri kapalıyken çalışan sü
 hareketler. Hepsi sekme arka plana geçince duruyor (`body.sekme-pasif`) ve
 `prefers-reduced-motion` altında kapalı.
 
-- **Panoda dolaşan ışık ("yılan").** Yedi bloğun kenarlarında dolaşan tek
-  bir ışık. Sıra bir tur: **ciro kartı (sol üst)** → dört saha kartı
-  yukarıdan aşağı → harita → seyir → başa. Her blokta ışık kendi kenarında
-  sol üst köşeden başlayıp saat yönünde tam tur atıyor.
+- **Kartların etrafında dolaşan ışın.** Panodaki her blok (ciro kartı ·
+  dört saha kartı · harita · seyir) **kendi** ışınını taşıyor ve kendi
+  kenarında, kendi içinde kesintisiz dolanıyor. Bloklar arasında hiçbir şey
+  çizilmiyor ve hiçbir sıra yok. Ara aşamalar: önce dört kartı tek şeritle
+  bağlayan bir zikzaktı (kartlar bitişikmiş gibi duruyordu), sonra tek ışık
+  bloktan bloğa dolaşıyordu (yine bir bağ hissi veriyordu).
 
-  **Bloklar arasında hiçbir şey çizilmiyor.** İlk hâli dört kartı tek
-  kesintisiz şeritle bağlıyordu ve kartlar birbirine bitişikmiş gibi
-  duruyordu; ışık artık bir bloğu bitirince sönüyor, ~0,13 sn sonra
-  sonraki bloğun sol üst köşesinde beliriyor.
+  Renk açık yeşil (`#D8F0A6`), kalınlık 2,8, çevresinde ışıma. Hız bütün
+  bloklarda aynı (`ISIN_HIZ` 105 px/sn): süre çevreye göre hesaplanıyor, yani
+  büyük blokta ışın hızlanmıyor — ölçülen: saha kartı 9,7 sn/tur, ciro kartı
+  42 sn/tur. Uzunluk 190 px. Başlangıç fazları dağıtık, hepsi aynı köşede
+  olmuyor.
 
-  Her blok kendi `<path>`'i — SVG'de kesik deseni her alt yolda baştan
-  başladığı için tek path ile yapılamıyordu. Zamanlama tek bir periyoda
-  (`YILAN_TUR`, 12 sn) oturuyor ve her bloğun `@keyframes`'i `yilanKur()`
-  içinde üretilip `#yilanStil`e yazılıyor; hepsi aynı süreyle döndüğü için
-  sıra hiç kaymıyor. Hız sabit: pay, bloğun çevresinin toplama oranı.
-  Ölçülen tur: ciro %0–23,6 · kartlar %24,8–50,1 · harita %51,2–75 ·
-  seyir %76–98,9.
+  Kapalı yolda deseni sürekli kılan şart: kesik + boşluk toplamı yolun
+  uzunluğuna eşit olmalı (`seg + bos = uz`); yoksa tur başında kısa bir
+  kararma oluyor.
 
   Ölçüler `getBoundingClientRect` ile alınıp **ölçeğe bölünüyor** (pano
   `transform:scale()` taşıyor). İki tuzak: `:not(body.hazir) .yilan`
   yazılırsa `.gdz` de body olmadığı için kural her zaman tutuyor —
-  olumsuzlama `body:not(.hazir)` olmalı; ve yılan yalnız Genel'de
-  gösterilmeli, diğer kırılımlarda `.gdz` sıfır boya inip yollar tepeye
-  yassılıyor.
+  olumsuzlama `body:not(.hazir)` olmalı; ve ışın yalnız Genel'de
+  gösterilmeli, diğer kırılımlarda `.gdz` sıfır boya iniyor.
 
-- **Gerçekleşen ciro rakamı** yavaşça yanıp söner (`ciroNabiz`, 3,6 sn).
-  Durum rengi korunsun diye opaklık değil `brightness` oynatılıyor.
-- **Harita** 9,5 sn'de bir soldan sağa parlar (`haritaParla`). Zemin açık
-  olduğu için tarama orada görünmüyor, koyu yeşil illerde dalga gibi
-  geçiyor. Katman `pointer-events:none` ve balonun altında (z-index 2 < 5),
-  hover etkilenmiyor.
+- **Gerçekleşen ciro rakamı** yanıp söner (`ciroNabiz`, 2,8 sn). Durum
+  rengi korunsun diye opaklık değil `brightness` (1 → 1,85) oynatılıyor,
+  yanına yumuşak bir `drop-shadow` ışıması eklendi — ekranın odak noktası
+  belirgin olsun diye.
+- **Harita** 9,5 sn'de bir soldan sağa parlar (`haritaParla`). Tarama
+  **SVG'nin içinde**, viewBox'ı kaplayan bir dikdörtgen: CSS ile
+  sarmalayıcıya konunca haritanın iki yanındaki boş sütunu da katediyor ve
+  "tüm genişliğe gidiyor" gibi duruyordu. viewBox yolların gerçek sınırına
+  çekilmiş olduğu için içerideki dikdörtgen tam haritanın eni kadar
+  (ölçülen 592 px; sarmalayıcı 777 px). `pointer-events:none`, hover ve
+  balon etkilenmiyor.
 - **Parlama yalnız haritada.** Veri damgasındaki ışık halkası
   (`veriIsigi`) ve hedef çubuğundaki tarama (`hedefParla`) kaldırıldı;
   ekranda aynı anda birden çok parıltı olması dikkati dağıtıyordu.
