@@ -141,10 +141,14 @@ body.hazir:not(.gosteri-acik) .veri .dot{animation:veriIsigi 5.5s ease-out infin
    yeşilinden fıstığa giden, uçlarda sönen ince bir şerit. Altın bilerek
    kullanılmadı — bu ekranda altın "hedef" demek, kozmetik bir çizgide o
    anlamı taşımamalı. */
+/* İçerik yukarı yaslı: "Gerçekleşen" etiketi ile büyük rakam arasındaki
+   boşluğu kapatmak için rakam yukarı çekiliyor (aşağıdaki .big eksi üst
+   boşluğu); ortalama açık kalsaydı kazanılan yerin yarısı etiketi aşağı
+   iterek geri alınırdı. */
 .hero-l{padding:clamp(4px,0.7vh,8px) 20px;border-right:0;
   background:linear-gradient(to bottom,transparent 0%,var(--fistik) 16%,
     var(--brand) 50%,var(--fistik) 84%,transparent 100%) right center/2px 86% no-repeat;
-  display:flex;flex-direction:column;justify-content:center}
+  display:flex;flex-direction:column;justify-content:flex-start}
 .hero-r{padding:clamp(4px,0.7vh,8px) 20px;background:var(--surf-2);display:flex;flex-direction:column}
 .lbl{font-size:var(--f4);color:var(--mut);font-weight:600}
 .hl-ust{display:flex;align-items:flex-start;gap:12px}
@@ -155,7 +159,14 @@ body.hazir:not(.gosteri-acik) .veri .dot{animation:veriIsigi 5.5s ease-out infin
   color:var(--brand);white-space:nowrap;line-height:1.1;letter-spacing:-.01em}
 .tesEt{display:block;margin-top:3px;font-size:var(--f3);font-weight:600;
   color:var(--mut);white-space:nowrap}
-.big{font-size:clamp(30px,3.8vw,38px);font-weight:700;letter-spacing:-.02em;line-height:1.05;margin:4px 0 2px}
+/* Üstteki satırın boyunu sağdaki kapsam kutusu ("Türkiye Geneli" +
+   teslimat) belirliyor; "Gerçekleşen" etiketi o satırın tepesinde kalınca
+   etiket ile rakam arasında 45 px'lik bir uçurum oluşuyordu. Rakam yukarı
+   çekilir: kapsam kutusu sağda, rakam solda olduğu için çakışmıyorlar,
+   yalnız aynı yükseklik bandını paylaşıyorlar. Altındaki her şey (günlük
+   hedef, çubuk, gün sonu tahmini) onunla birlikte yukarı geliyor. */
+.big{font-size:clamp(30px,3.8vw,38px);font-weight:700;letter-spacing:-.02em;line-height:1.05;
+  margin:-26px 0 2px}
 .sub{font-size:clamp(14px,1.05vw,17px);color:var(--ink-2)}
 .sub b{font-size:1.06em}
 .bullet{margin:clamp(5px,0.8vh,9px) 0 0}
@@ -202,8 +213,10 @@ body.hazir:not(.gosteri-acik) .bullet .track::after{
 /* Hedef artık yatay bir çizgi değil, kutunun dik sağ kenarı */
 .blg i.dik{width:3px;height:12px;border-radius:1px}
 
+/* Sağdaki KPI bloğu da yukarı yaslı: solda rakam yukarı çekilince iki kart
+   arasındaki denge bozulmasın. Eskiden space-evenly ile ortalanıyordu. */
 .pair{display:grid;grid-template-columns:1fr 1fr;gap:clamp(4px,1vh,10px) 16px;
-  flex:1 1 auto;align-content:space-evenly;justify-items:center;text-align:center}
+  flex:1 1 auto;align-content:start;justify-items:center;text-align:center}
 .pair > div{display:flex;flex-direction:column;justify-content:center;min-width:0}
 .pair > div[hidden]{display:none}   /* display:flex hidden özniteliğini ezmesin */
 /* Başlık ya da alt satır dar ekranda iki satıra düştüğünde KPI'lar kayıyordu;
@@ -841,11 +854,11 @@ body.acilis #spark text:not(#suAnYazi){animation:yavasBelir .45s .5s backwards}
     <div class="spark" id="sparkSatir">
       <div class="s-yari">
         <div class="s-head"><h3>Ciro</h3><span class="s-don" id="sparkDon"></span></div>
-        <svg id="spark" viewBox="0 0 1000 120" role="img" aria-label="Dönem içi ciro seyri"></svg>
+        <svg id="spark" viewBox="0 0 1000 200" role="img" aria-label="Dönem içi ciro seyri"></svg>
       </div>
       <div class="s-yari">
         <div class="s-head"><h3>Kayıt sayısı</h3><span class="s-don" id="kytDon"></span></div>
-        <svg id="kytSpark" viewBox="0 0 1000 120" role="img" aria-label="Dönem içi kayıt sayısı"></svg>
+        <svg id="kytSpark" viewBox="0 0 1000 200" role="img" aria-label="Dönem içi kayıt sayısı"></svg>
       </div>
     </div>
   </section>
@@ -2151,6 +2164,14 @@ function cizSpark(kap,k,per){
        String(n.saat).padStart(2,"0")+':00</text>';
   });
 
+  /* viewBox burada kurulmalı: HTML'de 0 0 1000 120 yazıyordu, SEYIR.H ise
+     200. Gün görünümü ilk yüklemede o eski kutuyla çiziliyordu, yani taban
+     çizgisi (y=170), saat etiketleri (y=194) ve tutar etiketlerinin altı
+     kutunun dışında kalıp görünmüyordu. Hafta'ya basınca cizGrafikHafta
+     kutuyu 200'e çekiyor, Gün'e dönünce grafik "kendiliğinden düzeliyordu"
+     — açılış animasyonuyla ilgisi yoktu. Kayıt grafiği (cizKayit) kutusunu
+     zaten kendi kuruyor. */
+  $("spark").setAttribute("viewBox","0 0 "+W2+" "+H);
   $("spark").innerHTML=g;
 
 }

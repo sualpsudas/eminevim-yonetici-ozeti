@@ -446,6 +446,39 @@ olarak ayarlar.
 emniyet zamanlayıcısı vardır: süre dolduğunda son değer her hâlükârda yerine
 yazılır, ekranda eski rakam asılı kalmaz.
 
+### Gün seyrinin viewBox'ı (düzeltildi)
+
+`cizSpark` — Gün görünümünün saatlik ciro grafiği — **viewBox'ı hiç
+kurmuyordu**. HTML'de `0 0 1000 120` yazıyordu, `SEYIR.H` ise 200'e
+çıkarılmıştı. İlk yüklemede grafik eski kutuyla çiziliyor, y=120'nin altında
+kalan her şey kutunun dışında kalıyordu: taban çizgisi (y=170), saat
+etiketleri (y=194) ve tutar etiketlerinin altı. Ekran görüntüsünde tam
+olarak bu görünüyor — ciro grafiğinde saat etiketleri yok, soldaki iki tutar
+yarıdan kesik; kayıt grafiğinde ikisi de yerinde (`cizKayit` kutusunu kendi
+kuruyor).
+
+Hafta'ya basınca `cizGrafikHafta` kutuyu 200'e çekiyor ve Gün'e dönünce
+grafik "kendiliğinden düzeliyordu". **Açılış animasyonuyla ilgisi yoktu.**
+`cizSpark` artık kutusunu kendi kuruyor; HTML'deki sabit değerler de 200'e
+çekildi.
+
+### Hero: etiket ile rakam arasındaki uçurum
+
+Üstteki satırın boyunu sağdaki kapsam kutusu belirliyor ("Türkiye Geneli" +
+teslimat, 63 px). "Gerçekleşen" etiketi o satırın tepesinde kalınca etiket
+ile büyük rakam arasında **45 px** boşluk oluşuyordu — solda kocaman bir
+delik, çünkü kapsam kutusu sağda.
+
+Rakam eksi üst boşlukla yukarı çekildi (`.big{margin-top:-26px}`) ve
+`.hero-l` ortalamadan yukarı yaslamaya geçti (ortalama kalsaydı kazanılan
+yerin yarısı etiketi aşağı iterek geri alınırdı). Sağdaki KPI bloğu da aynı
+şekilde yukarı yaslandı (`.pair{align-content:start}`).
+
+Ölçülen: etiket–rakam arası **45 → 15 px**, hero 324 → **294 px**, dört
+dönemde de aynı. Kapsam kutusu sağda (x≥759), rakam metni en geniş hâlinde
+302 px'te bitiyor — çakışma yok, 1280×720'de de yok. Hero kısaldığı için
+sayfa ölçeği **0,867 → 0,896**'ya çıktı: ekrandaki her şey biraz büyüdü.
+
 ### Sığdırma sırası: önce kartlar, sonra ölçek
 
 `ekranaSigdir` panoyu 2200–2400 px genişliğinde kurup ölçekliyor;
