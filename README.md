@@ -521,12 +521,16 @@ kartın içinde ortalanıyor, üst satırın nereye düştüğü kartın boyuna 
 Kutu mutlak konumlu olduğu için yazmak yerleşimi değiştirmiyor; ölçüm
 `ekranaSigdir` içinde, pano son genişliğine geldikten sonra yapılıyor.
 
+Hiza referansı **soldaki gerçekleşen rakamı** (`.big`): kapsam adı da onunla
+aynı puntoda (48 px), ikisi aynı çizgide okunuyor. Bir süre sağdaki "H/G"
+etiketine hizalanıyordu; küçük etiketle büyük başlığı eşitlemek gözle
+dengesiz duruyordu. Ölçülen: üst ve alt kenar farkı 0 px — dört dönemde ve
+saha önizlemesinde de.
+
 Hizalanan **kutu değil metin**: `.k`'nın 2,7em'lik yer tutucusu var ve yazı
 onun dibine yaslı (`align-items:flex-end`), o yüzden kutu tepelerini
 eşitlemek gözle hizalı görünmüyordu. `kapsamHizala()` iki yazının kendi
-kutusunu `Range` ile ölçüp farkı kapatıyor. Ölçülen: "Türkiye Geneli" ile
-"H/G" yazıları aynı piksele oturuyor (fark 0) — dört dönemde, saha
-önizlemesinde ve 1280×720'de de. KPI ızgarası dikeyde
+kutusunu `Range` ile ölçüp farkı kapatıyor. KPI ızgarası dikeyde
 ortalandı (üst/alt boşluk eşit: 1920×940'ta 29/29, 1280×720'de 45/45).
 
 ### Dönemler arası boy sabitliği

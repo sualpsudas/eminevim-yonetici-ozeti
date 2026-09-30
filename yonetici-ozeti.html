@@ -3893,7 +3893,11 @@ function ustOlc(){
    Kutu mutlak konumlu, yani yazmak yerleşimi değiştirmiyor. */
 function kapsamHizala(){
   const sol=document.querySelector(".hero-l"), kutu=document.querySelector(".kapsamKut");
-  const ust=document.querySelector("#hgBox .k");
+  /* Hiza referansı SOLDAKİ GERÇEKLEŞEN RAKAMI: kapsam adı da onunla aynı
+     puntoda, ikisi aynı çizgide okunsun. Bir süre sağdaki "H/G" etiketine
+     hizalanıyordu; küçük etiketle büyük başlığı eşitlemek gözle dengesiz
+     duruyordu. */
+  const ust=document.querySelector(".big");
   if(!sol||!kutu||!ust) return;
   const s=parseFloat(document.querySelector(".wrap").dataset.olcek)||1;
   /* Kutu değil METİN hizalanır: .k'nın 2,7em'lik yer tutucusu var ve yazı
