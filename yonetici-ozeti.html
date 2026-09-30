@@ -82,6 +82,18 @@ body.genel-tek-ekran .paypan{border-left:1px solid var(--rule);padding-left:var(
 .veri{font-size:var(--f4);color:rgba(255,255,255,.75);line-height:1.35;text-align:right}
 .veri b{color:#fff;font-weight:600}
 .veri .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#7FC59B;margin-right:6px}
+/* Gerçekleşen ciro rakamı yavaşça yanıp söner: ekranda bakılacak tek rakam
+   odur, bekleme hâlinde de gözü oraya çeker. Renk (durum yeşili/kırmızısı)
+   korunsun diye opaklık değil parlaklık oynatılıyor; sekme arka plandayken
+   ve gösteri sırasında durur. */
+@keyframes ciroNabiz{
+  0%,100%{filter:brightness(1)}
+  50%{filter:brightness(1.42)}
+}
+body.hazir:not(.gosteri-acik) .big{animation:ciroNabiz 3.6s ease-in-out infinite}
+body.sekme-pasif .big{animation-play-state:paused}
+@media (prefers-reduced-motion:reduce){.big{animation:none}}
+
 @keyframes veriIsigi{
   0%,72%,100%{box-shadow:0 0 0 0 rgba(127,197,155,0)}
   82%{box-shadow:0 0 0 5px rgba(127,197,155,.16)}
@@ -370,18 +382,34 @@ tr.toplam:hover td{background:var(--surf-2)}
   border-left:1px solid var(--rule);border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);
   transition:background .15s,box-shadow .15s}
 .kart:hover{background:var(--brand-soft);box-shadow:0 1px 6px rgba(39,55,85,.10)}
-.kart::after{content:"";position:absolute;left:-42%;top:0;width:34%;height:2px;pointer-events:none;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.9),transparent);opacity:0}
-@keyframes kartIsik{
-  0%,78%{left:-42%;opacity:0}
-  82%{opacity:.7}
-  94%{left:108%;opacity:.25}
-  100%{left:108%;opacity:0}
+body.sekme-pasif .veri .dot,body.sekme-pasif .bullet .track::after{animation-play-state:paused}
+
+/* ---- kartların üstünde dolaşan ışık ("yılan") ----
+   Kart başına ayrı bir parıltı yerine dört kartı tek şeritte ören bir yol:
+   1. kartın sol üstünden başlar, üst kenardan sağa, sağ kenardan aşağı,
+   alt kenardan sola; sonraki kartta sol kenardan aşağı, alt kenardan sağa;
+   sonrakinde yine sağ kenardan aşağı… Zikzak sütunun tamamını dolaşır.
+
+   Yol SVG olarak kartların ÜSTÜNDE duruyor, kartların kendi kutularında
+   değil: kenarlar arası geçiş (kart aralıkları) ancak böyle kesintisiz
+   çizilebiliyor. Geometriyi yilanKur() ölçüp yazıyor, yerleşim her
+   değiştiğinde yeniden kuruluyor. Işığın kendisi stroke-dasharray ile
+   yürüyen tek bir kısa kesik. */
+#secSahaKart{position:relative}
+.yilan{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3;overflow:visible}
+.yilan path{fill:none;stroke:var(--fistik);stroke-width:2.4;
+  stroke-linecap:round;stroke-linejoin:round;
+  filter:drop-shadow(0 0 5px rgba(161,203,58,.85));
+  stroke-dasharray:var(--seg,60px) var(--uz,3000px);
+  stroke-dashoffset:var(--seg,60px);opacity:0}
+@keyframes yilanAk{
+  0%{stroke-dashoffset:var(--seg);opacity:0}
+  4%,66%{opacity:1}
+  72%,100%{stroke-dashoffset:calc(-1 * var(--uz));opacity:0}
 }
-body.hazir:not(.gosteri-acik) .kart::after{
-  animation:kartIsik 11s ease-in-out calc(var(--sira,0) * 900ms) infinite}
-body.sekme-pasif .veri .dot,body.sekme-pasif .bullet .track::after,
-body.sekme-pasif .kart::after{animation-play-state:paused}
+body.hazir:not(.gosteri-acik) .yilan path{animation:yilanAk 11s linear 1.8s infinite}
+body.sekme-pasif .yilan path{animation-play-state:paused}
+@media (prefers-reduced-motion:reduce){.yilan{display:none}}
 .kart .ad{display:flex;align-items:center;gap:7px;font-size:clamp(var(--f3),1.05vw,17px);font-weight:650}
 .kart .ad .pay{margin-left:auto;font-size:var(--f4);font-weight:600;color:var(--mut);
   white-space:nowrap;flex:0 0 auto}
@@ -488,6 +516,22 @@ body.sekme-pasif .kart::after{animation-play-state:paused}
    taşırır — bkz. "Ekrana sığma". */
 .harita-sar svg{display:block;width:min(100%,900px);height:auto;
   max-height:clamp(218px,32.2vh,500px);margin:0 auto}
+/* Harita ara ara soldan sağa parlar. Zemin zaten açık olduğu için beyaz
+   tarama orada neredeyse görünmez; koyu yeşil illerde belirgin bir dalga
+   olarak geçer. Karışım kipi yok — gerekmiyor ve kipler yazdırmada sorun
+   çıkarıyor. Balon ve iller üstünde tıklamayı engellemesin diye
+   pointer-events kapalı, z-index balonun altında. */
+.harita-sar::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:2;
+  background:linear-gradient(104deg,transparent 40%,rgba(255,255,255,.58) 50%,transparent 60%);
+  transform:translateX(-150%)}
+@keyframes haritaParla{
+  0%,64%{transform:translateX(-150%)}
+  100%{transform:translateX(150%)}
+}
+body.hazir:not(.gosteri-acik) .harita-sar::after{
+  animation:haritaParla 9.5s cubic-bezier(.38,0,.22,1) 2.4s infinite}
+body.sekme-pasif .harita-sar::after{animation-play-state:paused}
+@media (prefers-reduced-motion:reduce){.harita-sar::after{animation:none;opacity:0}}
 .harita-sar .il{stroke:#FCFBF7;stroke-width:.6;stroke-linejoin:round;cursor:default;
   transition:fill-opacity .45s cubic-bezier(.22,.61,.36,1),stroke .12s,stroke-width .12s}
 .harita-sar .il.bos{fill:var(--surf-3)}
@@ -912,6 +956,8 @@ body.acilis #spark text.tahmin:not(#suAnYazi){
  <aside class="gdz-yan">
   <section class="sec" id="secSahaKart" aria-label="Saha bölgeleri">
     <div class="kartlar dikey" id="sahaKartlar"></div>
+    <svg class="yilan" id="yilan" aria-hidden="true" focusable="false"
+         preserveAspectRatio="none"><path id="yilanYol"></path></svg>
   </section>
  </aside>
 </div>
@@ -3655,6 +3701,40 @@ function kapsamHizala(){
   sol.style.setProperty("--kapsam-y", Math.max(0,y).toFixed(1)+"px");
 }
 
+/* Kartların üstünde dolaşan ışığın yolunu kurar. Zikzak: 1. kartın sol
+   üstünden üst kenardan sağa, sonra her kartta bir kenardan aşağı ve alt
+   kenardan karşıya — inilen kenar her kartta yön değiştiriyor, böylece dört
+   kart tek kesintisiz şerit gibi örülüyor.
+
+   Ölçüler offsetLeft/offsetTop ile alınıyor: getBoundingClientRect panonun
+   scale()'ini taşıyor, offset* ise yerleşim pikseli veriyor — viewBox da
+   aynı birimde kurulduğu için ikisi birebir örtüşüyor. */
+function yilanKur(){
+  const bolum=$("secSahaKart"), sv=$("yilan"), yol=$("yilanYol");
+  if(!bolum||!sv||!yol) return;
+  const kartlar=[].slice.call(bolum.querySelectorAll(".kart"));
+  if(kartlar.length<2 || !bolum.offsetWidth){ sv.style.visibility="hidden"; return; }
+  sv.style.visibility="";
+  sv.setAttribute("viewBox","0 0 "+bolum.offsetWidth+" "+bolum.offsetHeight);
+
+  const r=kartlar.map(function(k){
+    return {x0:k.offsetLeft, y0:k.offsetTop,
+            x1:k.offsetLeft+k.offsetWidth, y1:k.offsetTop+k.offsetHeight};
+  });
+  let d="M"+r[0].x0+" "+r[0].y0+" L"+r[0].x1+" "+r[0].y0;   /* üst kenar, sağa */
+  let sag=true;                                             /* şu an sağ kenardayız */
+  r.forEach(function(c){
+    d+=" L"+(sag?c.x1:c.x0)+" "+c.y1;                       /* kenardan aşağı */
+    d+=" L"+(sag?c.x0:c.x1)+" "+c.y1;                       /* alt kenar, karşıya */
+    sag=!sag;
+  });
+  yol.setAttribute("d",d);
+  let uz=0; try{ uz=yol.getTotalLength(); }catch(e){}
+  if(!uz || !isFinite(uz)){ sv.style.visibility="hidden"; return; }
+  yol.style.setProperty("--uz", uz.toFixed(0)+"px");
+  yol.style.setProperty("--seg", Math.max(40,uz*0.13).toFixed(0)+"px");
+}
+
 let sigdirZaman=null;
 function ekranSigdirSifirla(){
   const sayfa=document.querySelector(".wrap");
@@ -3696,6 +3776,7 @@ function ekranaSigdir(tazeleme){
   /* Kartlar panonun son genişliğinde sığdırılır, ölçüm ondan sonra alınır. */
   kartSigdir();
   kapsamHizala();
+  yilanKur();
   yukseklik=sayfa.scrollHeight;
   /* Son genişlik ölçümünde kalan yuvarlama farkı taşma üretmesin. */
   olcek=Math.min(olcek,window.innerWidth/genislik,alan/Math.max(1,yukseklik));

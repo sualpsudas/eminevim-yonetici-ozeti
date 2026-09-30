@@ -550,6 +550,33 @@ kendini tekrar çağırmaz). Ölçülen: dönem, kırılım, kanal, hızlı tık
 `resize` — hepsinde ölçek 0,867 ve kart 190 px'te sabit (1280×720'de 0,760
 ve 137 px).
 
+## Bekleme hareketleri
+
+Açılış bittikten sonra (`body.hazir`) ve gösteri kapalıyken çalışan sürekli
+hareketler. Hepsi sekme arka plana geçince duruyor (`body.sekme-pasif`) ve
+`prefers-reduced-motion` altında kapalı.
+
+- **Kartların üstünde dolaşan ışık ("yılan").** Dört saha kartını tek şerit
+  gibi ören bir zikzak: 1. kartın sol üstünden üst kenardan sağa, sağ
+  kenardan aşağı, alt kenardan sola; 2. kartta sol kenardan aşağı, alt
+  kenardan sağa; 3. kartta yine sağ kenardan aşağı… Yol kartların
+  **üstünde** duran bir SVG'de (`#yilan`), kartların kendi kutularında
+  değil — kartlar arası geçiş ancak böyle kesintisiz çizilebiliyor.
+  Geometriyi `yilanKur()` ölçüp yazıyor (`offsetLeft/offsetTop`;
+  `getBoundingClientRect` panonun `scale()`'ini taşıdığı için kullanılamaz),
+  yerleşim her değiştiğinde yeniden kuruluyor. Işık `stroke-dasharray` ile
+  yürüyen tek bir kesik: ölçülen yol 2343 px, kesik 305 px, tur 11 sn
+  (7 sn yürür, 4 sn dinlenir). Önceki hâli kart başına ayrı bir parıltıydı
+  (`kartIsik`), kaldırıldı.
+- **Gerçekleşen ciro rakamı** yavaşça yanıp söner (`ciroNabiz`, 3,6 sn).
+  Durum rengi korunsun diye opaklık değil `brightness` oynatılıyor.
+- **Harita** 9,5 sn'de bir soldan sağa parlar (`haritaParla`). Zemin açık
+  olduğu için tarama orada görünmüyor, koyu yeşil illerde dalga gibi
+  geçiyor. Katman `pointer-events:none` ve balonun altında (z-index 2 < 5),
+  hover etkilenmiyor.
+- Veri damgasındaki nokta, hedef çubuğundaki parıltı, "şu an" noktasının
+  nabzı ve güncel kayıt sütununun nefesi önceki turdan duruyor.
+
 ### Seyrin açılışı soldan sağa
 
 Soldaki ciro seyri artık tek seferde belirmiyor, soldan sağa kuruluyor:
