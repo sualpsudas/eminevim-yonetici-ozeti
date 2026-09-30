@@ -3593,8 +3593,10 @@ function ustOlc(){
    Saha/Bölge/Şube/Personel sayfaları uzun listeler içerdiğinden onları tek
    kareye sıkıştırmak metni okunamaz hâle getirirdi. Genişliği ölçeğin tersi
    kadar açıp tamamını küçülterek ekranın yatay alanı da eksiksiz kullanılır. */
+let sigdirZaman=null;
 function ekranSigdirSifirla(){
   const sayfa=document.querySelector(".wrap");
+  clearTimeout(sigdirZaman);
   if(!sayfa) return;
   document.body.classList.remove("genel-tek-ekran");
   sayfa.style.removeProperty("width");
@@ -3602,7 +3604,14 @@ function ekranSigdirSifirla(){
   sayfa.style.removeProperty("transform");
   sayfa.removeAttribute("data-olcek");
 }
-function ekranaSigdir(){
+/* Ölçüm sırası önemli: kartlar ÖNCE panonun son genişliğinde sığdırılmalı.
+   Kart yığınının boyu soldaki sütuna bağlı, o da genişlikle değişiyor;
+   kartSigdir doğal genişlikte (1920) çalışıp pano sonra 2214-2388 px'e
+   açılınca --ko bir çizim geride kalıyordu. Ölçülen: sığdırma anında kart
+   yığını 987 px, oturunca 911 px — 76 px fazla. Pano o fazlalığa göre
+   küçültülüp orada donuyordu, Hafta'dan Gün'e dönünce ölçek 0,867 yerine
+   0,804 çıkıyor ve kartlar ekranda 190 px yerine 176 px görünüyordu. */
+function ekranaSigdir(tazeleme){
   const sayfa=document.querySelector(".wrap");
   if(!sayfa || S.seviye!=="genel") return;
   const ust=document.querySelector(".top"), nav=document.querySelector(".navbar");
@@ -3622,12 +3631,22 @@ function ekranaSigdir(){
   }
   genislik=Math.max(1180,window.innerWidth/olcek);
   sayfa.style.width=genislik.toFixed(1)+"px";
+  /* Kartlar panonun son genişliğinde sığdırılır, ölçüm ondan sonra alınır. */
+  kartSigdir();
   yukseklik=sayfa.scrollHeight;
   /* Son genişlik ölçümünde kalan yuvarlama farkı taşma üretmesin. */
   olcek=Math.min(olcek,window.innerWidth/genislik,alan/Math.max(1,yukseklik));
 
   sayfa.style.transform="scale("+olcek.toFixed(5)+")";
   sayfa.dataset.olcek=olcek.toFixed(3);
+
+  /* Emniyet ağı: rakam akışları ve çubuk geçişleri bitince yerleşim bir
+     miktar daha oturabiliyor. Ölçek orada donmasın diye bir kez daha
+     ölçülür; tazeleme turu kendini tekrar çağırmaz. */
+  if(!tazeleme){
+    clearTimeout(sigdirZaman);
+    sigdirZaman=setTimeout(function(){ ekranaSigdir(true); }, 1000);
+  }
 }
 
 /* Grafiklerin viewBox'ı ekran genişliğine bağlı olduğu için yeniden çizilir. */

@@ -446,6 +446,31 @@ olarak ayarlar.
 emniyet zamanlayıcısı vardır: süre dolduğunda son değer her hâlükârda yerine
 yazılır, ekranda eski rakam asılı kalmaz.
 
+### Sığdırma sırası: önce kartlar, sonra ölçek
+
+`ekranaSigdir` panoyu 2200–2400 px genişliğinde kurup ölçekliyor;
+`kartSigdir` ise kartları soldaki sütuna göre sığdırıyor. İkisi farklı
+genişliklerde çalışıyordu: `kartSigdir` doğal genişlikte (1920), ölçekleme
+ondan sonra panoyu açıyordu. Kart yığınının boyu soldaki sütuna bağlı, o da
+genişlikle değiştiği için `--ko` bir çizim geride kalıyordu.
+
+Sonuç ölçülebilir bir hataydı: **sığdırma anında kart yığını 987 px,
+oturduktan sonra 911 px** — 76 px fazla. Pano o fazlalığa göre küçültülüp
+orada donuyordu. Hafta'dan Gün'e dönünce:
+
+| | ölçek | kart (ekranda) |
+|---|---|---|
+| ilk açılış | 0,867 | 190 px |
+| Hafta → Gün (eski) | **0,804** | **176 px** |
+| Hafta → Gün (yeni) | 0,867 | 190 px |
+
+Düzeltme iki parça: (1) `kartSigdir` artık `ekranaSigdir`'in içinde, panonun
+**son genişliğinde** çağrılıyor; ölçüm ondan sonra alınıyor. (2) Geçişler
+bitince bir kez daha ölçen emniyet turu (`ekranaSigdir(true)`, 1 sn sonra,
+kendini tekrar çağırmaz). Ölçülen: dönem, kırılım, kanal, hızlı tıklama ve
+`resize` — hepsinde ölçek 0,867 ve kart 190 px'te sabit (1280×720'de 0,760
+ve 137 px).
+
 ### Açılış sayacı ilk boyamadan sonra başlar
 
 `body.acilis` sabit 2,3 sn sonra kaldırılıyor, ama **CSS animasyonları
