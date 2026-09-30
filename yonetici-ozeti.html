@@ -43,7 +43,27 @@ button,select{font:inherit;color:inherit}
 h1,h2,h3{margin:0;font-weight:650;letter-spacing:-.01em}
 :focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:2px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
-.wrap{width:var(--sayfa-en);margin:0 auto;padding:14px 20px 24px}
+.wrap{width:var(--sayfa-en);margin:0 auto;padding:14px 20px 24px;
+  transform-origin:top left}
+/* Genel pano, başlık ve gezinme altında kalan kullanılabilir yüksekliğe
+   orantılı olarak sığdırılır. Ayrıntı/listeler okunabilirlik için normal
+   akışta ve kaydırılabilir kalır. Ölçek JS tarafından hesaplanır. */
+body.genel-tek-ekran{overflow:hidden}
+/* Sığdırma sırasında Genel'in masaüstü kompozisyonu korunur. Ekran daralsa
+   da bloklar alt alta yığılmaz; bütün pano tek parça hâlinde küçülür. */
+body.genel-tek-ekran .wrap{padding:14px 20px 24px}
+body.genel-tek-ekran .gdz{grid-template-columns:minmax(0,1fr) minmax(240px,288px)}
+body.genel-tek-ekran .hero{grid-template-columns:7fr 5fr}
+body.genel-tek-ekran .hero-l{border-bottom:0;
+  background:linear-gradient(to bottom,transparent 0%,var(--fistik) 16%,
+    var(--brand) 50%,var(--fistik) 84%,transparent 100%) right center/2px 86% no-repeat}
+body.genel-tek-ekran .pair{justify-items:stretch;text-align:center}
+body.genel-tek-ekran .hsag{
+  grid-template-columns:minmax(0,1.12fr) minmax(185px,235px) minmax(190px,235px)}
+body.genel-tek-ekran .hunipan,
+body.genel-tek-ekran .paypan{border-top:0;padding-top:0}
+body.genel-tek-ekran .hunipan{border-left:1px solid var(--rule);padding-left:var(--gap)}
+body.genel-tek-ekran .paypan{border-left:1px solid var(--rule);padding-left:var(--gap)}
 
 /* ---- üst bant ---- */
 .top{background:var(--brand-deep);color:#fff;border-bottom:3px solid var(--gold);
@@ -62,6 +82,12 @@ h1,h2,h3{margin:0;font-weight:650;letter-spacing:-.01em}
 .veri{font-size:var(--f4);color:rgba(255,255,255,.75);line-height:1.35;text-align:right}
 .veri b{color:#fff;font-weight:600}
 .veri .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#7FC59B;margin-right:6px}
+@keyframes veriIsigi{
+  0%,72%,100%{box-shadow:0 0 0 0 rgba(127,197,155,0)}
+  82%{box-shadow:0 0 0 5px rgba(127,197,155,.16)}
+  90%{box-shadow:0 0 0 9px rgba(127,197,155,0)}
+}
+body.hazir:not(.gosteri-acik) .veri .dot{animation:veriIsigi 5.5s ease-out infinite}
 
 /* ---- gezinme ---- */
 .navbar{border-bottom:1px solid var(--rule);background:var(--surf-2);
@@ -115,37 +141,38 @@ h1,h2,h3{margin:0;font-weight:650;letter-spacing:-.01em}
    yeşilinden fıstığa giden, uçlarda sönen ince bir şerit. Altın bilerek
    kullanılmadı — bu ekranda altın "hedef" demek, kozmetik bir çizgide o
    anlamı taşımamalı. */
-.hero-l{padding:clamp(9px,1.4vh,15px) 20px;border-right:0;
+.hero-l{padding:clamp(4px,0.7vh,8px) 20px;border-right:0;
   background:linear-gradient(to bottom,transparent 0%,var(--fistik) 16%,
     var(--brand) 50%,var(--fistik) 84%,transparent 100%) right center/2px 86% no-repeat;
   display:flex;flex-direction:column;justify-content:center}
-.hero-r{padding:clamp(9px,1.4vh,15px) 20px;background:var(--surf-2);display:flex;flex-direction:column}
+.hero-r{padding:clamp(4px,0.7vh,8px) 20px;background:var(--surf-2);display:flex;flex-direction:column}
 .lbl{font-size:var(--f4);color:var(--mut);font-weight:600}
-.hl-ust{display:flex;align-items:baseline;gap:12px}
-.hl-ust .lbl{align-self:center}
+.hl-ust{display:flex;align-items:flex-start;gap:12px}
+.hl-ust .lbl{align-self:flex-start;margin-top:4px}
 /* Kapsam etiketi ve hemen altındaki teslimat adedi tek kutuda, sağa yaslı. */
-.kapsamKut{margin-left:auto;margin-right:clamp(12px,6%,64px);text-align:right;min-width:0}
+.kapsamKut{margin-left:auto;margin-right:clamp(12px,6%,64px);padding-top:4px;text-align:right;min-width:0}
 .kapsamEt{display:block;font-size:clamp(20px,1.8vw,32px);font-weight:700;
   color:var(--brand);white-space:nowrap;line-height:1.1;letter-spacing:-.01em}
 .tesEt{display:block;margin-top:3px;font-size:var(--f3);font-weight:600;
   color:var(--mut);white-space:nowrap}
-.big{font-size:clamp(26px,3.4vw,var(--f1));font-weight:700;letter-spacing:-.02em;line-height:1.1;margin:6px 0 3px}
-.sub{font-size:var(--f3);color:var(--ink-2)}
-.bullet{margin:clamp(7px,1.2vh,13px) 0 0}
+.big{font-size:clamp(30px,3.8vw,38px);font-weight:700;letter-spacing:-.02em;line-height:1.05;margin:4px 0 2px}
+.sub{font-size:clamp(14px,1.05vw,17px);color:var(--ink-2)}
+.sub b{font-size:1.06em}
+.bullet{margin:clamp(5px,0.8vh,9px) 0 0}
 .bullet.bos{visibility:hidden}   /* yer tutar, görünmez */
 /* Çubuklar tek ızgarada: etiket sütunu sabit, çubuklar aynı x'te başlar ve
    aynı ölçeği paylaşır — hafta içi + hafta sonu, hafta çubuğuyla hizalı. */
 /* Üç satırlık yer her dönemde ayrılır: Hafta'da üç çubuk çıkınca kart
    büyüyordu, dönem değiştikçe boy oynamasın. */
-.btablo{display:grid;grid-template-columns:auto 1fr;gap:7px 12px;align-items:center;
-  min-height:clamp(62px,8.4vh,80px);align-content:center}
+.btablo{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;align-items:center;
+  min-height:clamp(46px,6.2vh,60px);align-content:center}
 .btablo.tekli{grid-template-columns:1fr}
 .btablo .bet{font-size:var(--f4);color:var(--mut);font-weight:600;white-space:nowrap}
 .btablo .bet.ana{color:var(--ink);font-weight:700}
 /* Çubuğun bittiği yerin üstünde gerçekleşen/hedef yüzdesi. Konumu dolgunun
    ucuyla aynı, o yüzden aynı geçişle birlikte kayar. */
-.bullet .ucEt{position:relative;height:16px}
-.bullet .ucEt b{position:absolute;bottom:0;font-size:var(--f4);font-weight:700;
+.bullet .ucEt{position:relative;height:19px}
+.bullet .ucEt b{position:absolute;bottom:2px;font-size:clamp(13px,1vw,16px);font-weight:700;
   line-height:1;white-space:nowrap;transition:left var(--ge),color .3s}
 /* Çubukta üç şey var: dolu kısım gerçekleşen, altın çizgi hedef, turkuaz
    çizgi tahmin. İkisi de aynı biçimde — basit birer dikey çizgi.
@@ -155,6 +182,15 @@ h1,h2,h3{margin:0;font-weight:650;letter-spacing:-.01em}
    aşabilmesi için: tahmin hedefin %133'üne kadar çubuğa sığar. */
 .bullet .track{position:relative;height:clamp(18px,2.6vh,24px);background:#E2DFD4;
   border-radius:3px;overflow:hidden}
+.bullet .track::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.48) 50%,transparent 65%);
+  transform:translateX(-125%)}
+@keyframes hedefParla{
+  0%,76%{transform:translateX(-125%)}
+  90%,100%{transform:translateX(125%)}
+}
+body.hazir:not(.gosteri-acik) .bullet .track::after{
+  animation:hedefParla 8.5s cubic-bezier(.35,0,.2,1) 1.5s infinite}
 .btablo .alt .track{height:clamp(9px,1.3vh,12px)}
 .bullet .fill{position:absolute;left:0;top:0;bottom:0;border-radius:2px}
 .bullet .mark{position:absolute;top:-4px;bottom:-4px;width:3px;background:var(--gold);border-radius:1px}
@@ -180,8 +216,8 @@ h1,h2,h3{margin:0;font-weight:650;letter-spacing:-.01em}
    dönemden döneme oynamasın. */
 .pair > div.bos{visibility:hidden}
 .ok{color:var(--good)} .no{color:var(--bad)} .watch{color:var(--watch)} .fc{color:var(--fc)}
-.fbox{border-top:1px solid var(--rule);margin-top:clamp(7px,1.1vh,12px);
-  padding-top:clamp(7px,1vh,11px)}
+.fbox{border-top:1px solid var(--rule);margin-top:clamp(5px,0.8vh,8px);
+  padding-top:clamp(5px,0.7vh,8px)}
 .fbox .v{font-size:var(--f2);font-weight:700;color:var(--fc);letter-spacing:-.01em}
 .fbox .rng{font-size:var(--f4);color:var(--ink-2);margin-top:3px}
 
@@ -201,14 +237,33 @@ h1,h2,h3{margin:0;font-weight:650;letter-spacing:-.01em}
   .spark .s-yari + .s-yari{border-left:0;padding-left:0;border-top:1px solid var(--rule);
     margin-top:10px;padding-top:10px}
 }
-.spark .s-head{display:flex;align-items:baseline;gap:12px;margin-bottom:2px}
-.spark .s-head h3{font-size:var(--f4);font-weight:650;color:var(--mut)}
-.spark .s-head span{font-size:var(--f4);color:var(--ink-2);font-weight:600;margin-left:auto}
-.spark svg{display:block;width:100%;height:auto;max-height:clamp(88px,12vh,130px)}
-@keyframes yanipSon{0%,100%{opacity:1}50%{opacity:.2}}
-#suAnNokta{animation:yanipSon 1.4s ease-in-out infinite}
-@keyframes cubukNabiz{0%,100%{fill-opacity:.55}50%{fill-opacity:.9}}
-#bugunCubuk{animation:cubukNabiz 1.8s ease-in-out infinite}
+/* Başlık iki satır: ölçünün adı (Ciro / Kayıt sayısı), altında silik dönem.
+   Eskiden başlık dönemin kendisini söylüyor, yanında da bir açıklama satırı
+   duruyordu ("kesik çizgi: tahmini kapanış" gibi). İki grafiğin üstünde dört
+   ayrı metin oluyordu; hangisinin ne olduğu başlıktan okunmuyordu. */
+.spark .s-head{display:block;margin-bottom:4px}
+.spark .s-head h3{font-size:clamp(14px,1.12vw,18px);font-weight:700;color:var(--ink)}
+.spark .s-head .s-don{display:block;margin-top:1px;font-size:clamp(11px,0.88vw,14px);
+  font-weight:600;color:var(--mut);opacity:.7;letter-spacing:.01em}
+.spark svg{display:block;width:100%;height:auto;max-height:clamp(135px,18vh,200px)}
+/* SVG üzerindeki sabit punto niteliklerini bir kademe büyüt; kalın değerler
+   eksen/saat etiketlerinden yine bir kademe daha büyük kalır. */
+.spark svg text{font-size:14px}
+.spark svg text[font-weight="700"]{font-size:15px}
+.spark svg .s-eksen{fill:#34433D;font-weight:700;font-size:15px}
+.spark svg .s-deger,.spark svg .k-deger{
+  font-size:16px;paint-order:stroke fill;stroke:#fff;stroke-width:3px;stroke-linejoin:round
+}
+@keyframes yanipSon{
+  0%,100%{opacity:.95;transform:scale(1)}
+  50%{opacity:.52;transform:scale(.82)}
+}
+#suAnNokta{transform-box:fill-box;transform-origin:center;
+  animation:yanipSon 2.2s ease-in-out infinite}
+@keyframes cubukNabiz{0%,100%{fill-opacity:.68}50%{fill-opacity:.92}}
+#bugunCubuk{animation:cubukNabiz 2.4s ease-in-out infinite}
+/* Arka sekmede görünmeyen sürekli hareketler boşuna çalışmasın. */
+body.sekme-pasif #suAnNokta,body.sekme-pasif #bugunCubuk{animation-play-state:paused}
 @media (prefers-reduced-motion:reduce){#suAnNokta,#bugunCubuk{animation:none}}
 
 /* ---- liste ---- */
@@ -289,12 +344,24 @@ tr.toplam:hover td{background:var(--surf-2)}
 
 /* ---- saha kartları ---- */
 .kartlar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--gap)}
-.kart{border:1px solid var(--rule);border-top:3px solid var(--kr,var(--brand));border-radius:var(--r);
+.kart{position:relative;overflow:hidden;border:1px solid var(--rule);border-top:3px solid var(--kr,var(--brand));border-radius:var(--r);
   background:#fff;box-shadow:var(--golge-uf);padding:clamp(14px,1.15vw,20px) clamp(16px,1.35vw,24px) clamp(15px,1.2vw,21px);
   text-align:left;width:100%;cursor:pointer;
   border-left:1px solid var(--rule);border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);
   transition:background .15s,box-shadow .15s}
 .kart:hover{background:var(--brand-soft);box-shadow:0 1px 6px rgba(39,55,85,.10)}
+.kart::after{content:"";position:absolute;left:-42%;top:0;width:34%;height:2px;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.9),transparent);opacity:0}
+@keyframes kartIsik{
+  0%,78%{left:-42%;opacity:0}
+  82%{opacity:.7}
+  94%{left:108%;opacity:.25}
+  100%{left:108%;opacity:0}
+}
+body.hazir:not(.gosteri-acik) .kart::after{
+  animation:kartIsik 11s ease-in-out calc(var(--sira,0) * 900ms) infinite}
+body.sekme-pasif .veri .dot,body.sekme-pasif .bullet .track::after,
+body.sekme-pasif .kart::after{animation-play-state:paused}
 .kart .ad{display:flex;align-items:center;gap:7px;font-size:clamp(var(--f3),1.05vw,17px);font-weight:650}
 .kart .ad .pay{margin-left:auto;font-size:var(--f4);font-weight:600;color:var(--mut);
   white-space:nowrap;flex:0 0 auto}
@@ -325,10 +392,11 @@ tr.toplam:hover td{background:var(--surf-2)}
 /* ---- harita + kanal payı ---- */
 /* Harita satırı üç sütun: harita · satış hunisi · kanal payı. Sayfa genişliği
    yayılınca haritanın sağında büyük bir boşluk kalıyordu, huni oraya girdi. */
-.hsag{display:grid;grid-template-columns:minmax(0,1fr) minmax(190px,250px) minmax(200px,250px);
+.hsag{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(185px,235px) minmax(190px,235px);
   gap:var(--gap);align-items:center;
   border:1px solid var(--rule);border-radius:var(--r);background:#fff;
-  box-shadow:var(--golge-uf);padding:clamp(10px,1.45vh,18px) 16px}
+  box-shadow:var(--golge-uf);padding:clamp(7px,1vh,11px) 16px;
+  min-height:clamp(260px,31vh,380px)}
 /* harita ile kanal payı arasında ince ayrım */
 .paypan{border-left:1px solid var(--rule);padding-left:var(--gap)}
 @media (max-width:1000px){
@@ -346,39 +414,39 @@ tr.toplam:hover td{background:var(--surf-2)}
    panel dikey flex, gövde otomatik kenar boşluklarıyla ortalanır, açıklama
    satırı dibe oturur. Boy değişmiyor, yalnız içerik yerleşiyor. */
 .hunipan,.paypan{align-self:stretch;display:flex;flex-direction:column}
-.huni{margin-block:auto}
-.paypan svg{margin-top:auto}
+.huni{width:100%;margin:4px 0 auto}
+.paypan svg{margin-top:4px}
 .pay-leg{margin-bottom:auto}
 .hunipan{min-width:0;border-left:1px solid var(--rule);padding-left:var(--gap)}
-.hunipan h3{font-size:var(--f4);font-weight:650;color:var(--mut);margin-bottom:8px}
+.hunipan h3{font-size:clamp(13px,1vw,16px);font-weight:650;color:var(--mut);margin-bottom:6px}
 .huni .kad .ust{display:flex;align-items:baseline;gap:8px}
-.huni .kad .ust .ad{font-size:var(--f4);font-weight:650;color:var(--ink)}
-.huni .kad .ust .sy{margin-left:auto;font-size:var(--f3);font-weight:700}
-.huni .kad .cub{position:relative;height:clamp(8px,1.1vh,12px);background:var(--surf-3);
+.huni .kad .ust .ad{font-size:clamp(12px,0.98vw,15px);font-weight:650;color:var(--ink)}
+.huni .kad .ust .sy{margin-left:auto;font-size:clamp(14px,1.12vw,18px);font-weight:700}
+.huni .kad .cub{position:relative;height:clamp(9px,1vh,11px);background:var(--surf-3);
   border-radius:2px;margin-top:3px}
 .huni .kad .cub i{position:absolute;left:0;top:0;bottom:0;border-radius:2px;
   background:var(--brand);transition:width var(--ge)}
-.huni .don{font-size:var(--f4);color:var(--mut);text-align:right;margin:clamp(3px,0.5vh,6px) 0}
+.huni .don{font-size:clamp(11px,0.9vw,14px);color:var(--mut);text-align:right;margin:2px 0}
 .huni .don b{color:var(--ink-2);font-weight:700}
-.huni-not{margin:clamp(5px,0.8vh,9px) 0 0;font-size:var(--f4);color:var(--mut);line-height:1.35}
+.huni-not{margin:2px 0 0;font-size:clamp(11px,0.9vw,14px);color:var(--mut);line-height:1.25}
 
 
 .paypan{min-width:0}
-.paypan h3{font-size:var(--f4);font-weight:650;color:var(--mut);margin-bottom:8px}
+.paypan h3{font-size:clamp(13px,1vw,16px);font-weight:650;color:var(--mut);margin-bottom:6px}
 /* Halkanın boyu, teslimat bloğu eklenince kısıldı: kanal payı sütunu
    uzayınca saha kartlarının altı katlamayı taşıyordu. */
-.paypan svg{display:block;width:min(100%,180px);height:auto;
-  max-height:clamp(78px,9.8vh,136px);margin-left:auto;margin-right:auto}
+.paypan svg{display:block;width:min(100%,210px);height:auto;
+  max-height:clamp(108px,14vh,160px);margin-left:auto;margin-right:auto}
 .pay-leg{margin-top:clamp(6px,0.9vh,10px);display:grid;gap:clamp(4px,0.7vh,7px)}
-.pay-leg div{display:flex;align-items:baseline;gap:8px;font-size:var(--f4);min-width:0}
-.pay-leg i{width:9px;height:9px;border-radius:2px;flex:0 0 auto;align-self:center}
+.pay-leg div{display:flex;align-items:baseline;gap:8px;font-size:clamp(12px,0.98vw,15px);min-width:0}
+.pay-leg i{width:10px;height:10px;border-radius:2px;flex:0 0 auto;align-self:center}
 .pay-leg .ad{font-weight:650;flex:1 1 auto}
 .pay-leg .pay{font-weight:700}
 .pay-leg .tl{color:var(--mut);flex:0 0 auto}
-.pay-not{margin:clamp(5px,0.8vh,9px) 0 0;font-size:var(--f4);color:var(--mut);line-height:1.35}
+.pay-not{margin:2px 0 0;font-size:clamp(11px,0.9vw,14px);color:var(--mut);line-height:1.25}
 
 /* ---- harita ---- */
-.harita-sar{padding:0;position:relative;display:flex;align-items:center;justify-content:center}
+.harita-sar{padding:0;position:relative;align-self:stretch;display:flex;align-items:center;justify-content:center}
 /* Haritanın çizilen boyunu yükseklik sınırı belirliyor: viewBox 1,91:1
    olduğu için max-height, genişlik sınırından önce bağlanıyor ve yanlarda
    boşluk kalıyordu. Sınır açıldı (eski hâli 20vh); harita kendi sütununda
@@ -503,12 +571,6 @@ tr.toplam:hover td{background:var(--surf-2)}
 .clegend i{display:inline-block;width:18px;height:0;border-top-width:3px;border-top-style:solid;vertical-align:middle;margin-right:6px}
 .clegend i.blok{height:10px;border:0;background:var(--good);border-radius:1px}
 
-/* ---- dipnot ---- */
-.dip{margin-top:clamp(12px,2vh,24px);padding-top:clamp(8px,1.2vh,14px);border-top:2px solid var(--rule);font-size:var(--f4);color:var(--mut);line-height:1.6}
-.dip b{color:var(--ink-2);font-weight:650}
-.proto{display:inline-block;margin-top:clamp(5px,0.8vh,10px);padding:5px 11px;border:1px solid var(--gold);border-radius:var(--r);
-  color:#7A5E1F;background:#FBF4E4;font-size:var(--f4);font-weight:650}
-
 /* ---- gösteri ---- */
 .gosteri{appearance:none;border:1px solid var(--rule);background:#fff;border-radius:var(--r);
   width:36px;height:32px;cursor:pointer;color:var(--brand);flex:0 0 auto;
@@ -573,12 +635,27 @@ tr.toplam:hover td{background:var(--surf-2)}
 @keyframes kartGir{from{opacity:0;transform:translateY(11px)}to{opacity:1;transform:none}}
 @keyframes yavasBelir{from{opacity:0}to{opacity:1}}
 @keyframes cizgiCiz{to{stroke-dashoffset:0}}
+@keyframes sutunYuksel{from{opacity:.25;transform:scaleY(0)}to{opacity:1;transform:scaleY(1)}}
+@keyframes huniDol{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 
-body.acilis .hero{animation:blokGir .5s cubic-bezier(.22,.61,.36,1) backwards}
-body.acilis .spark{animation:blokGir .5s cubic-bezier(.22,.61,.36,1) .12s backwards}
-body.acilis .hsag{animation:blokGir .5s cubic-bezier(.22,.61,.36,1) .2s backwards}
+/* Açılış tek hareket yığını değil, yukarıdan aşağı okunan kısa bir sekans:
+   ciro → seyir → analizler → saha kartları. Başlık ve filtreler sabit kalır. */
+body.acilis .hero{animation:blokGir .48s cubic-bezier(.22,.61,.36,1) .04s backwards}
+body.acilis .spark{animation:blokGir .5s cubic-bezier(.22,.61,.36,1) .20s backwards}
+body.acilis .hsag{animation:blokGir .52s cubic-bezier(.22,.61,.36,1) .42s backwards}
 body.acilis .kartlar.dikey .kart{animation:kartGir .5s cubic-bezier(.22,.61,.36,1) backwards;
-  animation-delay:calc(var(--sira,0) * 70ms + 150ms)}
+  animation-delay:calc(var(--sira,0) * 90ms + 820ms)}
+body.acilis #kytSpark rect{transform-box:fill-box;transform-origin:center bottom;
+  animation:sutunYuksel .48s cubic-bezier(.22,.61,.36,1) backwards;
+  animation-delay:calc(340ms + var(--sira,0) * 45ms)}
+body.acilis .huni .kad,body.acilis .huni .don{
+  animation:blokGir .34s cubic-bezier(.22,.61,.36,1) backwards;
+  animation-delay:calc(560ms + var(--sira,0) * 90ms)}
+body.acilis .huni .cub i{transform-origin:left center;
+  animation:huniDol .58s cubic-bezier(.22,.61,.36,1) backwards;
+  animation-delay:calc(650ms + var(--sira,0) * 100ms)}
+body.acilis .paypan svg,body.acilis .pay-leg{
+  animation:yavasBelir .42s .64s backwards}
 /* Çubuk kendi sırasını anlatır: önce gerçekleşen dolar, sonra hedef işareti
    belirir, en son tahmin bandı uzar. Dolgu, yanındaki sayan rakamla aynı
    tempoda ilerlesin diye açılışta uzatılır. */
@@ -754,11 +831,11 @@ body.acilis #spark text:not(#suAnYazi){animation:yavasBelir .45s .5s backwards}
     </div>
     <div class="spark" id="sparkSatir">
       <div class="s-yari">
-        <div class="s-head"><h3 id="sparkBaslik">Seyir</h3><span id="sparkSon">—</span></div>
+        <div class="s-head"><h3>Ciro</h3><span class="s-don" id="sparkDon"></span></div>
         <svg id="spark" viewBox="0 0 1000 120" role="img" aria-label="Dönem içi ciro seyri"></svg>
       </div>
       <div class="s-yari">
-        <div class="s-head"><h3 id="kytBaslik">Kayıt sayısı</h3><span id="kytSon">—</span></div>
+        <div class="s-head"><h3>Kayıt sayısı</h3><span class="s-don" id="kytDon"></span></div>
         <svg id="kytSpark" viewBox="0 0 1000 120" role="img" aria-label="Dönem içi kayıt sayısı"></svg>
       </div>
     </div>
@@ -837,11 +914,6 @@ body.acilis #spark text:not(#suAnYazi){animation:yavasBelir .45s .5s backwards}
       <button class="more" id="perMore" hidden>Daha fazla göster</button>
     </div>
   </section>
-
-  <footer class="dip">
-    <p style="margin:0">Ciro, seçili dönemde gerçekleşen satış tutarıdır. Hedefler her kırılım için ayrı tanımlıdır. Hafta Pazartesi–Pazar sayılır. Yıl görünümünde hedef kullanılmaz, aylık ortalama üzerinden ilerlenir.</p>
-    <div class="proto">ÖRNEK ÇALIŞMA — rakamlar, bölge ve şube adları temsilidir</div>
-  </footer>
 
 </main>
 
@@ -1539,6 +1611,9 @@ function bicemiSabitle(kap){ if(kap) void kap.offsetWidth; }
 
 let acilisZaman=null;
 function ciz(neden){
+  /* Önce önceki ekran ölçeğini kaldır: bütün çizim ve kart ölçümleri doğal
+     boyutta yapılır, yeni ölçek çizimin sonunda tekrar hesaplanır. */
+  ekranSigdirSifirla();
   /* Gösteri KPI kutularına kendi metnini yazıyor; yeniden çizim onu ezmeden
      önce durdurulur. NEDEN'den önce çağrılır, çünkü gösteriyi durdurmak
      sahaVurgula() üzerinden NEDEN'e dokunuyor. */
@@ -1546,9 +1621,15 @@ function ciz(neden){
   onizlemeSifirla();
   NEDEN = neden || "veri";
   if(NEDEN==="ilk" && !SAKIN.matches){
+    document.body.classList.remove("hazir");
     document.body.classList.add("acilis");
     clearTimeout(acilisZaman);
-    acilisZaman=setTimeout(function(){ document.body.classList.remove("acilis"); }, 2300);
+    acilisZaman=setTimeout(function(){
+      document.body.classList.remove("acilis");
+      document.body.classList.add("hazir");
+    }, 2300);
+  } else if(NEDEN==="ilk"){
+    document.body.classList.add("hazir");
   }
   const kap=kapsam(), k=S.kanal, per=donem(), o=olcum(kap,k,per);
   /* Bir mertebe sıçrandıysa bu çizimde rakamlar akmaz, hep birden geçer. */
@@ -1568,7 +1649,11 @@ function ciz(neden){
   olcekSicradi=false;
   /* rAF geri çağrısı zaman damgası geçirir; doğrudan verilirse yeniden
      ölçüm tetiklenirdi. */
-  requestAnimationFrame(function(){ kartSigdir(); });
+  requestAnimationFrame(function(){
+    kartSigdir();
+    /* Kartların doğal yüksekliği kesinleştikten sonra panoyu ekrana oturt. */
+    requestAnimationFrame(ekranaSigdir);
+  });
 }
 
 const PLAN={
@@ -1649,8 +1734,9 @@ function cizFiltre(){
 
 function cizCiro(kap,k,per,o){
   const yilMi = per.tip==="yil";
-  $("ciroLbl").textContent = (per.tip==="gun"&&per.bas===BUGUN) ? "Gerçekleşen (saat "+saat()+" itibarıyla)"
-    : (o.tamam?"Gerçekleşen":"Gerçekleşen (bugüne kadar)");
+  /* Veri kesiti üst bantta zaten yazıyor; başlıkta parantezli saat/kesit
+     tekrarı ciro rakamının görsel ağırlığını azaltıyordu. */
+  $("ciroLbl").textContent = "Gerçekleşen";
   sayiAk($("ciroBuyuk"), o.gercek, TL, "tl");
   $("ciroBuyuk").className = "big "+(yilMi?"":durum(o.seyir));
 
@@ -1839,11 +1925,15 @@ function seyirBaslik(per){
 
 function cizSeyir(kap,k,per,o){
   const gunMu = per.tip==="gun";
-  $("sparkBaslik").textContent = seyirBaslik(per);
+  /* Başlıklar sabit — ölçünün adı. Dönem ikisinin de altında silik yazar;
+     açıklama satırları (lejant / "kesik çizgi: …") kaldırıldı. */
+  const don = seyirBaslik(per);
+  $("sparkDon").textContent = don;
+  $("kytDon").textContent = don;
   if(gunMu) cizSpark(kap,k,per);
-  else cizGrafik(kap,k,per,o,{svg:$("spark"), leg:null, not:$("sparkSon")});
+  else cizGrafik(kap,k,per,o,{svg:$("spark"), leg:null, not:null});
   if(acilisMi()) cizgiCizdir($("spark"));
-  cizKayit(kap,k,per,{svg:$("kytSpark"), not:$("kytSon")});
+  cizKayit(kap,k,per,{svg:$("kytSpark"), not:null});
 }
 
 /* Kayıt seyrinin dilimleri. Ciro tarafıyla aynı okuma mantığı:
@@ -1903,19 +1993,21 @@ function cizKayit(kap,k,per,el){
   const Y=v=>H-B-(v/enb)*(H-B-T);
 
   let g='<line x1="'+L+'" y1="'+(H-B)+'" x2="'+(W2-R)+'" y2="'+(H-B)+
-        '" stroke="#C9CFC9" stroke-width="1"/>';
+        '" stroke="#AEB7B1" stroke-width="1.2"/>';
   const bw=Math.min(haftaMi?44:40, (haftaMi?bir:(W2-L-R)/Math.max(1,n))*0.62);
   dl.forEach(function(d,i){
     const x=X(i);
-    g+='<text x="'+x.toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle" font-size="12" fill="#58645F">'+
-       d.ad+'</text>';
+    const eksenAd=per.tip==="gun" ? d.ad+":00" : d.ad;
+    const eksenDayanak=i===0?"start":(i===n-1?"end":"middle");
+    g+='<text class="s-eksen" x="'+x.toFixed(1)+'" y="'+(H-8)+'" text-anchor="'+eksenDayanak+'">'+
+       eksenAd+'</text>';
     if(d.gelecek || !(d.v>0)) return;
     const y=Y(d.v), h=(H-B)-y;
-    g+='<rect x="'+(x-bw/2).toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+
+    g+='<rect'+(d.yarim?' id="bugunCubuk"':'')+' style="--sira:'+i+'" x="'+(x-bw/2).toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+
        '" height="'+Math.max(0,h).toFixed(1)+'" rx="2" fill="#1E3856" fill-opacity="'+
        (d.yarim?".5":".85")+'"/>';
-    g+='<text x="'+x.toFixed(1)+'" y="'+(y-6).toFixed(1)+'" text-anchor="middle" '+
-       'font-size="13" font-weight="700" fill="#1E3856">'+AD(d.v)+'</text>';
+    g+='<text class="k-deger" x="'+x.toFixed(1)+'" y="'+(y-6).toFixed(1)+'" text-anchor="middle" '+
+       'font-weight="700" fill="#1E3856">'+AD(d.v)+'</text>';
   });
   if(haftaMi){
     /* iki öbeğin arasına ince ayrım ve altlarına ad */
@@ -1964,6 +2056,7 @@ function suAnYeri(){
   return {x:G.L+i*(G.W2-G.L-G.R)/(G.n-1), y:G.y};
 }
 function saatAk(){
+  if(document.hidden) return;
   if(!SPARK_GEO) return;
   const nokta=document.getElementById("suAnNokta"), yazi=document.getElementById("suAnYazi");
   if(!nokta||!yazi) return;
@@ -1973,6 +2066,12 @@ function saatAk(){
   yazi.textContent=metin;
 }
 setInterval(saatAk,1000);
+/* Görünmeyen sekmede nabızları durdur; geri gelindiğinde saat ve nokta
+   beklemeden güncellensin. */
+document.addEventListener("visibilitychange",function(){
+  document.body.classList.toggle("sekme-pasif",document.hidden);
+  if(!document.hidden) saatAk();
+});
 
 function cizSpark(kap,k,per){
   /* Kümülatif: her saat, gün başından o saate kadarki toplam ciroyu gösterir. */
@@ -1987,6 +2086,8 @@ function cizSpark(kap,k,per){
   const Y=v=>H-B-((v-alt)/aralik)*(H-T-B);
 
   let duz="", kesik="", g="";
+  g+='<line x1="'+L+'" y1="'+(H-B)+'" x2="'+(W2-R)+'" y2="'+(H-B)+
+     '" stroke="#AEB7B1" stroke-width="1.2"/>';
 
   /* Şu an: yanıp sönen kırmızı nokta, yanında akan saat. Gerçekleşenin
      nerede bittiğini işaretler; konumu saatle birlikte ilerler. */
@@ -2009,14 +2110,19 @@ function cizSpark(kap,k,per){
     const x=X(i), y=Y(n.v), renk=n.tahmin?"#2B8C8A":"#00724C";
     g+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="3.2" fill="'+(n.tahmin?"#fff":renk)+
        '" stroke="'+renk+'" stroke-width="'+(n.tahmin?2:1)+'"/>';
-    g+='<text x="'+x.toFixed(1)+'" y="'+(y-10).toFixed(1)+'" text-anchor="middle" font-size="13" '+
+    /* Uzun TL etiketleri geniş/F11 görünümünde aynı hatta yaklaşabiliyor.
+       İki yükseklikte dönüşümlü göstererek puntoyu küçültmeden çakışmayı önle. */
+    const etiketY=Math.max(20,y-(i%2?24:10));
+    const degerDayanak=i===0?"start":(i===nk.length-1?"end":"middle");
+    const eksenDayanak=i===0?"start":(i===nk.length-1?"end":"middle");
+    g+='<text class="s-deger" x="'+x.toFixed(1)+'" y="'+etiketY.toFixed(1)+'" text-anchor="'+degerDayanak+'" '+
        'font-weight="'+(n.tahmin?600:700)+'" fill="'+renk+'"'+(n.tahmin?' opacity=".85"':'')+'>'+TL(n.v)+'</text>';
-    g+='<text x="'+x.toFixed(1)+'" y="'+(H-6)+'" text-anchor="middle" font-size="12" fill="#58645F">'+
+    g+='<text class="s-eksen" x="'+x.toFixed(1)+'" y="'+(H-6)+'" text-anchor="'+eksenDayanak+'">'+
        String(n.saat).padStart(2,"0")+':00</text>';
   });
 
   $("spark").innerHTML=g;
-  $("sparkSon").textContent = "kesik çizgi: tahmin";
+
 }
 
 /* Tek randevu rakamı: seçili dönemin randevusu. Kümülatif ikinci rakam
@@ -2298,17 +2404,27 @@ function eksen(W2,H,R,T,B,ham,etiket,tabanHam,solBosluk){
   const L=solBosluk||16;
   const n=etiket.length, X=i=>L+(n<=1?(W2-L-R)/2:i*(W2-L-R)/(n-1));
   const Y=v=>H-B-((v-alt)/(enb-alt||1))*(H-B-T);
-  /* taban çizgisi dışında ızgara yok; tutarlar noktaların üstünde yazılı */
+  /* Taban çizgisi dışında ızgara yok; tutarlar noktaların üstünde yazılı.
+     Çizgi ve etiketler kayıt grafiğindekiyle aynı ağırlıkta: ikisi yan yana
+     duruyor, ciro tarafı daha açık kalınca ekseni yokmuş gibi görünüyordu. */
   let g='<line x1="'+L+'" y1="'+(H-B)+'" x2="'+(W2-R)+'" y2="'+(H-B)+
-        '" stroke="#C9CFC9" stroke-width="1"/>';
+        '" stroke="#AEB7B1" stroke-width="1.2"/>';
   const adim=Math.max(1,Math.ceil(n/13));
-  for(let i=0;i<n;i+=adim)
-    g+='<text x="'+X(i).toFixed(1)+'" y="'+(H-10)+'" text-anchor="middle" font-size="'+FS+'" fill="#58645F">'+etiket[i]+'</text>';
+  for(let i=0;i<n;i+=adim){
+    const day = i===0 ? "start" : (i>=n-adim ? "end" : "middle");
+    g+='<text class="s-eksen" x="'+X(i).toFixed(1)+'" y="'+(H-10)+'" text-anchor="'+day+'">'+etiket[i]+'</text>';
+  }
   return {g:g, X:X, Y:Y, n:n, L:L};
 }
 
 /* Tutar etiketleri: sığdığı kadarı yazılır, kalanı atlanır. Son nokta
    her zaman yazılır — bakılan rakam odur. */
+/* Bir tutar etiketinin viewBox biriminde kapladığı yaklaşık genişlik.
+   Punto SVG niteliğinden değil CSS'ten geliyor (.spark svg .s-deger, 16px)
+   ve viewBox 1000 birim genişliğinde çiziliyor; eski 82 birimlik tahmin
+   10,5 px'lik yazıya göreydi, punto büyüyünce Yıl'da aylık tutarlar üst
+   üste biniyordu (ölçülen: 8 çakışma). ETIKET_EN o yüzden tek yerden. */
+const ETIKET_EN = 160, ETIKET_EN_DAR = 190;
 function etiketAdimi(genislik,n,yaklasikPx){
   if(n<=1) return 1;
   const aralik=genislik/(n-1);
@@ -2317,7 +2433,10 @@ function etiketAdimi(genislik,n,yaklasikPx){
 
 /* Dönem içi seyrin ortak ölçüsü. Gün'deki saatlik seyir de aynı kutuyu
    kullanır; dönem değiştikçe grafik alanı aynı kalır. */
-const SEYIR={W:1000,H:120,L:30,R:34,T:24,B:24};
+/* Ciro kartından kazanılan dikey alan seyir grafiklerine verildi. Grafik
+   yalnız CSS ile esnetilmiyor; viewBox da büyüdüğü için veri çizimi gerçekten
+   daha yüksek ve okunaklı bir alana yayılıyor. */
+const SEYIR={W:1000,H:200,L:32,R:36,T:30,B:30};
 
 /* Genel ekranın dönem içi seyri.
 
@@ -2365,14 +2484,14 @@ function cizGrafikHafta(kap,k,per,o,el){
   });
 
   g+='<line x1="'+L+'" y1="'+(H-B)+'" x2="'+(W2-R)+'" y2="'+(H-B)+
-     '" stroke="#C9CFC9" stroke-width="1"/>';
+     '" stroke="#AEB7B1" stroke-width="1.2"/>';
 
   const bw=Math.min(46,bir*0.62);
   dl.forEach(function(d,i){
     const x=X(i);
     /* gün adı */
-    g+='<text x="'+x.toFixed(1)+'" y="'+(H-9)+'" text-anchor="middle" font-size="11" '+
-       'fill="'+(d.yarim?"#00724C":"#58645F")+'" font-weight="'+(d.yarim?700:400)+'">'+d.ad+'</text>';
+    g+='<text class="s-eksen" x="'+x.toFixed(1)+'" y="'+(H-9)+'" text-anchor="middle"'+
+       (d.yarim?' fill="#00724C"':'')+'>'+d.ad+'</text>';
     if(d.gelecek||!d.ciro) return;
     const y=Y(d.ciro), h=Math.max(1,H-B-y);
     /* bugünün çubuğu ince ince yanıp söner */
@@ -2414,7 +2533,7 @@ function cizGrafikYil(kap,k,per,el){
 
   /* her sütunun tutarı üstünde; sığmıyorsa aralıklı, son dolu ay her zaman */
   let son=-1; dl.forEach(function(d,i){ if(!d.gelecek&&d.ciro) son=i; });
-  const adim=etiketAdimi(W2-ax.L-R, ax.n, dar()?95:82);
+  const adim=etiketAdimi(W2-ax.L-R, ax.n, dar()?ETIKET_EN_DAR:ETIKET_EN);
   dl.forEach(function(d,i){
     if(d.gelecek||!d.ciro) return;
     if(i%adim!==0 && i!==son) return;
@@ -2470,7 +2589,7 @@ function cizGrafikBirikim(kap,k,per,o,el){
     g+='<path d="'+pg+'" fill="none" stroke="'+renk+'" stroke-width="3" stroke-linejoin="round"/>';
 
     /* birikimin o güne kadarki tutarı noktanın üstünde */
-    const adim=etiketAdimi(W2-ax.L-R, n, dar()?95:82);
+    const adim=etiketAdimi(W2-ax.L-R, n, dar()?ETIKET_EN_DAR:ETIKET_EN);
     for(let i=0;i<=son;i++){
       if(i%adim!==0 && i!==son) continue;
       g+='<circle cx="'+ax.X(i).toFixed(1)+'" cy="'+ax.Y(kg[i]).toFixed(1)+'" r="'+(i===son?4:2.6)+
@@ -2779,6 +2898,7 @@ function gosteriTur(){
 function gosteriBaslat(){
   if(GOSTERI.acik || S.seviye!=="genel") return;
   GOSTERI.acik=true;
+  document.body.classList.add("gosteri-acik");
   const b=$("gosteri");
   b.classList.add("acik"); b.setAttribute("aria-pressed","true");
   b.setAttribute("aria-label","Gösteriyi durdur");
@@ -2787,6 +2907,7 @@ function gosteriBaslat(){
 function gosteriDurdur(cizmeden){
   if(!GOSTERI.acik) return;
   GOSTERI.acik=false; gosteriTemizle();
+  document.body.classList.remove("gosteri-acik");
   const b=$("gosteri");
   b.classList.remove("acik"); b.setAttribute("aria-pressed","false");
   b.setAttribute("aria-label","Gösteriyi başlat");
@@ -2823,8 +2944,8 @@ function cizHuni(kap,k,per){
   /* Yapı sabit; iskelet bir kez kurulur, sonra yalnız değerler güncellenir. */
   iskelet(kutu, "huni3", function(){
     return kademe.map(function(x,i){
-      return (i>0 ? '<div class="don">&#8595; <b></b></div>' : '')+
-        '<div class="kad"><div class="ust"><span class="ad">'+x.ad+'</span>'+
+      return (i>0 ? '<div class="don" style="--sira:'+i+'">&#8595; <b></b></div>' : '')+
+        '<div class="kad" style="--sira:'+i+'"><div class="ust"><span class="ad">'+x.ad+'</span>'+
         '<span class="sy"></span></div><div class="cub"><i style="width:0"></i></div></div>';
     }).join("");
   });
@@ -2898,7 +3019,7 @@ function cizPay(per,kapsamD,el){
 /* Halkanın yayları. oranSube 0–1 arası; ara değerlerde de geçerli bir
    çizim verir, akış sırasında her kare buradan üretilir. */
 function payYaylari(oranSube,toplam,perAd,dolum){
-  const cx=100, cy=100, r1=88, r2=56;
+  const cx=100, cy=100, r1=91, r2=53;
   function yay(a0,a1){
     const nk=(a,r)=>[(cx+r*Math.cos(a)).toFixed(2),(cy+r*Math.sin(a)).toFixed(2)];
     const buyuk=(a1-a0)>Math.PI?1:0;
@@ -2923,10 +3044,9 @@ function payYaylari(oranSube,toplam,perAd,dolum){
     }
     const om=(a+a2)/2, pr=(r1+r2)/2, yuzde=d.v/d0*100;
     if(d0>0.985 && yuzde>=10) g+='<text x="'+(cx+pr*Math.cos(om)).toFixed(1)+'" y="'+(cy+pr*Math.sin(om)+5).toFixed(1)+
-      '" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">'+PCT(yuzde)+'</text>';
+      '" text-anchor="middle" font-size="17" font-weight="700" fill="#fff">'+PCT(yuzde)+'</text>';
     a=a2;
   });
-  g+='<text x="'+cx+'" y="'+(cy+5)+'" text-anchor="middle" font-size="12" fill="#58645F">'+perAd+'</text>';
   return g;
 }
 
@@ -3437,6 +3557,47 @@ $("perMore").onclick=function(){S.limit+=100;cizPersonel(kapsam(),S.kanal,donem(
 function ustOlc(){
   document.documentElement.style.setProperty("--top-h",
     document.querySelector(".top").offsetHeight+"px");
+}
+
+/* Genel pano her ekran oranında tek karede kalsın. Yalnız Genel ölçeklenir;
+   Saha/Bölge/Şube/Personel sayfaları uzun listeler içerdiğinden onları tek
+   kareye sıkıştırmak metni okunamaz hâle getirirdi. Genişliği ölçeğin tersi
+   kadar açıp tamamını küçülterek ekranın yatay alanı da eksiksiz kullanılır. */
+function ekranSigdirSifirla(){
+  const sayfa=document.querySelector(".wrap");
+  if(!sayfa) return;
+  document.body.classList.remove("genel-tek-ekran");
+  sayfa.style.removeProperty("width");
+  sayfa.style.removeProperty("height");
+  sayfa.style.removeProperty("transform");
+  sayfa.removeAttribute("data-olcek");
+}
+function ekranaSigdir(){
+  const sayfa=document.querySelector(".wrap");
+  if(!sayfa || S.seviye!=="genel") return;
+  const ust=document.querySelector(".top"), nav=document.querySelector(".navbar");
+  const alan=Math.max(1,window.innerHeight-ust.offsetHeight-nav.offsetHeight-2);
+  let olcek=1, yukseklik=0, genislik=window.innerWidth;
+  document.body.classList.add("genel-tek-ekran");
+
+  /* Pano 1180 px'in altındaki görünümde de masaüstü kompozisyonunu korur.
+     Genişlik açıldıkça satırlar kısalabildiği için birkaç turda yakınsat. */
+  for(let i=0;i<8;i++){
+    genislik=Math.max(1180,window.innerWidth/olcek);
+    sayfa.style.width=genislik.toFixed(1)+"px";
+    yukseklik=sayfa.scrollHeight;
+    const yeni=Math.min(1,window.innerWidth/genislik,alan/Math.max(1,yukseklik));
+    if(Math.abs(yeni-olcek)<0.001){ olcek=yeni; break; }
+    olcek=yeni;
+  }
+  genislik=Math.max(1180,window.innerWidth/olcek);
+  sayfa.style.width=genislik.toFixed(1)+"px";
+  yukseklik=sayfa.scrollHeight;
+  /* Son genişlik ölçümünde kalan yuvarlama farkı taşma üretmesin. */
+  olcek=Math.min(olcek,window.innerWidth/genislik,alan/Math.max(1,yukseklik));
+
+  sayfa.style.transform="scale("+olcek.toFixed(5)+")";
+  sayfa.dataset.olcek=olcek.toFixed(3);
 }
 
 /* Grafiklerin viewBox'ı ekran genişliğine bağlı olduğu için yeniden çizilir. */

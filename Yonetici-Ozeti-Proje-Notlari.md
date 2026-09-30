@@ -99,3 +99,68 @@ Codex ile devam edilen HTML dosyasına (Cep Performans Defteri V3) geçmeden ön
 - **Format:** Tutarlar tam sayı + nokta binlik ayraç (₺230.000), K/M kısaltması yok. Hedef ve Tahmini Kapanış sabit (lacivert) renkte; sadece Gerçekleşen duruma göre (kırmızı/yeşil) renklenir.
 - **Hiyerarşik boyutlandırma:** Gün → Hafta → Ay → Yıl sırasıyla ana metrik (halka + büyük rakam + başlık) kademeli küçülür; Hedef/Tahmini Kapanış gibi referans rakamlar ise her sekmede aynı (sabit) boyutta kalır.
 - **Tutarlılık:** Tüm periyot seçicileri (gün/hafta/ay/yıl bilet satırları) aynı görsel dili (nokta + iki satır metin, kart değil) paylaşmalı; hover ve seçili durumlar da tutarlı olmalı.
+
+---
+
+## HTML son durum değişiklik kaydı — 30 Eylül 2026
+
+Ana çalışma dosyası: `yonetici-ozeti.html`
+
+### İçerik ve yerleşim
+
+- Ciro açıklaması ile “Örnek çalışma” bilgilendirme satırı kaldırıldı.
+- Genel görünüm, ekran oranı ne olursa olsun bütün ana bölümler tek ekranda kalacak şekilde orantılı ölçeklenir hâle getirildi. Saha, Bölge, Şube ve Personel gibi uzun liste görünümleri bu sıkıştırmadan ayrı tutuldu.
+- Ciro kartının dikey yüksekliği azaltılarak seyir ve alt analiz bölümüne daha fazla alan verildi.
+- Saatlik ciro ve kayıt seyri bölümü büyütüldü; grafik ve eksen yazıları okunabilir hâle getirildi.
+- Alt analiz satırındaki harita büyütüldü ve kendi alanında dikey/yatay ortalandı.
+- Dönüşüm oranı ve toplam kanal dağılımı görsellerinin boyut ve hizaları birbirine yaklaştırıldı.
+- Kanal dağılımı halkası ve açıklama puntoları büyütüldü; halkanın merkezindeki dönem yazısı kaldırıldı.
+
+### Ciro kartı
+
+- “Gerçekleşen” başlığındaki parantezli ifade kaldırıldı.
+- Gerçekleşen tutarı ve hedef bilgisi büyütüldü.
+- H/G göstergesi büyütülüp hafifçe yukarı alındı.
+- “Türkiye Geneli” etiketi, gerçekleşen alanıyla daha tutarlı hizalandı.
+- Teslimat bilgisi kapsam etiketiyle birlikte ciro kartında konumlandırıldı.
+
+### Seyir grafikleri
+
+- Saatlik ciro tutar etiketleri büyütüldü ve kontrastları güçlendirildi.
+- İlk ve son ciro etiketlerinin SVG kenarlarında kırpılması engellendi.
+- Saatlik ciro grafiğine görünür bir yatay eksen çizgisi eklendi.
+- Ciro grafiğindeki saat etiketleri koyulaştırılıp kalınlaştırıldı.
+- Kayıt Sayısı grafiğinin günlük ekseni `09:00`, `10:00` … biçimine çevrildi; hafta, ay ve yıl etiketleri kendi biçimlerini koruyor.
+- Güncel saat dilimindeki kayıt sütunu özel olarak işaretlenir hâle getirildi.
+
+### Açılış animasyonu
+
+- Açılış, yaklaşık iki saniyelik sıralı bir anlatı hâline getirildi:
+  1. Ciro ve KPI değerleri belirir; uygun rakamlar sıfırdan hedef değerlerine akar.
+  2. Ciro çizgisi soldan sağa çizilir; kayıt sütunları sırayla yükselir.
+  3. Harita, dönüşüm hunisi ve kanal dağılımı görünür olur.
+  4. Saha kartları kısa aralıklarla sırayla açılır.
+- Başlık ve filtre alanları açılış boyunca sabit bırakılarak yerleşim sıçraması önlendi.
+- Hareket azaltma (`prefers-reduced-motion`) tercihi olan sistemlerde animasyonlar kapalı kalır.
+
+### Bekleme durumu ve mikro animasyonlar
+
+- Saatlik cirodaki “şu an” noktası daha yavaş ve yumuşak bir nabız hareketine geçirildi.
+- Güncel kayıt sütununa düşük yoğunluklu bir nefes hareketi eklendi.
+- Veri damgasındaki yeşil nokta seyrek aralıklarla yumuşak bir ışık halkası yayıyor.
+- Ciro hedef çubuğundan yaklaşık 8,5 saniyede bir ince bir parlama geçiyor.
+- Saha kartlarının üst çizgilerinde sırayla gezen, düşük yoğunluklu bir ışık vurgusu bulunuyor.
+- Dekoratif bekleme hareketleri yalnız açılış tamamlandıktan sonra başlıyor.
+- Tarayıcı sekmesi arka plana geçtiğinde sürekli animasyonlar duraklatılıyor; sekmeye dönüldüğünde saat konumu hemen güncelleniyor.
+- Gösteri modu başladığında dekoratif bekleme animasyonları kapatılarak iki hareket katmanının üst üste binmesi engellendi.
+
+### Gösteri modu durumu
+
+- Mevcut gösteri akışı korunuyor: KPI kutularının adetlere dönüşmesi, saha turu, harita vurgusu ve saha kartlarının bölge yüzlerine dönmesi.
+- Konuşulan sahne tabanlı yeni gösteri kurgusu henüz uygulanmadı; ayrı bir sonraki geliştirme olarak değerlendirilebilir.
+
+### Kontroller
+
+- Genel/Gün görünümü dar ve F11 benzeri ekran oranında kontrol edildi.
+- Tek ekran ölçeklemesinde yatay taşma ve ana bölüm kırılması gözlenmedi.
+- JavaScript sözdizimi değişikliklerden sonra doğrulandı.

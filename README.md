@@ -613,30 +613,16 @@ hizalı kalır (ölçülen sapma ≤ 1,5 px). Ekran boyu değişirse (`resize`)
 
 ## Ekrana sığma
 
-1080p ekranda tam ekran tarayıcıda görünür alan ~940 px. Ölçülen yükseklikler
-o genişlikte:
+Genel pano başlık ve gezinme şeridinden kalan kullanılabilir alana otomatik
+sığdırılır. Doğal pano genişliği en az 1180 px tutulur; ekran daha dar veya
+kısa olduğunda genişlik ve yükseklik oranlarından küçük olanı seçilip bütün
+pano tek parça olarak ölçeklenir. Böylece masaüstü kompozisyonu bozulmadan
+ciro, seyir, harita, huni, kanal dağılımı ve dört saha kartı aynı karede kalır.
 
-| | yükseklik |
-|---|---|
-| başlık + gezinme şeridi | 114 px |
-| ciro bloğu (`secCiro`) | 496 px — hero + seyir 129 |
-| harita bloğu (`secHarita`) | 331 px — harita 303 |
-| dipnot (`.dip`) | 71 px |
-
-**Güncel durum (30 Eylül, ikinci tur):** `.gdz` altı Gün/Ay/Yıl'da 967 px,
-Hafta'da 978 px — yani harita bloğunun altı katlamanın (940) **27–38 px
-aşağısında**. Harita büyütülüp kart iç boşluğu geri açılınca kabul edildi.
-Yer açmak gerekirse sıradaki kaynaklar: seyir satırı (129 px, `SEYIR.H`
-viewBox'tan kısılabilir), hero ile harita arasındaki 12 px ara, dipnot.
-
-Saha kartları soldaki iki bloğun boyuna hizalandığı için katlamaya sığıp
-sığmaması bu toplama bağlı. Harita 30vh'ye çıkarıldığında kartların altı
-60 px taşıyordu; harita 25vh + seyir 12vh ile kartlar tam oturuyor (ölçülen
-sapma −1 px, Hafta'da +9 px — üç çubuklu hero biraz daha uzun).
-
-**Dipnot hâlâ katlamanın altında kalıyor** (~110 px). Onu da sığdırmak
-yapısal bir değişiklik istiyor; "Sıradaki adımlar"daki üç sütun fikri açık
-duruyor.
+Alt açıklama ve `ÖRNEK ÇALIŞMA` bandı kaldırıldı. Sığdırma yalnız Genel
+sayfasına uygulanır; uzun liste/tablo içeren diğer kırılımlar okunabilirlik
+için normal kaydırmalı akışta kalır. Pencere boyutu veya dönem değişince
+ölçek doğal boyutta yeniden ölçülür.
 
 ## Sürüm kontrolü
 
@@ -857,8 +843,10 @@ sonra beş sayfa × dört dönem taraması çalıştırılacak (hata, boş böl�
 - **Hover ile filtreleme dokunmatikte çalışmaz.** Genel müdürlükteki ekranın
   dokunmatik olacağı kararı duruyor; ekran gerçek ortamda denendiğinde tıklama
   ile seçime geçmek gerekebilir.
-- Genel sayfası 1080p'de tek ekrana sığmıyor (yaklaşık 1200 px). Sığdırmak için
-  denenen otomatik ölçekleme her şeyi %30 küçülttüğü için geri alındı; yapısal
-  çözüm (üç sütun) açık duruyor.
+- Genel sayfası kullanılabilir ekran yüksekliği ve genişliğine otomatik,
+  orantılı olarak sığdırılıyor. Dar görünümde de masaüstü kompozisyonu
+  korunuyor; pano en az 1180 px doğal genişlikte kurulup bütün olarak
+  küçültülüyor. Uzun liste içeren Saha/Bölge/Şube/Personel sayfaları
+  okunabilirlik için bu kurala dahil değil ve normal kaydırmalı kalıyor.
 - Telefon düzeni artık hedeflenmiyor — masaüstü ve büyük ekran önceliklidir.
   Dosyadaki dar ekran kuralları duruyor ama bakımı yapılmıyor.
