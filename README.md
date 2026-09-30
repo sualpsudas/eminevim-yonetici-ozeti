@@ -622,7 +622,17 @@ ve 137 px).
 Ekran duvarda dururken çalışan iki değişim. **Gösteriden farkı: saha
 kartları dönmez**, kartlar yerinde kalır.
 
-1. **KPI kutuları adetlere döner** — ciro kartının sağındaki dört kutu
+1. **KPI kutuları üç yüz arasında döner** — KPI değerleri → organizasyon
+   adetleri (saha · bölge · şube · personel) → **teslimat** → başa. Her yüz
+   6,5 sn duruyor.
+
+   **Teslimat yüzü** karta ortalı tek satır: iri rakam + "teslimat", Georgia
+   ile ve parlak yeşille (`#8FE04A`, ışımalı), yanıp sönerek ve büyüyüp
+   küçülerek. Dört kutudan bilerek ayrışıyor — teslimat 75 gün gecikmeli bir
+   kohorttan geliyor, güncel ciroyla aynı dilde okunmamalı. Ciro kartının sağ
+   üstündeki eski teslimat satırı (`.tesEt`) kaldırıldı.
+
+   Eski hâli (yalnız adetler) — ciro kartının sağındaki dört kutu
    saha · bölge · şube · personel adetlerine çevrilir, 6,5 sn durur, sonra
    KPI değerlerine geri döner. Gösterinin `gosteriAdetCevir` /
    `gosteriAnlik` / `gosteriGeriYaz` altyapısı yeniden kullanılıyor.

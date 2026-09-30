@@ -168,8 +168,6 @@ body.sekme-pasif .big{animation-play-state:paused}
    en az aynı puntoda (.big ile birebir aynı clamp). */
 .kapsamEt{display:block;font-size:clamp(34px,4.5vw,48px);font-weight:700;
   color:var(--brand);white-space:nowrap;line-height:1.04;letter-spacing:-.02em}
-.tesEt{display:block;margin-top:3px;font-size:var(--f3);font-weight:600;
-  color:var(--mut);white-space:nowrap}
 .big{font-size:clamp(34px,4.5vw,48px);font-weight:700;letter-spacing:-.02em;line-height:1.04;
   margin:6px 0 0}
 /* Gerçekleşen tutar, günlük hedef ve çubuk tek bir öbek gibi okunsun diye
@@ -720,6 +718,29 @@ body.sekme-pasif #harita .hrt-parla{animation-play-state:paused}
 .yuz-tus:hover{opacity:1;background:var(--brand-soft);color:var(--brand);
   border-color:var(--brand)}
 body.gosteri-acik .yuz-tus{display:none}
+
+/* KPI bloğunun üçüncü yüzü: teslimat. Karta ortalı tek satır; ayrı bir
+   yazı karakteri ve parlak yeşille dört kutudan bilerek ayrışıyor —
+   teslimat gecikmeli bir kohorttan geliyor, güncel ciroyla aynı dilde
+   okunmamalı. Yanıp sönüyor ve büyüyüp küçülüyor. */
+.tes-yuz{position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:2px;pointer-events:none;z-index:2}
+.tes-yuz[hidden]{display:none}
+.tes-yuz b{font-family:Georgia,"Times New Roman",serif;font-weight:700;
+  font-size:clamp(46px,6vw,84px);line-height:1;letter-spacing:-.02em;
+  color:#8FE04A;text-shadow:0 0 18px rgba(143,224,74,.55),0 1px 0 rgba(0,0,0,.05)}
+.tes-yuz span{font-family:Georgia,"Times New Roman",serif;font-style:italic;
+  font-size:clamp(17px,1.6vw,26px);letter-spacing:.06em;color:#6FBE33}
+@keyframes tesNabiz{
+  0%,100%{transform:scale(1);opacity:.9;filter:brightness(1)}
+  50%{transform:scale(1.09);opacity:1;filter:brightness(1.45)}
+}
+body.hazir .tes-yuz{animation:tesNabiz 2.4s ease-in-out infinite;
+  transform-origin:center}
+body.sekme-pasif .tes-yuz{animation-play-state:paused}
+@media (prefers-reduced-motion:reduce){.tes-yuz{animation:none}}
+/* Teslimat yüzündeyken dört kutu yer tutar ama görünmez. */
+.hero-r.tes .pair{visibility:hidden}
 .spark .s-yari.cevir{animation:kutuCevir var(--cs,.66s) cubic-bezier(.45,0,.25,1)}
 
 /* ---- geçişler ----
@@ -933,7 +954,6 @@ body.acilis #spark text.tahmin:not(#suAnYazi){
           <div class="lbl" id="ciroLbl">Gerçekleşen</div>
           <div class="kapsamKut">
             <span class="kapsamEt" id="kapsamEt">Türkiye Geneli</span>
-            <span class="tesEt" id="tesEt">—</span>
           </div>
         </div>
         <div class="big" id="ciroBuyuk">—</div>
@@ -953,6 +973,9 @@ body.acilis #spark text.tahmin:not(#suAnYazi){
         </div>
       </div>
       <div class="hero-r">
+        <div class="tes-yuz" id="tesYuz" hidden aria-hidden="true">
+          <b id="tesSayi">—</b><span>teslimat</span>
+        </div>
         <button type="button" class="yuz-tus" id="kpiTus"
                 title="KPI değerleri ↔ organizasyon adetleri"
                 aria-label="Kutuları çevir">&#10227;</button>
@@ -2355,7 +2378,7 @@ function cizRandevu(kap,k,per,o){
      adetler basılıyor. BURADA yazılmalı, cizCiro'nun sonunda değil: dört
      kutunun sonuncusunu (randevu) cizRandevu yazıyor, önce basılsa onun
      üstüne biniyordu. */
-  if(S.kpiYuz==="adet") adetleriYaz(adetler(S.onizleme||KOK));
+  kpiYuzUygula();
 }
 
 /* Önceki dönemin aynı kesiti (randevu karşılaştırması için) */
@@ -3136,6 +3159,8 @@ function beklemeSifirla(){
   beklemeTemizle(); yariTemizle();
   BEKLE.kpiKar=null;
   S.sagSeyir="kyt"; S.kpiYuz="kpi";
+  const sg=document.querySelector(".hero-r"); if(sg) sg.classList.remove("tes");
+  const ty=$("tesYuz"); if(ty) ty.hidden=true;
   document.querySelectorAll("#sparkSatir .s-yari.cevir").forEach(function(x){
     x.classList.remove("cevir"); });
 }
@@ -3149,11 +3174,18 @@ function beklemeTik(){
   beklemeSayac++;
   if(beklemeSayac%2===1) beklemeKpi(); else beklemeSagSeyir();
 }
-/* Kutuları öbür yüze çevirir: KPI değerleri ↔ organizasyon adetleri.
-   Hem sağ üstteki tuş hem bekleme modu bunu çağırıyor; yüz S.kpiYuz'da
-   durduğu için yeniden çizim onu bozmuyor. */
+/* Üç yüz sırayla: KPI değerleri → organizasyon adetleri → teslimat.
+   Yüz S.kpiYuz'da durduğu için yeniden çizim onu bozmuyor. Hem sağ üstteki
+   tuş hem bekleme modu aynı işlevi çağırıyor. */
+const KPI_YUZ=["kpi","adet","teslimat"];
+function kpiYuzUygula(){
+  const sag=document.querySelector(".hero-r"), tes=$("tesYuz");
+  if(S.kpiYuz==="adet") adetleriYaz(adetler(S.onizleme||KOK));
+  if(sag) sag.classList.toggle("tes", S.kpiYuz==="teslimat");
+  if(tes) tes.hidden = S.kpiYuz!=="teslimat";
+}
 function kpiYuzCevir(){
-  S.kpiYuz = S.kpiYuz==="adet" ? "kpi" : "adet";
+  S.kpiYuz = KPI_YUZ[(KPI_YUZ.indexOf(S.kpiYuz)+1) % KPI_YUZ.length];
   akislariBitir();
   const yaz=function(){
     const per=donem(), kap=kapsam(), k=S.kanal, o=olcum(kap,k,per);
@@ -3162,8 +3194,10 @@ function kpiYuzCevir(){
   if(SAKIN.matches) yaz(); else onizlemeCevir(yaz);
 }
 function beklemeKpi(){
+  /* Adetler → teslimat → başa: üç yüz de görülsün. */
   kpiYuzCevir();
-  beklemeBekle(BEKLE_ADET, function(){ kpiYuzCevir(); beklemeTemizle(); });
+  beklemeBekle(BEKLE_ADET, function(){ kpiYuzCevir(); });
+  beklemeBekle(BEKLE_ADET*2, function(){ kpiYuzCevir(); beklemeTemizle(); });
 }
 /* Seyrin sağ yarısı randevu sayısına döner, sonra kayda geri. */
 /* Dönüş kendi zamanlayıcısını kullanıyor: elle çevirme bekleme modunun
@@ -3259,7 +3293,7 @@ function cizHuni(kap,k,per){
 function cizTeslimat(kap,k,per){
   const sonG=Math.min(per.bit,BUGUN);
   const v = sonG>=per.bas ? topArr(kap.tes[k],per.bas,sonG) : 0;
-  sayiAk($("tesEt"), v, x=>AD(x)+" Teslimat", "ad");
+  sayiAk($("tesSayi"), v, AD, "ad");
 }
 
 /* Haritanın yanındaki bölge listesi. Kapsam neyse onun bölgeleri: kökte
