@@ -1242,6 +1242,36 @@ güvencesi gerekiyordu. Uzak depo yok; gerekirse
 Saha/bölge sabitlemesi ve yeni koşullu biçimlendirme öncesi temiz sürüm
 `oncesi-etkilesim-2026-09-30` etiketiyle (`c412b19`) korunuyor.
 
+## Yayın
+
+| | adres |
+|---|---|
+| **Canlı pano** | https://sualpsudas.github.io/eminevim-yonetici-ozeti/ |
+| depo | https://github.com/sualpsudas/eminevim-yonetici-ozeti (public) |
+
+GitHub Pages, `master` dalının kökünden servis ediliyor. Üç yardımcı dosya var:
+
+- `index.html` — kök adresi panoya yönlendirir, böylece paylaşılan link kısa
+  kalır. Hem `meta refresh` hem `location.replace` var; biri engellenirse
+  öbürü çalışıyor, ikisi de olmazsa elle tıklanacak bağlantı görünüyor.
+- `robots.txt` + panodaki `<meta name="robots" content="noindex, nofollow">`
+  — **linki bilen açar, arama motorları indekslemez.** Pano şirket markalı
+  olduğu ve rakamlar örnek olduğu için böyle seçildi. Arama sonuçlarında
+  çıkması istenirse ikisi de kaldırılır.
+- `.nojekyll` — Pages dosyaları Jekyll'den geçirmeden olduğu gibi servis etsin.
+
+> **Depo PUBLIC.** Ücretsiz planda GitHub Pages yalnız public depoda
+> çalışıyor; "herkesin tıklayıp açabildiği link" istendiği için bilerek
+> public yapıldı. Yani **hem pano hem kaynak kod URL'yi bilen herkese
+> açık.** Gerçek veri bağlandığında bu kurulum yeniden düşünülmeli:
+> o noktada depo private'a alınıp Pages için GitHub Pro'ya geçmek ya da
+> şirket içi bir sunucuya taşımak gerekir.
+
+**Gizli bir ikinci kopya** Claude Artifact olarak da duruyor
+(claude.ai/artifact/3G8R8iK2bQ66ptbu2rzWmk): varsayılanı gizli, yalnız sahibi
+ve erişim verdiği kişiler açabiliyor, görüntülemek için claude.ai oturumu
+gerekiyor.
+
 ## Ortamlar
 
 Masaüstü ve telefon için ayrı düzen vardır. 720 px altında grafikler daha kare bir
@@ -1600,7 +1630,7 @@ sonra beş sayfa × dört dönem taraması çalıştırılacak (hata, boş böl�
 - Ciro büyüklükleri temsilidir; gerçek mertebe `OLCEK` ile ayarlanacak.
 - Hedef toplamları kırılımlar arasında farklıdır (saha toplamı ≠ şube toplamı).
   Bu bilinçlidir — her kırılımın kendi hedefi vardır.
-- Versiyon kontrolü yoktur (git repo değil).
+- Versiyon kontrolünde: https://github.com/sualpsudas/eminevim-yonetici-ozeti
 - Saha ve bölge önizlemesi tek tıklamayla sabitlenir, ikinci tıkla ayrıntıya
   inilir; bu iki aşamalı hareket gerçek dokunmatik ekranda ayrıca
   doğrulanmalıdır.
