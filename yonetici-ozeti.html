@@ -85,12 +85,12 @@ body.genel-tek-ekran .paypan{border-left:1px solid var(--rule);padding-left:var(
 /* Gerçekleşen ciro rakamı yavaşça yanıp söner: ekranda bakılacak tek rakam
    odur, bekleme hâlinde de gözü oraya çeker. Renk (durum yeşili/kırmızısı)
    korunsun diye opaklık değil parlaklık oynatılıyor; sekme arka plandayken
-   ve gösteri sırasında durur. */
+   ve hareket azaltma tercihinde durur. */
 @keyframes ciroNabiz{
   0%,100%{filter:brightness(1) drop-shadow(0 0 0 rgba(0,114,76,0))}
   50%{filter:brightness(1.85) drop-shadow(0 0 12px rgba(0,114,76,.42))}
 }
-body.hazir:not(.gosteri-acik) .big{animation:ciroNabiz 2.8s ease-in-out infinite}
+body.hazir .big{animation:ciroNabiz 2.8s ease-in-out infinite}
 body.sekme-pasif .big{animation-play-state:paused}
 @media (prefers-reduced-motion:reduce){.big{animation:none}}
 
@@ -118,8 +118,12 @@ body.sekme-pasif .big{animation-play-state:paused}
 .stepper button{appearance:none;border:0;background:transparent;width:34px;height:32px;cursor:pointer;color:var(--ink-2)}
 .stepper button:hover:not(:disabled){background:var(--surf-2)}
 .stepper button:disabled{opacity:.3;cursor:default}
+/* Genişlik en uzun etikete göre SABİT, yoksa dönem düğmeleri arasında
+   gezinirken şerit git gel yapıyor: "25 Ağustos – 31 Ağustos" 132 px ama
+   "2026 yılı" 46 px (ölçülen, 12 px gövde). px değil em: --f4 kırılımla
+   değişiyor, oran değişmiyor. 11,01em metin + 2x10px padding -> 13em. */
 .stepper span{padding:0 10px;font-size:var(--f4);font-weight:600;white-space:nowrap;
-  min-width:118px;text-align:center;color:var(--mut)}
+  width:13em;text-align:center;color:var(--mut)}
 
 .filt{display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap}
 .filt:empty{display:none}
@@ -133,7 +137,7 @@ body.sekme-pasif .big{animation-play-state:paused}
 
 
 /* ---- bölüm ---- */
-.sec{margin:36px 0 0}
+section.sec{margin:36px 0 0}
 .gdz-ana > .sec:first-child,.gdz-yan > .sec:first-child{margin-top:0}
 .sec-h{display:flex;align-items:baseline;gap:12px;padding-bottom:9px;border-bottom:1px solid var(--rule);margin-bottom:15px;flex-wrap:wrap}
 .sec-h h2{font-size:var(--f3);font-weight:650}
@@ -238,7 +242,7 @@ body.sekme-pasif .big{animation-play-state:paused}
   0%,100%{transform:scale(1)}
   50%{transform:scale(1.14)}
 }
-body.hazir:not(.gosteri-acik) #hgBox .v{
+body.hazir #hgBox .v{
   display:inline-block;transform-origin:center;
   animation:hgOdak 3.2s ease-in-out infinite}
 body.sekme-pasif #hgBox .v{animation-play-state:paused}
@@ -278,14 +282,35 @@ body.sekme-pasif #hgBox .v{animation-play-state:paused}
 .spark .s-head .s-don{display:block;margin-top:1px;font-size:clamp(11px,0.88vw,14px);
   font-weight:600;color:var(--mut);opacity:.7;letter-spacing:.01em}
 .spark svg{display:block;width:100%;height:auto;max-height:clamp(135px,18vh,200px)}
-/* SVG üzerindeki sabit punto niteliklerini bir kademe büyüt; kalın değerler
+/* SVG üzerindeki sabit punto nitelikleri. Birimler viewBox birimi, ekrana
+   ölçekle iniyor: ölçülen 1600x920'de seyir SVG'si 628 px'e sığıyor, ölçek
+   0,628 — yani 15 birim ekranda yalnız 9,4 px, 16 birim 10,05 px çıkıyordu.
+   Gövde yazısı 14 px, grafik başlığı 17,9 px olduğu için rakamlar ikisinin
+   de altında kalıyor ve okunmuyordu. Bir kademe büyütüldü; kalın değerler
    eksen/saat etiketlerinden yine bir kademe daha büyük kalır. */
-.spark svg text{font-size:14px}
-.spark svg text[font-weight="700"]{font-size:15px}
-.spark svg .s-eksen{fill:#34433D;font-weight:700;font-size:15px}
-.spark svg .s-deger,.spark svg .k-deger{
-  font-size:16px;paint-order:stroke fill;stroke:#fff;stroke-width:3px;stroke-linejoin:round
+.spark svg text{font-size:15px}
+.spark svg text[font-weight="700"]{font-size:16px}
+.spark svg .s-eksen{fill:#34433D;font-weight:700;font-size:16px}
+/* text.s-deger, .s-deger DEĞİL: değer yazıları font-weight="700" niteliği
+   taşıyor ve yukarıdaki text[font-weight="700"] seçicisi (0,2,2) salt
+   .s-deger'den (0,2,1) daha güçlü — sıra sonra olsa da yenemiyordu, ölçülen:
+   buraya 18 yazılıyken rakamlar 16 birimde kalıyordu. text eklenince (0,2,2)
+   eşitlenip sıra kazanıyor. */
+.spark svg text.s-deger,.spark svg text.k-deger{
+  font-size:18px;paint-order:stroke fill;stroke:#fff;stroke-width:3px;stroke-linejoin:round
 }
+/* Veri etiketleri pano boştayken soldan sağa teker teker parlar. Rakamın
+   kendisi değişmiyor, yalnız sırayla "okunuyor" gibi oluyor — gözü grafiğin
+   üstünde soldan sağa, yani zaman yönünde gezdiriyor.
+   transform-box:fill-box ZORUNLU: SVG'de varsayılan referans kutusu
+   viewBox'ın kendisi, o yüzden scale etiketi kendi merkezinden değil
+   grafiğin köşesinden büyütüp yerinden fırlatıyor. */
+@keyframes degerParla{
+  0%,100%{transform:scale(1);filter:none}
+  38%{transform:scale(1.16);filter:brightness(.78)}
+}
+.spark svg text.parla{transform-box:fill-box;transform-origin:center;
+  animation:degerParla .92s cubic-bezier(.33,0,.5,1)}
 @keyframes yanipSon{
   0%,100%{opacity:.95;transform:scale(1)}
   50%{opacity:.52;transform:scale(.82)}
@@ -404,7 +429,7 @@ tr.toplam:hover td{background:var(--surf-2)}
   filter:drop-shadow(0 0 7px rgba(200,240,140,.95));
   stroke-dasharray:var(--seg,190px) var(--bos,2000px)}
 @keyframes isinAk{to{stroke-dashoffset:calc(-1 * var(--uz))}}
-body.hazir:not(.gosteri-acik) .yilan path{
+body.hazir .yilan path{
   animation:isinAk var(--sure,14s) linear var(--gec,0s) infinite}
 body.sekme-pasif .yilan path{animation-play-state:paused}
 /* ":not(body.hazir) .yilan" yazılmamalı: .gdz de body değil, kural her
@@ -412,7 +437,7 @@ body.sekme-pasif .yilan path{animation-play-state:paused}
 /* Yalnız Genel'de: diğer kırılımlarda .gdz sıfır boya iniyor ve
    preserveAspectRatio="none" yüzünden yollar tepeye yassılıp ince bir
    çizgi olarak sızabiliyor. genel-tek-ekran sınıfı yalnız Genel'de var. */
-body.gosteri-acik .yilan,body:not(.hazir) .yilan,
+body:not(.hazir) .yilan,
 body:not(.genel-tek-ekran) .yilan{visibility:hidden}
 @media (prefers-reduced-motion:reduce){.yilan{display:none}}
 .kart .ad{display:flex;align-items:center;gap:7px;font-size:clamp(var(--f3),1.05vw,17px);font-weight:650}
@@ -486,7 +511,16 @@ body:not(.genel-tek-ekran) .yilan{visibility:hidden}
    hem de kademe farkını daha okunur kılıyor. */
 .huni .kad .cub{position:relative;height:clamp(13px,2.2vh,24px);background:var(--surf-3);
   border-radius:2px;margin-top:3px}
-.huni .kad .cub i{position:absolute;left:0;top:0;bottom:0;border-radius:2px;
+/* Huni akışı: dolu kısmın içinden soldan sağa bir ışık geçer, üç kademe
+   180 ms arayla. Huni bir AKIŞ (randevu -> kart -> kayıt) ama ekranda
+   üç durağan çubuk gibi duruyordu; süpürme o sırayı gösteriyor. Değerlere
+   dokunmuyor, o yüzden "veri değişti" izlenimi vermiyor. */
+@keyframes huniAkis{from{transform:translateX(-110%)}to{transform:translateX(260%)}}
+.huni .kad .cub i.akis::after{content:"";position:absolute;inset:0;width:42%;
+  border-radius:2px;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.62),transparent);
+  animation:huniAkis 1.15s cubic-bezier(.4,0,.5,1)}
+.huni .kad .cub i{overflow:hidden;position:absolute;left:0;top:0;bottom:0;border-radius:2px;
   background:var(--brand);transition:width var(--ge)}
 .huni .don{font-size:clamp(11px,0.9vw,14px);color:var(--mut);text-align:right;margin:2px 0}
 .huni .don b{color:var(--ink-2);font-weight:700}
@@ -511,21 +545,44 @@ body:not(.genel-tek-ekran) .yilan{visibility:hidden}
 /* Harita kendi sütununda SOLA dayalı; sağında kalan yer bölge listesine
    veriliyor. Harita yükseklik sınırına göre ölçeklendiği için yanında her
    zaman epey boşluk kalıyordu. */
-.hrt-kol{min-width:0;align-self:stretch;display:flex;align-items:stretch;
-  gap:clamp(10px,1.2vw,22px)}
+.hrt-kol{position:relative;min-width:0;align-self:stretch;display:flex;
+  align-items:stretch;gap:clamp(10px,1.2vw,22px)}
 /* Sütunlar içeriğe göre değil KUTUYA göre boyutlanır (minmax(0,1fr)).
    max-content denendi: dar ekranda ızgara kutusunu dinlemeyip taşıyor ve
    yanındaki "Dönüşüm oranı" panelinin üstüne biniyordu — ölçülen 1600×900'de
    183 px, 1366×768'de 114 px. Ad sığmazsa üç noktayla kısalır. */
-/* Başlık satırın tepesinde, "Dönüşüm oranı" ve "Toplam kanal dağılımı"
-   başlıklarıyla aynı biçim ve aynı hizada; liste altında kalan yerde
-   dikeyde ortalanıyor. */
-.bolge-kol{position:relative;flex:1 1 auto;min-width:0;display:flex;flex-direction:column}
+/* Başlık satırın tepesinde, "Dönüşüm oranı" ve "Kanal dağılımı"
+   başlıklarıyla aynı biçim ve aynı hizada; liste de hemen başlığın
+   altından başlar. Ortalanınca, satır sayısı haritanın boyundan kısa
+   kaldığında başlıkla ilk satır arasında kocaman bir boşluk açılıyordu. */
+/* flex:0 1 auto — liste artan genişliği TUTMUYOR, kendi sütunları kadar yer
+   alıp kalanı haritaya bırakıyor (bkz. .harita-sar max-width). */
+/* Sütun KAYMAZ: başlık da satırlar da her zaman haritanın hemen sağındaki
+   aynı yerde başlar, ilk sütun dibe kadar iner, fazlası sağdaki sütundan
+   devam eder. Önce `margin-left:auto` ile bütün sütun sağa yapıştırılmıştı;
+   az bölgeli bir saha seçilince (tek sütun) "Bölgeler" başlığı da onunla
+   sağa kaçıyordu. position:relative de kaldırıldı — dönüş tuşu artık bu
+   sütuna değil .hrt-kol'a, yani kartın sağ kenarına dayanıyor. */
+.bolge-kol{flex:0 1 auto;min-width:0;display:flex;flex-direction:column}
 .bolge-kol h3{font-size:clamp(13px,1vw,16px);font-weight:650;color:var(--mut);
   margin-bottom:6px}
-.bolge-liste{flex:1 1 auto;min-width:0;max-width:100%;display:grid;
-  align-content:center;
-  grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);
+/* min-height:0 + overflow:hidden ZORUNLU: yoksa izgara kendi boyuyla
+   sütunu büyütüyor, büyüyen sütuna daha çok satır sığıyor ve satır
+   sayısı ölçümü kendi kuyruğunu kovalıyor. Ölçülen: serbest bırakılınca
+   20 satır seçiliyor, harita satırı 289,6 -> 349,4 px uzuyor ve tek-ekran
+   ölçeği 0,859 -> 0,822'ye düşüyor, yani bütün pano küçülüyor. Böyle
+   kutunun boyunu HARİTA belirliyor, liste ona uyuyor.
+   flex tabanı da 0 (auto değil): auto iken sütunun "varsayılan boyu"
+   listenin bütün içeriği oluyor ve align-items:stretch satırı yine ona
+   göre uzatıyordu — ölçülen 248,8 -> 288,2 px, satır sayısı her dönüşte
+   15'ten 18'e zıplıyordu. */
+.bolge-liste{flex:1 1 0;min-width:0;min-height:0;overflow:hidden;max-width:100%;display:grid;
+  align-content:start;
+  /* Sütun geni 1fr DEĞİL, tavanlı: 1fr listeye verilen bütün genişliği
+     bölüşüyordu, ölçülen 1600x920'de sütun 185 px çıkıyor ve ad ile değer
+     arasında gereksiz boşluk kalıyordu. Tavanla sütun daralır, boşalan yer
+     haritaya geçer. max-content denenmemesinin gerekçesi yukarıda. */
+  grid-auto-flow:column;grid-auto-columns:minmax(0,clamp(120px,10.3vw,172px));
   gap:0 clamp(12px,1.2vw,24px);font-size:clamp(11px,0.9vw,15px);line-height:1.18;perspective:600px}
 /* Satır boyu sıkı: 11 satır + "Bölgeler" başlığı haritanın boyuna sığmalı,
    yoksa harita satırı uzuyor ve tek-ekran ölçeği bütün panoyu küçültüyor
@@ -542,23 +599,32 @@ body:not(.genel-tek-ekran) .yilan{visibility:hidden}
   text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2);font-weight:600}
 .bolge-liste .btl{margin-left:auto;font-weight:700;white-space:nowrap;color:var(--ink);
   padding:0 7px;border-radius:3px;transition:background .45s cubic-bezier(.22,.61,.36,1)}
-.bolge-liste .hg-iz{display:none;position:relative;width:96px;height:10px;
+/* Çubuk 96 -> 60 px: boşalan 36 px sütun başına isim kutusuna gidiyor
+   (64 -> 100 px). Ölçüm ve gerekçe README'de. */
+.bolge-liste .hg-iz{display:none;position:relative;width:60px;height:10px;
   border-radius:3px;background:#E1EBE5;overflow:visible}
 .bolge-liste .bsat.hg-yuz .hg-iz{display:block}
-.bolge-liste .bsat.hg-yuz .btl{width:96px;padding:0;background:none}
+.bolge-liste .bsat.hg-yuz .btl{width:60px;padding:0;background:none}
 .bolge-liste .hg-dol{display:block;height:100%;width:var(--hg-p,0%);
   border-radius:3px;background:var(--hg-renk,#00724C);transition:width .45s}
 .bolge-liste .hg-deger{position:absolute;z-index:1;top:-3px;
-  left:clamp(17px,var(--hg-p,0%),calc(100% - 17px));transform:translateX(-50%);
+  /* Kenar payı 17 -> 13 px: 60 px'lik çubukta 17+17 gezinme payını
+     26 px'e düşürüyordu, yüzde yazısı neredeyse hiç kımıldamayacaktı. */
+  left:clamp(13px,var(--hg-p,0%),calc(100% - 13px));transform:translateX(-50%);
   padding:0 2px;border-radius:2px;background:#fff;color:var(--brand-deep)}
 .bolge-liste .ciro-deger{display:block}
 .bolge-liste .bsat.hg-yuz .ciro-deger{display:none}
 /* Dönüşte yalnız değerler döner, satırların sırası hiç değişmez. */
-.bolge-liste .btl.cevir{animation:kutuCevir .55s cubic-bezier(.45,0,.25,1)}
+.bolge-liste .btl.cevir{animation:kutuCevir var(--cs,.52s) cubic-bezier(.45,0,.25,1)}
 .bolge-liste .bbos{border-bottom:0}
-/* Harita sütunun yarısını geçmiyor: geniş ekranda zaten kendi yüksekliğine
-   sığıyor, dar ekranda ise bütün yeri alıp listeye yer bırakmıyordu. */
-.harita-sar{padding:0;position:relative;flex:0 1 auto;max-width:52%;
+/* Harita sütunun yarısını geçmiyordu (52%): geniş ekranda zaten kendi
+   yüksekliğine sığıyor, dar ekranda ise bütün yeri alıp listeye yer
+   bırakmıyordu. Bölge sütunları daraltılınca boşalan genişlik buraya verildi
+   (52% -> 58%). Harita GENİŞLERKEN UZAMIYOR: boyu aşağıdaki
+   height:clamp() ile açıkça veriliyor, genişlik yalnız kutunun içindeki
+   letterbox boşluğunu yiyor. Yani satır boyu, dolayısıyla tek-ekran ölçeği
+   bundan etkilenmiyor — ölçümü README'de. */
+.harita-sar{padding:0;position:relative;flex:0 1 auto;max-width:58%;
   display:flex;align-items:center;justify-content:flex-start}
 /* Haritanın çizilen boyunu yükseklik sınırı belirliyor: viewBox 1,91:1
    olduğu için max-height, genişlik sınırından önce bağlanıyor ve yanlarda
@@ -583,11 +649,21 @@ body:not(.genel-tek-ekran) .yilan{visibility:hidden}
    olduğu için içerideki dikdörtgen tam haritanın eni kadar.
    pointer-events kapalı: hover ve balon etkilenmiyor. */
 #harita .hrt-parla{pointer-events:none}
+/* İl nabzı: pano boştayken en çok ciro yapan birkaç il sırayla kısa bir
+   nabız atar. Veriyi değiştirmiyor, yalnız haritanın canlı olduğunu
+   söylüyor. Önizleme açıkken (.vurgu) susuyor — o sırada haritanın kendi
+   vurgusu okunuyor ve iki işaret birbirine karışır. */
+@keyframes ilNabiz{
+  0%,100%{filter:none}
+  40%{filter:brightness(1.22) saturate(1.15)}
+}
+body.hazir .harita-sar:not(.vurgu) .il.nabiz{
+  animation:ilNabiz 1.6s cubic-bezier(.33,0,.5,1)}
 @keyframes haritaParla{
   0%,62%{transform:translateX(-1160px)}
   100%{transform:translateX(1160px)}
 }
-body.hazir:not(.gosteri-acik) #harita .hrt-parla{
+body.hazir #harita .hrt-parla{
   animation:haritaParla 9.5s cubic-bezier(.38,0,.22,1) 2.4s infinite}
 body.sekme-pasif #harita .hrt-parla{animation-play-state:paused}
 @media (prefers-reduced-motion:reduce){#harita .hrt-parla{display:none}}
@@ -703,25 +779,26 @@ body.sekme-pasif #harita .hrt-parla{animation-play-state:paused}
 .clegend i{display:inline-block;width:18px;height:0;border-top-width:3px;border-top-style:solid;vertical-align:middle;margin-right:6px}
 .clegend i.blok{height:10px;border:0;background:var(--good);border-radius:1px}
 
-/* ---- gösteri ---- */
-.gosteri{appearance:none;border:1px solid var(--rule);background:#fff;border-radius:var(--r);
-  width:36px;height:32px;cursor:pointer;color:var(--brand);flex:0 0 auto;
-  display:flex;align-items:center;justify-content:center;
-  transition:background .15s,color .15s,border-color .15s}
-.gosteri[hidden]{display:none}   /* display:flex hidden özniteliğini ezmesin */
-.gosteri:hover{background:var(--brand-soft)}
-.gosteri.acik{background:var(--brand);border-color:var(--brand);color:#fff}
-.gosteri .dur{display:none}
-.gosteri.acik .oynat{display:none}
-.gosteri.acik .dur{display:block}
 
 /* KPI kutuları gösteri sırasında yatay eksende dönerek içerik değiştirir. */
 .pair{perspective:700px}
+/* Dönüş iki ayrı fazdır ve yumuşatması ASİMETRİK: çıkışta hızlanır
+   (ease-in), tam yan dönmüşken içerik değişir, inişte yavaşlar (ease-out).
+   Gerçek bir kartın dönüşü böyledir; tek bir simetrik eğri iki fazı birden
+   yönetince hareket plastik duruyordu.
+   Opaklık düşüşü KALDIRILDI: 88 derecede panel %20 opaklığa iniyordu ve
+   dönmek yerine "yanıp sönmüş" gibi görünüyordu. Tam 90 derecede kenarına
+   geldiği için zaten görünmez oluyor, soldurmaya gerek yok. Onun yerine
+   yan dönmüşken hafifçe koyulaşıyor — ışık açısı değişmiş gibi.
+   İçerik takası tam %50'de olmalı; çağıran yerler süreyi ikiye bölüp
+   öyle zamanlıyor (bkz. CEVIR_SURE). */
 @keyframes kutuCevir{
-  0%{transform:rotateX(0deg);opacity:1}
-  45%{transform:rotateX(88deg);opacity:.2}
-  55%{transform:rotateX(-88deg);opacity:.2}
-  100%{transform:rotateX(0deg);opacity:1}
+  0%  {transform:rotateX(0deg);   filter:brightness(1);
+       animation-timing-function:cubic-bezier(.45,.05,1,.6)}
+  49.9%{transform:rotateX(90deg);  filter:brightness(.88)}
+  50% {transform:rotateX(-90deg); filter:brightness(.88);
+       animation-timing-function:cubic-bezier(0,.5,.3,1)}
+  100%{transform:rotateX(0deg);   filter:brightness(1)}
 }
 .pair > div.cevir{animation:kutuCevir var(--cs,.62s) cubic-bezier(.45,0,.25,1)}
 /* Seyrin sağ yarısı da aynı biçimde dönüyor: kayıt sayısı ↔ randevu sayısı. */
@@ -729,14 +806,24 @@ body.sekme-pasif #harita .hrt-parla{animation-play-state:paused}
 /* Dönen iki yüzün sağ üstünde elle çevirme tuşu. Bekleme modu kendiliğinden
    çeviriyor; bu tuş istenildiği anda öbür yüze geçmeyi sağlıyor. Sönük
    duruyor, üstüne gelince beliriyor — sunumda göze batmasın. */
-.yuz-tus{position:absolute;top:5px;right:7px;z-index:4;appearance:none;
+/* Dönüş tuşunun YANINDA nereye döneceğinin adı. ↻ işareti "bu kutu
+   dönüyor" diyor ama neye döneceğini söylemiyordu; hangi ölçünün geleceği
+   ancak dönünce anlaşılıyordu. Etiket ile tuş tek sarmalda: konumlama
+   sarmalda, tuş artık akışın içinde. Etiket tuştan solda, çünkü tuş sağ
+   üst köşeye yapışık. */
+.yuz-sar{position:absolute;top:5px;right:7px;z-index:4;
+  display:flex;align-items:center;gap:6px}
+.yuz-hedef{font-size:clamp(10px,0.8vw,12px);font-weight:650;color:var(--mut);
+  white-space:nowrap;opacity:.7;transition:opacity .15s,color .15s}
+.yuz-sar:hover .yuz-hedef{opacity:1;color:var(--brand)}
+.yuz-tus{position:static;flex:0 0 auto;appearance:none;
   width:25px;height:25px;border-radius:50%;cursor:pointer;line-height:1;
   border:1px solid var(--rule);background:#fff;color:var(--mut);
   font-size:14px;display:flex;align-items:center;justify-content:center;
   opacity:.4;transition:opacity .15s,background .15s,color .15s}
-.yuz-tus:hover{opacity:1;background:var(--brand-soft);color:var(--brand);
-  border-color:var(--brand)}
-body.gosteri-acik .yuz-tus{display:none}
+.yuz-sar:hover .yuz-tus,.yuz-tus:hover{opacity:1;background:var(--brand-soft);
+  color:var(--brand);border-color:var(--brand)}
+
 
 /* KPI bloğunun üçüncü yüzü: teslimat. Karta ortalı tek satır; ayrı bir
    yazı karakteri ve parlak yeşille dört kutudan bilerek ayrışıyor —
@@ -756,10 +843,21 @@ body.gosteri-acik .yuz-tus{display:none}
 }
 body.hazir .tes-yuz{animation:tesNabiz 3.4s ease-in-out infinite;
   transform-origin:center}
+/* Giriş oynarken nabzı bastır: iki animasyon aynı transform'u yazıyor. */
+body.hazir .tes-yuz.giris{animation:yuzGir var(--cg,.22s) cubic-bezier(0,.5,.3,1)}
 body.sekme-pasif .tes-yuz{animation-play-state:paused}
 @media (prefers-reduced-motion:reduce){.tes-yuz{animation:none}}
 /* Teslimat yüzündeyken dört kutu yer tutar ama görünmez. */
 .hero-r.tes .pair{visibility:hidden}
+/* Teslimat PAT DİYE GELMESİN. Dönüş animasyonu .pair kutularının üzerinde,
+   teslimat ise kardeş bir katman; kutular dönüşün orta noktasında görünmez
+   olunca kalan yarı boşa oynuyor ve yazı hiç dönmeden beliriyordu. Katman
+   dönüşün İKİNCİ yarısını kendisi oynuyor: tam kenarından açılıyor.
+   Çıkışta düzeltme gerekmiyor — orta noktada kutular geri gelip dönüşün
+   ikinci yarısını zaten oynuyorlar. */
+@keyframes yuzGir{from{transform:rotateX(-90deg);filter:brightness(.88)}
+                  to{transform:rotateX(0deg);filter:brightness(1)}}
+.tes-yuz.giris{animation:yuzGir var(--cg,.22s) cubic-bezier(0,.5,.3,1)}
 .spark .s-yari.cevir{animation:kutuCevir var(--cs,.66s) cubic-bezier(.45,0,.25,1)}
 
 /* ---- geçişler ----
@@ -780,21 +878,6 @@ body.sekme-pasif .tes-yuz{animation-play-state:paused}
 .kart .ad .kad{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .kart .hg .ort{font-size:12px;color:var(--mut);font-weight:600;margin-left:6px}
 
-/* Kartın arka yüzü: gösterinin son aşamasında kart dönüyor ve o sahanın
-   bölgeleri dönem cirosuyla birlikte görünüyor. */
-.kartlar.dikey{perspective:900px}
-.kart.cevir{animation:kutuCevir var(--cs,.55s) cubic-bezier(.45,0,.25,1)}
-.kart .arka{display:none;text-align:left}
-.kart.arkada .arka{display:block}
-.kart.arkada > .ad,.kart.arkada > .v,.kart.arkada > .hg,
-.kart.arkada > .bar,.kart.arkada > dl{display:none}
-.kart .arka .abas{font-size:calc(clamp(11px,0.95vw,15px) * var(--ko,1));font-weight:700;
-  color:var(--ink);padding-bottom:calc(4px * var(--ko,1));
-  margin-bottom:calc(4px * var(--ko,1));border-bottom:1px solid var(--rule-soft)}
-.kart .arka .asat{display:flex;align-items:baseline;gap:8px;line-height:1.5;
-  font-size:calc(clamp(10px,0.86vw,14px) * var(--ko,1))}
-.kart .arka .asat span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)}
-.kart .arka .asat b{margin-left:auto;font-weight:700;white-space:nowrap}
 
 /* ---- açılış ----
    Yalnız ilk yüklemede çalışır: body.acilis sınıfı ciz("ilk") ile konur,
@@ -895,7 +978,7 @@ body.acilis #spark text.tahmin:not(#suAnYazi){
   .seviye button{flex:1 1 0;padding:9px 6px}
   .zaman{flex:1 1 100%;justify-content:space-between;margin-left:0}
   .tabs button{padding:9px 10px}
-  .stepper span{min-width:0;padding:0 8px}
+  .stepper span{width:12.6em;padding:0 8px}   /* dar ekranda da sabit, yalnız padding kısık */
   .filt select{max-width:none;flex:1 1 130px}
   .filt label{flex:1 1 100%}
   .hero-l,.hero-r{padding:18px 16px}
@@ -946,13 +1029,6 @@ body.acilis #spark text.tahmin:not(#suAnYazi){
           <span id="donemAd">—</span>
           <button id="next" aria-label="Sonraki dönem">&#9654;</button>
         </div>
-        <button class="gosteri" id="gosteri" aria-pressed="false"
-                aria-label="Gösteriyi başlat" title="Gösteri: adetler ve saha turu">
-          <svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true" focusable="false">
-            <path class="oynat" d="M2.6 1.6 L10 6 L2.6 10.4 Z" fill="currentColor"/>
-            <rect class="dur" x="2.6" y="2.6" width="6.8" height="6.8" rx="1" fill="currentColor"/>
-          </svg>
-        </button>
       </div>
     </div>
     <div class="satir filt" id="filt"></div>
@@ -995,9 +1071,12 @@ body.acilis #spark text.tahmin:not(#suAnYazi){
         <div class="tes-yuz" id="tesYuz" hidden aria-hidden="true">
           <b id="tesSayi">—</b><span>teslimat</span>
         </div>
-        <button type="button" class="yuz-tus" id="kpiTus"
-                title="KPI değerleri ↔ organizasyon adetleri"
-                aria-label="Kutuları çevir">&#10227;</button>
+        <span class="yuz-sar">
+          <span class="yuz-hedef" id="kpiHedef"></span>
+          <button type="button" class="yuz-tus" id="kpiTus"
+                  title="KPI değerleri → organizasyon adetleri → teslimat"
+                  aria-label="Kutuları çevir">&#10227;</button>
+        </span>
         <div class="pair">
           <div id="hgBox">
             <div class="k" id="hgK">Hedefe göre</div>
@@ -1024,15 +1103,24 @@ body.acilis #spark text.tahmin:not(#suAnYazi){
     </div>
     <div class="spark" id="sparkSatir">
       <div class="s-yari">
-        <div class="s-head"><h3>Ciro</h3><span class="s-don" id="sparkDon"></span></div>
+        <span class="yuz-sar">
+          <span class="yuz-hedef" id="solHedef"></span>
+          <button type="button" class="yuz-tus" id="solTus"
+                  title="Ciro ↔ kayıt sayısı"
+                  aria-label="Sol grafiği çevir">&#10227;</button>
+        </span>
+        <div class="s-head"><h3 id="solBas">Ciro</h3><span class="s-don" id="sparkDon"></span></div>
         <svg id="spark" viewBox="0 0 1000 200" role="img" aria-label="Dönem içi ciro seyri"></svg>
       </div>
       <div class="s-yari">
-        <button type="button" class="yuz-tus" id="sagTus"
-                title="Kayıt sayısı ↔ randevu sayısı"
-                aria-label="Grafiği çevir">&#10227;</button>
-        <div class="s-head"><h3 id="kytBas">Kayıt sayısı</h3><span class="s-don" id="kytDon"></span></div>
-        <svg id="kytSpark" viewBox="0 0 1000 200" role="img" aria-label="Dönem içi kayıt sayısı"></svg>
+        <span class="yuz-sar">
+          <span class="yuz-hedef" id="sagHedef"></span>
+          <button type="button" class="yuz-tus" id="sagTus"
+                  title="Randevu sayısı ↔ kart sayısı"
+                  aria-label="Sağ grafiği çevir">&#10227;</button>
+        </span>
+        <div class="s-head"><h3 id="kytBas">Randevu sayısı</h3><span class="s-don" id="kytDon"></span></div>
+        <svg id="kytSpark" viewBox="0 0 1000 200" role="img" aria-label="Dönem içi randevu sayısı"></svg>
       </div>
     </div>
   </section>
@@ -1045,8 +1133,11 @@ body.acilis #spark text.tahmin:not(#suAnYazi){
           <div class="il-balon" id="ilBalon"></div>
         </div>
         <div class="bolge-kol">
-          <button type="button" class="yuz-tus" id="bolTus"
-                  title="H/G ↔ ciro" aria-label="Bölge değerlerini çevir">&#10227;</button>
+          <span class="yuz-sar">
+            <span class="yuz-hedef" id="bolHedef"></span>
+            <button type="button" class="yuz-tus" id="bolTus"
+                    title="H/G ↔ ciro" aria-label="Bölge değerlerini çevir">&#10227;</button>
+          </span>
           <h3>Bölgeler</h3>
           <div class="bolge-liste" id="bolgeListe" aria-label="Bölgelere göre ciro"></div>
         </div>
@@ -1057,7 +1148,7 @@ body.acilis #spark text.tahmin:not(#suAnYazi){
         <p class="huni-not">Randevudan kayda kadar dönem içi dönüşüm.</p>
       </div>
       <div class="paypan">
-        <h3 id="payBaslik">Toplam kanal dağılımı</h3>
+        <h3 id="payBaslik">Kanal dağılımı</h3>
         <svg id="payHalka" viewBox="0 0 200 200" role="img" aria-label="Şube ve saha kanalı payı"></svg>
         <div class="pay-leg" id="payLeg"></div>
         <p class="pay-not">Kanal seçiminden bağımsız; her zaman iki kanalın toplamı.</p>
@@ -1330,12 +1421,31 @@ function yeni(tip,ad,ust){
     hed :{tum:new Float64Array(12),      spy:new Float64Array(12)},
     gecen:{tum:new Float64Array(12),     spy:new Float64Array(12)}};
 }
+/* Haritanın yanındaki bölge listesinde satır dar: ölçülen 1600x900'de isim
+   kutusu 100 px, en uzun ad ("Muğla–Batı Akdeniz") 130 px istiyor. Orada
+   gösterilmek üzere kısa ad; TAM ad bütün öteki sayfalarda, satırın
+   title'ında ve aria etiketinde olduğu gibi kalıyor. Yalnız sığmayanlar
+   burada — listede olmayan ad kendi tam hâliyle yazılır. */
+const BOLGE_KISA={
+  "İstanbul Anadolu 1":"İst. Anadolu 1",
+  "İstanbul Anadolu 2":"İst. Anadolu 2",
+  "İstanbul Avrupa 1":"İst. Avrupa 1",
+  "İstanbul Avrupa 2":"İst. Avrupa 2",
+  "İstanbul Avrupa 3":"İst. Avrupa 3",
+  "İstanbul Kuzey":"İst. Kuzey",
+  "Muğla–Batı Akdeniz":"Muğla–B. Akd.",
+  "Kayseri–Nevşehir":"Kayseri–Nevş.",
+  "Diyarbakır–Doğu":"Diyarbakır–D.",
+  "Hatay–Osmaniye":"Hatay–Osman.",
+  "Güney Marmara":"G. Marmara"
+};
 const KOK=yeni("kok","Tüm Eminevim",null);
 const SUBELER=[],BOLGELER=[],PERSONEL=[];
 KOK.perf=1;
 SAHALAR.forEach(function(ad){const s=yeni("saha",ad,KOK);s.perf=0.95+rnd()*0.11;KOK.cocuk.push(s);});
 BOLGE_TANIM.forEach(function(bt){
   const sa=KOK.cocuk[bt.s], b=yeni("bolge",bt.ad,sa);
+  b.kisa=BOLGE_KISA[bt.ad]||bt.ad;
   b.perf=sa.perf*(0.93+rnd()*0.15); sa.cocuk.push(b); BOLGELER.push(b);
   bt.su.forEach(function(tanim){
     const [ad,plaka]=tanim.split("|");
@@ -1608,7 +1718,7 @@ function degisimSinif(v){return v===null?"":(v>=0?"ok":"no");}
 /* ===== DURUM ===== */
 const SEVIYELER=["genel","saha","bolge","sube","personel"];
 const SEV_AD={saha:{c:"Saha",t:"saha"},bolge:{c:"Bölge",t:"bölge"},sube:{c:"Şube",t:"şube"},personel:{c:"Personel",t:"personel"}};
-const S={ sagSeyir:"kyt",kpiYuz:"kpi",bolgeYuz:"hg",kanal:"tum",per:"gun",ofs:0,seviye:"genel",onizleme:null,
+const S={ solSeyir:"ciro",sagSeyir:"rnd",kpiYuz:"kpi",bolgeYuz:"hg",kanal:"tum",per:"gun",ofs:0,seviye:"genel",onizleme:null,
          secimSabit:null,secimHover:null,bolgeListeKap:null,
          filtre:{saha:null,bolge:null,sube:null},
          sirala:"donemCiro",yon:-1,ara:"",limit:60,
@@ -1829,10 +1939,6 @@ function ciz(neden){
      boyutta yapılır, yeni ölçek çizimin sonunda tekrar hesaplanır. */
   ekranSigdirSifirla();
   beklemeSifirla();
-  /* Gösteri KPI kutularına kendi metnini yazıyor; yeniden çizim onu ezmeden
-     önce durdurulur. NEDEN'den önce çağrılır, çünkü gösteriyi durdurmak
-     sahaVurgula() üzerinden NEDEN'e dokunuyor. */
-  if(GOSTERI.acik && neden!=="gosteri") gosteriDurdur(true);
   onizlemeSifirla();
   NEDEN = neden || "veri";
   if(NEDEN==="ilk" && !SAKIN.matches){
@@ -1917,7 +2023,6 @@ function cizSeviye(){
     b.setAttribute("aria-pressed", b.dataset.s===S.seviye?"true":"false");
   });
   /* Gösteri ciro kartı ile saha kartlarını kullanıyor; yalnız Genel'de var. */
-  const g=$("gosteri"); if(g) g.hidden = S.seviye!=="genel";
 }
 function cizZaman(per){
   document.querySelectorAll('.tabs button').forEach(function(b){
@@ -2159,29 +2264,63 @@ function seyirBaslik(per){
   return String(YIL);
 }
 
+/* Her ölçünün adı tek yerde: başlık, aria etiketi ve dönüş tuşunun yanındaki
+   hedef etiketi hep buradan okunuyor. */
+const SEYIR_AD={ciro:"Ciro", kyt:"Kayıt sayısı", rnd:"Randevu sayısı", kart:"Kart sayısı"};
+const SEYIR_ETIKET={ciro:"Dönem içi ciro seyri", kyt:"Dönem içi kayıt sayısı",
+                    rnd:"Dönem içi randevu sayısı", kart:"Dönem içi kart sayısı"};
+
 function cizSeyir(kap,k,per,o){
-  const gunMu = per.tip==="gun";
-  /* Başlıklar sabit — ölçünün adı. Dönem ikisinin de altında silik yazar;
-     açıklama satırları (lejant / "kesik çizgi: …") kaldırıldı. */
+  /* Başlıklar sabit değil — gösterilen ölçünün adı. Dönem ikisinin de
+     altında silik yazar; açıklama satırları kaldırıldı. */
   const don = seyirBaslik(per);
   $("sparkDon").textContent = don;
   $("kytDon").textContent = don;
-  if(gunMu) cizSpark(kap,k,per);
-  else cizGrafik(kap,k,per,o,{svg:$("spark"), leg:null, not:null});
-  if(acilisMi()) cizgiCizdir($("spark"));
+  solSeyirCiz(kap,k,per,o);
   sagSeyirCiz(kap,k,per);
 }
 
-/* Seyrin sağ yarısı iki ölçü arasında dönüyor: kayıt sayısı ↔ randevu
-   sayısı. Hangisinin çizileceği S.sagSeyir'de; bekleme modu bunu çevirip
-   yarıyı döndürüyor, yeniden çizimlerde ise olduğu gibi korunuyor. */
+/* İKİ YARI DA DÖNÜYOR.
+   Sol: ciro ↔ kayıt sayısı — tutar ile onu üreten kayıt adedi aynı yerde.
+   Sağ: randevu ↔ kart sayısı — huninin ilk iki kademesi (randevu → kart).
+   Böylece soldaki yarı "sonuç", sağdaki "sonuca giden yol" oluyor.
+   Hangi yüzün açık olduğu S.solSeyir / S.sagSeyir'de durur; yeniden çizim
+   onu bozmaz, bekleme modu ile tuşlar aynı yolu kullanır. */
+function solSeyirCiz(kap,k,per,o){
+  per=per||donem(); kap=kap||kapsam(); k=k||S.kanal;
+  const alan=S.solSeyir, sv=$("spark");
+  const bas=$("solBas"); if(bas) bas.textContent=SEYIR_AD[alan];
+  if(sv) sv.setAttribute("aria-label", SEYIR_ETIKET[alan]);
+  if(alan==="ciro"){
+    /* Ciro tarafı Gün'de saatlik kesitli özel grafiği kullanıyor. */
+    if(per.tip==="gun") cizSpark(kap,k,per);
+    else cizGrafik(kap,k,per,o||olcum(kap,k,per),{svg:sv, leg:null, not:null});
+    if(acilisMi()) cizgiCizdir(sv);
+  }else{
+    cizKayit(kap,k,per,{svg:sv, not:null}, alan);
+  }
+  yuzHedefYaz();
+}
 function sagSeyirCiz(kap,k,per){
   per=per||donem(); kap=kap||kapsam(); k=k||S.kanal;
-  const rnd = S.sagSeyir==="rnd";
-  const bas=$("kytBas"); if(bas) bas.textContent = rnd ? "Randevu sayısı" : "Kayıt sayısı";
-  const sv=$("kytSpark");
-  if(sv) sv.setAttribute("aria-label", rnd ? "Dönem içi randevu sayısı" : "Dönem içi kayıt sayısı");
-  cizKayit(kap,k,per,{svg:sv, not:null}, rnd?"rnd":"kyt");
+  const alan=S.sagSeyir, sv=$("kytSpark");
+  const bas=$("kytBas"); if(bas) bas.textContent=SEYIR_AD[alan];
+  if(sv) sv.setAttribute("aria-label", SEYIR_ETIKET[alan]);
+  cizKayit(kap,k,per,{svg:sv, not:null}, alan);
+  yuzHedefYaz();
+}
+
+/* Dönüş tuşlarının yanındaki hedef adları. Tek kaynak: her tuşun SIRADAKİ
+   yüzü. Dört tuşun hepsi aynı işlevden besleniyor, böylece bir yüz eklenince
+   etiket kendiliğinden doğru kalıyor. */
+const KPI_YUZ_AD={kpi:"KPI değerleri", adet:"Organizasyon adetleri", teslimat:"Teslimat"};
+function yuzHedefYaz(){
+  const yaz=function(id,metin){ const el=$(id); if(el) el.textContent=metin; };
+  const sonraKpi=KPI_YUZ[(KPI_YUZ.indexOf(S.kpiYuz)+1) % KPI_YUZ.length];
+  yaz("kpiHedef", KPI_YUZ_AD[sonraKpi]);
+  yaz("solHedef", SEYIR_AD[S.solSeyir==="ciro" ? "kyt" : "ciro"]);
+  yaz("sagHedef", SEYIR_AD[S.sagSeyir==="rnd" ? "kart" : "rnd"]);
+  yaz("bolHedef", S.bolgeYuz==="hg" ? "Ciro" : "Hedefe göre");
 }
 
 /* Kayıt seyrinin dilimleri. Ciro tarafıyla aynı okuma mantığı:
@@ -2230,9 +2369,12 @@ function kayitDilim(d,k,per,alan){
    ciro tarafındaki birikimli çizgiyle karışmasın, iki ölçü bakışta ayrılsın.
    Her sütunun rakamı üstünde yazar; dilimleme bunu mümkün kılacak şekilde
    seçildi (en çok 12 sütun). Hafta'da hafta içi ile hafta sonu iki öbek. */
+/* Huni sırası randevu → kart → kayıt; renkler de o sırayı izliyor:
+   turkuazdan (--fc) laciverte (--ink), kart ortada duran ara ton. */
+const KAYIT_RENK={rnd:"#2B8C8A", kart:"#2F6B7A", kyt:"#1E3856"};
 function cizKayit(kap,k,per,el,alan){
   alan=alan||"kyt";
-  const renk = alan==="rnd" ? "#2B8C8A" : "#1E3856";
+  const renk = KAYIT_RENK[alan] || KAYIT_RENK.kyt;
   const dl=kayitDilim(kap,k,per,alan), n=dl.length;
   const W2=SEYIR.W, H=SEYIR.H, L=SEYIR.L, R=SEYIR.R, T=SEYIR.T, B=SEYIR.B;
   const haftaMi = per.tip==="hafta" && n>5;
@@ -2336,9 +2478,23 @@ function cizSpark(kap,k,per){
   const X=i=>L+i*(W2-L-R)/(nk.length-1);
   const Y=v=>H-B-((v-alt)/aralik)*(H-T-B);
 
-  let duz="", kesik="", g="";
+  /* Yollar ÖNCE kuruluyor: alan dolgusunun taban çizgisinden hemen sonra,
+     "şu an" noktasından ve çizgilerden önce basılması gerekiyor — yoksa
+     yarı saydam dolgu noktanın üstüne biniyor. */
+  let duz="", kesik="", sonGercek=-1;
+  nk.forEach(function(n,i){
+    const nokta=X(i).toFixed(1)+" "+Y(n.v).toFixed(1);
+    if(!n.tahmin){ duz+=(duz?"L":"M")+nokta; sonGercek=i; }
+    else { if(!kesik && i>0){ const o=nk[i-1]; kesik="M"+X(i-1).toFixed(1)+" "+Y(o.v).toFixed(1); } kesik+="L"+nokta; }
+  });
+
+  let g="";
   g+='<line x1="'+L+'" y1="'+(H-B)+'" x2="'+(W2-R)+'" y2="'+(H-B)+
      '" stroke="#AEB7B1" stroke-width="1.2"/>';
+  if(duz && sonGercek>0){
+    g+=alanTanimi("spark-alan","#00724C");
+    g+=alanYolu(duz, X(0), X(sonGercek), H-B, "spark-alan");
+  }
 
   /* Şu an: yanıp sönen kırmızı nokta, yanında akan saat. Gerçekleşenin
      nerede bittiğini işaretler; konumu saatle birlikte ilerler. */
@@ -2349,11 +2505,6 @@ function cizSpark(kap,k,per){
     g+='<text id="suAnYazi" x="'+(yer.x+8).toFixed(1)+'" y="'+(yer.y+4)+
        '" font-size="13" font-weight="700" fill="#C0392B">'+ss(canliSaat())+'</text>';
   } else { SPARK_GEO=null; }
-  nk.forEach(function(n,i){
-    const nokta=X(i).toFixed(1)+" "+Y(n.v).toFixed(1);
-    if(!n.tahmin) duz+=(duz?"L":"M")+nokta;
-    else { if(!kesik && i>0){ const o=nk[i-1]; kesik="M"+X(i-1).toFixed(1)+" "+Y(o.v).toFixed(1); } kesik+="L"+nokta; }
-  });
   if(duz) g+='<path d="'+duz+'" fill="none" stroke="#00724C" stroke-width="2.5" stroke-linejoin="round"/>';
   if(kesik) g+='<path class="kesik" d="'+kesik+'" fill="none" stroke="#2B8C8A" stroke-width="2.5" stroke-dasharray="6 5" stroke-linejoin="round"/>';
 
@@ -2706,6 +2857,27 @@ function etiketAdimi(genislik,n,yaklasikPx){
    daha yüksek ve okunaklı bir alana yayılıyor. */
 const SEYIR={W:1000,H:200,L:32,R:36,T:30,B:30};
 
+/* Birikimli ciro çizgisinin ALTINDAKİ alan. 628 px genişlikte 2,5–3 px'lik
+   tek bir çizgi grafiği boş gösteriyordu; dolgu alanı doldurup "ne kadar yol
+   alındı" hissini güçlendiriyor. Hedef çizgisi, tahmin projeksiyonu, noktalar
+   ve etiketler olduğu gibi kalıyor — dolgu YALNIZ çizginin altına giriyor,
+   üstüne hiçbir şey eklemiyor, o yüzden hiçbir okuma kaybolmuyor.
+   Gradyan kimliği SVG başına: aynı sayfada hem Genel'in grafiği hem saha
+   bloklarının grafikleri var, sabit bir id olsa çakışırdı. */
+function alanTanimi(id,renk){
+  return '<defs><linearGradient id="'+id+'" x1="0" y1="0" x2="0" y2="1">'+
+    '<stop offset="0" stop-color="'+renk+'" stop-opacity=".28"/>'+
+    '<stop offset="1" stop-color="'+renk+'" stop-opacity=".02"/>'+
+    '</linearGradient></defs>';
+}
+/* cizgi: "M..L.." biçiminde hazır yol. Alan, yolun iki ucundan taban
+   çizgisine inip kapanıyor. */
+function alanYolu(cizgi,x0,x1,taban,id){
+  if(!cizgi) return "";
+  return '<path d="'+cizgi+'L'+x1.toFixed(1)+' '+taban+'L'+x0.toFixed(1)+' '+taban+
+         'Z" fill="url(#'+id+')" stroke="none"/>';
+}
+
 /* Genel ekranın dönem içi seyri.
 
    Hafta ve Ay birikimlidir: dönem başından o ana kadarki toplam. Aynı
@@ -2847,13 +3019,22 @@ function cizGrafikBirikim(kap,k,per,o,el){
   const dz=durum(o.seyir);
   const renk = el.renk || (dz==="ok"?"#00724C":(dz==="no"?"#9B342C":"#8A6410"));
 
+  /* Gerçekleşen yol önce kurulup alan dolgusu basılıyor: dolgu eksenin
+     üstünde ama çizgilerin ve noktaların altında kalmalı. */
+  let pg="";
+  if(son>=0) for(let i=0;i<=son;i++) pg+=(pg?"L":"M")+ax.X(i).toFixed(1)+" "+ax.Y(kg[i]).toFixed(1);
+  if(pg && son>0){
+    const aid=(el.svg&&el.svg.id?el.svg.id:"grafik")+"-alan";
+    g+=alanTanimi(aid,renk);
+    g+=alanYolu(pg, ax.X(0), ax.X(son), H-B, aid);
+  }
+
   if(proj.length>1){
     let pp=""; proj.forEach(function(q){ pp+=(pp?"L":"M")+ax.X(q.i).toFixed(1)+" "+ax.Y(q.v).toFixed(1); });
     g+='<path d="'+pp+'" fill="none" stroke="#2B8C8A" stroke-width="2.5" stroke-dasharray="6 5" stroke-linejoin="round"/>';
   }
 
   if(son>=0){
-    let pg=""; for(let i=0;i<=son;i++) pg+=(pg?"L":"M")+ax.X(i).toFixed(1)+" "+ax.Y(kg[i]).toFixed(1);
     g+='<path d="'+pg+'" fill="none" stroke="'+renk+'" stroke-width="3" stroke-linejoin="round"/>';
 
     /* birikimin o güne kadarki tutarı noktanın üstünde */
@@ -2917,7 +3098,7 @@ function secimGoster(hedef,listeKap){
   $("kapsamEt").textContent = hedef ? hedef.ad : "Türkiye Geneli";
   $("secCiro").classList.toggle("onizleme", !!hedef);
   $("secCiro").classList.toggle("sabit", !!S.secimSabit && !S.secimHover);
-  const eskiKap=S.bolgeListeKap;
+  const eskiKap=S.bolgeListeKap||KOK;
   S.bolgeListeKap=listeKap||KOK;
   if(hedef===S.onizleme && eskiKap===S.bolgeListeKap) return;
   S.onizleme=hedef;
@@ -2927,7 +3108,10 @@ function secimGoster(hedef,listeKap){
   const yaz=function(){
     const per=donem(), kap=kapsam(), k=S.kanal, o=olcum(kap,k,per);
     cizCiro(kap,k,per,o); cizSeyir(kap,k,per,o); cizRandevu(kap,k,per,o);
-    cizHuni(kap,k,per); cizTeslimat(kap,k,per); cizPay(per); cizBolgeListe(per);
+    cizHuni(kap,k,per); cizTeslimat(kap,k,per); cizPay(per);
+    /* Bölge satırına hover, listenin kendi verisini değiştirmez. Aynı
+       listeyi yeniden çizmek sayı akışını kesip satırları oynatıyordu. */
+    if(eskiKap!==S.bolgeListeKap) cizBolgeListe(per);
   };
   /* Kutu dönüşü burada değil. Vurgulama — elle de, gösteride de — kutulara
      o sahanın KPI DEĞERLERİNİ yazar ve rakamlar akarak geçer. Adetlere
@@ -2940,12 +3124,11 @@ function secimUygula(){
   secimGoster(s?s.node:null,s?s.listeKap:null);
 }
 function secimHover(node,listeKap){
-  if(GOSTERI.acik) return;
+  beklemeGecikti();
   S.secimHover=node?{node:node,listeKap:listeKap||KOK}:null;
   secimUygula();
 }
 function secimSabitle(node,listeKap){
-  if(GOSTERI.acik) return;
   beklemeTemizle();
   S.secimSabit={node:node,listeKap:listeKap||KOK};
   S.secimHover=null;
@@ -2956,6 +3139,23 @@ function secimBosalt(){
   S.secimSabit=null; S.secimHover=null;
   secimUygula();
 }
+/* Sabit seçime İKİNCİ kez tıklamak bir alt kırılıma iner. Eskiden bu iş
+   çift tıklamadaydı; dokunmatikte çift dokunma hem zor hem görünmezdi, o
+   yüzden "bir kez daha seç" hareketine taşındı. Saha -> Bölge sayfası,
+   bölge -> Şube sayfası. Başka tipler (kök, şube) inilecek yer olmadığı
+   için sessizce yoksayılır. */
+function detayaIn(n){
+  if(!n) return false;
+  if(n.tip==="saha"){ S.filtre.saha=n; S.filtre.bolge=null; S.filtre.sube=null; S.seviye="bolge"; }
+  else if(n.tip==="bolge"){ S.filtre.saha=n.ust; S.filtre.bolge=n; S.filtre.sube=null; S.seviye="sube"; }
+  else return false;
+  S.limit=60; S.listeLimit=40;
+  window.scrollTo({top:0,behavior:"smooth"}); ciz("seviye");
+  return true;
+}
+/* Sabitlenmiş olan tam olarak bu düğüm mü? Hover'a bakmaz: hover sabit
+   seçimin üstüne önizleme bindirebiliyor, ama inme kararını sabit olan verir. */
+function sabitMi(n){ return !!S.secimSabit && S.secimSabit.node===n; }
 /* Gösteri mevcut saha sırasını doğrudan sürer. */
 function sahaVurgula(si){
   secimGoster(si===null?null:KOK.cocuk[si],si===null?null:KOK.cocuk[si]);
@@ -2965,19 +3165,23 @@ function sahaVurgula(si){
    Gösterinin birinci evresindeki sıralı dönüşten farklı: burada dördü
    birden ve daha hızlı döner. */
 let onizlemeZaman=null, onizlemeBitir=null;
+/* Dönüş süreleri tek yerde. Takas TAM yarıda olmalı (kutuCevir %50'de
+   kenarına geliyor); eskiden 440 ms'lik dönüşte 220 yerine elle yazılmış
+   sayılar vardı ve her blok biraz farklı kayıyordu. */
+const CEVIR_SURE={kpi:440, yari:660, bolge:520};
 function onizlemeCevir(yaz,sonra){
   clearTimeout(onizlemeZaman); clearTimeout(onizlemeBitir);
+  const sure=CEVIR_SURE.kpi;
   const kutular=document.querySelectorAll(".pair > div");
   kutular.forEach(function(el){
     el.classList.remove("cevir"); void el.offsetWidth;
-    el.style.setProperty("--cs","0.44s");
+    el.style.setProperty("--cs",(sure/1000)+"s");
     el.classList.add("cevir");
   });
-  /* Yarı yolda, kutu tam yan dönmüşken içerik değişir. */
-  onizlemeZaman=setTimeout(function(){ yaz(); if(sonra) sonra(); },220);
+  onizlemeZaman=setTimeout(function(){ yaz(); if(sonra) sonra(); }, sure/2);
   onizlemeBitir=setTimeout(function(){
     kutular.forEach(function(el){ el.classList.remove("cevir"); el.style.removeProperty("--cs"); });
-  },460);
+  }, sure+20);
 }
 
 /* Önizleme yalnız fare kartın ya da ilin üstündeyken yaşayan geçici bir
@@ -3002,19 +3206,10 @@ function onizlemeSifirla(){
 }
 
 
-/* ===== GÖSTERİ =====
-   Sunum için: ciro kartının sağındaki dört KPI kutusu sırayla dönerek
-   organizasyonun adetlerini gösterir, sonra KPI değerlerine geri döner ve
-   saha kartları tek tek — fare geziyormuş gibi — vurgulanır. Sonra başa sarar.
-
-   Sıra bilinçli: saha turunda sahaVurgula() cizCiro'yu doğrudan çağırıyor,
-   yani kutulardaki adetleri ezerdi. Önce adetler gösterilir, kutular geri
-   döner, tur ondan sonra başlar. */
-const GOSTERI_KUTU=["hgBox","oncBox","kalanBox","rndBox"];
-const GOSTERI={acik:false, zaman:[], kpi:null};
-
-function gosteriBekle(gecikme,is){ GOSTERI.zaman.push(setTimeout(is,gecikme)); }
-function gosteriTemizle(){ GOSTERI.zaman.forEach(clearTimeout); GOSTERI.zaman=[]; }
+/* ===== ORGANİZASYON ADETLERİ =====
+   KPI kutularının ikinci yüzü: kaç saha · bölge · şube · personel.
+   Eskiden bu blok gösteri (play) modunun da parçasıydı; gösteri
+   kaldırıldı, adet okuması bekleme modunun KPI yüzünde kullanılıyor. */
 
 /* Bir düğümün altındaki adetler. Kök için saha · bölge · şube · personel;
    bir sahanın altında saha olmadığı için orada dördüncü kutuya o sahanın
@@ -3052,8 +3247,10 @@ function adetler(d){
 
 /* Dört kutuya adetleri yazar. Kutunun kendi akışı varsa durdurulur, yoksa
    akış sonradan adedin üstüne kendi ara değerini basıyor. */
+/* KPI kutularının kimlikleri, sol üst -> sağ üst -> sol alt -> sağ alt. */
+const KPI_KUTU=["hgBox","oncBox","kalanBox","rndBox"];
 function adetleriYaz(liste){
-  GOSTERI_KUTU.forEach(function(id,i){
+  KPI_KUTU.forEach(function(id,i){
     const el=$(id); if(!el||!liste[i]) return;
     /* Yıl'da "Hedefe kalan" gizli; gösteri boyunca görünür olmalı. */
     el.classList.remove("bos"); el.removeAttribute("aria-hidden");
@@ -3067,166 +3264,53 @@ adetleriYaz.tek=function(el,x){
   el.querySelector(".d").textContent=x.d;
 };
 
-/* Kutuların o anki içeriği; gösteri bitince buradan geri yazılır. */
-function gosteriAnlik(){
-  return GOSTERI_KUTU.map(function(id){
-    const el=$(id);
-    return {id:id, bos:el.classList.contains("bos"),
-      k:el.querySelector(".k").textContent,
-      v:el.querySelector(".v").textContent,
-      vs:el.querySelector(".v").className,
-      d:el.querySelector(".d").textContent};
-  });
-}
-function gosteriGeriYaz(x){
-  const el=$(x.id); if(!el) return;
-  el.querySelector(".k").textContent=x.k;
-  const v=el.querySelector(".v"); akisiDurdur(v);
-  v.textContent=x.v; v.className=x.vs;
-  el.querySelector(".d").textContent=x.d;
-  el.classList.toggle("bos",x.bos);
-  if(x.bos) el.setAttribute("aria-hidden","true"); else el.removeAttribute("aria-hidden");
-}
-
-/* Dönme: içerik animasyonun tam ortasında, kutu yan dönmüşken değişir. */
-function gosteriCevir(el,yaz){
-  if(!el) return;
-  el.classList.remove("cevir"); void el.offsetWidth; el.classList.add("cevir");
-  gosteriBekle(300, yaz);
-  gosteriBekle(700, function(){ el.classList.remove("cevir"); });
-}
-
-/* Tek bir kartın arka yüzüne (ya da önüne) dönmesi. İçerik kart tam yan
-   dönmüşken, 270 ms'de değişir. Eskiden dört kart birden kademeli dönüyordu;
-   şimdi tur kart kart ilerlediği için her kart kendi sırasında dönüyor.
-   Zamanlama çağrıldığı ana göredir — gosteriTur içinde bir gosteriBekle'nin
-   içinden çağrılır. */
-function kartCevir(b,arkaya){
-  if(!b) return;
-  gosteriBekle(0, function(){
-    /* Kartın boyu dönüşte değişmemeli: arka yüz ön yüzden kısa olduğu için
-       #sahaKartlar ızgarasının satır payları yeniden dağılıyor ve dört kart
-       birden oynuyordu. O anki boy piksel olarak çivilenir, gösteri bitince
-       kartlariCoz() bırakır. */
-    kartlariSabitle();
-    b.classList.remove("cevir"); void b.offsetWidth;
-    b.style.setProperty("--cs","0.55s");
-    b.classList.add("cevir");
-  });
-  gosteriBekle(270, function(){ b.classList.toggle("arkada", arkaya); });
-  gosteriBekle(620, function(){
-    b.classList.remove("cevir"); b.style.removeProperty("--cs");
-  });
-}
-
-/* Kart boylarını o anki değerlerine çivilemek / bırakmak. Gösteri boyunca
-   kartlar arka yüze dönüp dönüyor; ızgara satırları buna göre oynamasın. */
-function kartlariSabitle(){
-  document.querySelectorAll("#sahaKartlar .kart").forEach(function(b){
-    if(!b.style.height) b.style.height=b.getBoundingClientRect().height.toFixed(1)+"px";
-  });
-}
-function kartlariCoz(){
-  document.querySelectorAll("#sahaKartlar .kart").forEach(function(b){
-    b.style.removeProperty("height");
-  });
-}
-
-/* Dört kutuyu çevirip bir düğümün adetlerini yazar (bölge · şube · personel
-   · il). Gösterinin saha turunda, sahanın KPI'ları okunduktan sonra. */
-function gosteriAdetCevir(d){
-  if(SAKIN.matches){ adetleriYaz(adetler(d)); return; }
-  onizlemeCevir(function(){}, function(){ adetleriYaz(adetler(d)); });
-}
-
-function gosteriTur(){
-  if(!GOSTERI.acik) return;
-  /* Sürmekte olan rakam akışları önce sabitlenir: hem anlık görüntü doğru
-     değerleri yakalasın, hem de akış sonradan adedin üstüne yazmasın. */
-  akislariBitir();
-  GOSTERI.kpi = gosteriAnlik();
-  const adet = adetler(KOK);
-  let t = 0;
-
-  /* 1) kutular sırayla adetlere döner: sol üst · sağ üst · sol alt · sağ alt */
-  GOSTERI_KUTU.forEach(function(id,i){
-    gosteriBekle(t, function(){
-      const el=$(id); if(!el) return;
-      /* Yıl'da "Hedefe kalan" gizli; gösteri boyunca görünür olmalı. */
-      el.classList.remove("bos"); el.removeAttribute("aria-hidden");
-      gosteriCevir(el, function(){ adetleriYaz.tek(el, adet[i]); });
-    });
-    t+=620;
-  });
-
-  /* 2) okunacak kadar durur, sonra KPI değerlerine geri döner */
-  t+=1800;
-  GOSTERI_KUTU.forEach(function(id,i){
-    gosteriBekle(t, function(){
-      gosteriCevir($(id), function(){ gosteriGeriYaz(GOSTERI.kpi[i]); });
-    });
-    t+=380;
-  });
-
-  /* 3) saha kartları tek tek dolaşılır; her kart kendi içinde üç adım:
-       a) karta "gelinir" (sahaVurgula): haritada o sahanın illeri öne çıkar,
-          üstteki bloklar o sahaya filtrelenir ve KPI kutularında SAHANIN
-          KENDİ KPI'LARI okunur — rakamlar akarak geçer, kutu dönmez,
-       b) kutular dönüp o sahanın adetlerini gösterir (bölge · şube ·
-          personel · il); kökte dördüncü kutu "saha"dır, bir sahanın altında
-          saha olmadığı için yerine kapsadığı il sayısı geliyor,
-       c) kartın kendisi arka yüzüne döner: o sahanın bölgeleri dönem
-          cirosuyla.
-     Kart ÖN YÜZÜNE DÖNMEDEN sıra öbür sahaya geçer — dönenler birikir,
-     turun sonunda hepsi birden öne çevrilir. Sıra böyle: önce sahayı
-     tanıyoruz (KPI), sonra büyüklüğünü (adetler), sonra içini (bölgeler). */
-  t+=900;
-  const kartlar=[].slice.call(document.querySelectorAll("#sahaKartlar .kart"));
-  kartlar.forEach(function(b,i){
-    gosteriBekle(t, function(){ sahaVurgula(i); });
-    t+=1500;                                   /* sahanın KPI'ları okunur */
-    gosteriBekle(t, function(){ gosteriAdetCevir(KOK.cocuk[i]); });
-    t+=1500;                                   /* adetler okunur */
-    gosteriBekle(t, function(){ kartCevir(b,true); });
-    t+=620+1700;                               /* dönüş + bölgeler okunur */
-  });
-
-  /* kartlar ön yüzlerine döner, sonra genele dönülür */
-  gosteriBekle(t, function(){
-    kartlar.forEach(function(b,i){ gosteriBekle(i*90, function(){ kartCevir(b,false); }); });
-  });
-  t+=(kartlar.length-1)*90+620+300;
-  gosteriBekle(t, function(){ sahaVurgula(null); kartlariCoz(); });
-
-  /* başa sar */
-  t+=1600;
-  gosteriBekle(t, function(){ if(GOSTERI.acik) gosteriTur(); });
-}
-
 /* ===== BEKLEME MODU =====
-   Ekran duvarda dururken kendi kendine dönen iki değişim. Gösteriden farkı:
-   burada saha kartları DÖNMEZ, kartlar yerinde kalır — yalnız ciro kartının
-   sağındaki dört KPI kutusu adetlere çevrilir ve seyrin sağ yarısı kayıt
-   sayısı ile randevu sayısı arasında döner. Aralar bilerek uzun; ekrana
-   sürekli bakılmıyor, ara ara göz atılıyor.
+   Pano duvarda dururken kendi kendine dönen değişimler. Kiosk dünyasında
+   buna "attract mode" deniyor: ekran boştayken ince, döngüsel hareketle
+   canlı olduğunu gösterir, biri dokununca hareket geri çekilir. Burada da
+   öyle: her ELLE çevirme ya da seçim sayacı baştan başlatıyor
+   (beklemeGecikti), yani kullanıcı panoyla uğraşırken kendi kendine hiçbir
+   şey oynamıyor.
 
-   Sıra: 20 sn'de bir sırayla biri. Yani her etki 40 sn'de bir geliyor.
-   Gösteri açıkken, Genel dışındaki kırılımlarda, saha önizlemesi sırasında,
-   sekme arka plandayken ve hareket azaltma tercihinde hiç çalışmıyor. */
-const BEKLE_ARA   = 20000;   /* iki etki arası */
-const BEKLE_ADET  = 6500;    /* KPI adetleri ne kadar durur */
-const BEKLE_RND   = 9000;    /* randevu grafiği ne kadar durur */
+   Dört etki sırayla:
+     1) ciro kartının sağındaki dört KPI kutusu adetlere/teslimata döner
+     2) seyrin iki yarısı sırayla kendi öteki ölçüsüne döner
+        (sol: ciro ↔ kayıt, sağ: randevu ↔ kart)
+     3) bölge listesi H/G ile ciro arasında döner — yukarıdan aşağı dalga
+     4) harita saha turu: dört saha sırayla vurgulanır, üst bloklar o sahaya
+        önizleme yapar
+   Bunların dışında kendi başına süren iki ince hareket var (il nabzı, huni
+   akışı); onlar sıraya girmiyor, bkz. ORTAM HAREKETLERİ.
+
+   Sıra: 15 sn'de bir tek etki. Yani her etki 60 sn'de bir geliyor. Aralar
+   bilerek uzun; ekrana sürekli bakılmıyor, ara ara göz atılıyor.
+   Genel dışındaki kırılımlarda, saha seçimi sabitken, sekme arka plandayken
+   ve hareket azaltma tercihinde hiç çalışmıyor. */
+const BEKLE_ARA   = 15000;   /* son etkileşimden / etkiden sonra bu kadar sükûnet */
+const BEKLE_ADET  = 5000;    /* her KPI yüzü ne kadar durur — üç yüz = 15 sn,
+                                bir bekleme aralığına tam oturuyor. 6.500'dü:
+                                üç yüz 19,5 sn sürüyor, yani sayacı aşıyordu. */
+const BEKLE_RND   = 9000;    /* ikinci ölçü ne kadar durur */
+const BEKLE_SAHA  = 3000;    /* harita turunda her saha ne kadar durur */
 const BEKLE={zaman:[], kpiKar:null};
 let beklemeSayac=0;
+/* Son etkileşim ya da son etkinin bitiş anı. Sayaç setInterval ile değil
+   bunun üstünden yürüyor: sabit bir setInterval, elle çevirmenin hemen
+   ardından tetiklenebiliyordu. */
+let beklemeSonHareket=Date.now();
 
 function beklemeBekle(gecikme,is){ BEKLE.zaman.push(setTimeout(is,gecikme)); }
-function beklemeTemizle(){ BEKLE.zaman.forEach(clearTimeout); BEKLE.zaman=[]; }
+function beklemeTemizle(){ BEKLE.zaman.forEach(clearTimeout); BEKLE.zaman=[];
+  beklemeSonHareket=Date.now(); }
+/* Kullanıcı bir şeye dokundu: sayacı baştan başlat, sürmekte olan etkiyi
+   olduğu yerde bırak (yarıda kesmek daha rahatsız ediciydi). */
+function beklemeGecikti(){ beklemeSonHareket=Date.now(); }
 /* Yeniden çizim her şeyi baştan yazıyor; yarıda kalan geri yazmalar iptal
    edilir ve durum başlangıç hâline döner. */
 function beklemeSifirla(){
-  beklemeTemizle(); yariTemizle();
+  beklemeTemizle(); yariTemizle(); nabizDurdur(); etiketDurdur();
   BEKLE.kpiKar=null;
-  S.sagSeyir="kyt"; S.kpiYuz="kpi"; S.bolgeYuz="hg";
+  S.solSeyir="ciro"; S.sagSeyir="rnd"; S.kpiYuz="kpi"; S.bolgeYuz="hg";
   bolTemizle();
   const sg=document.querySelector(".hero-r"); if(sg) sg.classList.remove("tes");
   const ty=$("tesYuz"); if(ty) ty.hidden=true;
@@ -3234,15 +3318,150 @@ function beklemeSifirla(){
     x.classList.remove("cevir"); });
 }
 function beklemeUygun(){
-  return document.body.classList.contains("hazir") && !GOSTERI.acik &&
-         S.seviye==="genel" && !S.onizleme && !document.hidden &&
+  return document.body.classList.contains("hazir") &&
+         S.seviye==="genel" && !S.onizleme && !S.secimSabit && !document.hidden &&
          !SAKIN.matches && BEKLE.zaman.length===0;
 }
+/* Tik sık çalışır (1 sn) ama etkiyi ancak son hareketten BEKLE_ARA kadar
+   sonra başlatır. Böylece elle çevirme sayacı gerçekten sıfırlıyor. */
+const BEKLE_ETKI=[beklemeKpi, beklemeSeyir, beklemeBolge, beklemeHaritaTur];
 function beklemeTik(){
+  ortamTik();
   if(!beklemeUygun()) return;
-  beklemeSayac++;
-  const n=beklemeSayac%3;
-  if(n===1) beklemeKpi(); else if(n===2) beklemeSagSeyir(); else beklemeBolge();
+  if(Date.now()-beklemeSonHareket < BEKLE_ARA) return;
+  BEKLE_ETKI[beklemeSayac++ % BEKLE_ETKI.length]();
+}
+
+/* ===== ORTAM HAREKETLERİ =====
+   Sıraya GİRMEYEN, kendi sayaçlarıyla süren ince hareketler: il nabzı, huni
+   akışı ve halka süpürmesi. Üçü de veriye dokunmuyor — ekrandaki hiçbir
+   sayı değişmiyor, yalnız panonun canlı olduğu görünüyor. Sıraya girmemeleri
+   bilinçli: sıradaki dört etki "bak, başka bir ölçü" diyor, bunlar yalnız
+   "buradayım" diyor, ikisi aynı kuyruğa konmamalı.
+   Hepsi aynı 1 sn'lik tikten besleniyor; ayrı setInterval açmıyoruz. */
+const NABIZ_TIK=3, HUNI_TIK=14, HALKA_TIK=22, ETIKET_TIK=9;   /* saniye cinsinden */
+const ETIKET_ARA=95;   /* iki etiket arası gecikme */
+const NABIZ_SAYI=6;
+let ortamSayac=0, nabizSira=0, nabizIller=null;
+function ortamUygun(){
+  return document.body.classList.contains("hazir") && S.seviye==="genel" &&
+         !S.onizleme && !document.hidden && !SAKIN.matches;
+}
+/* Etiket parlaması. Etiketler her çizimde yeniden üretildiği için
+   zamanlayıcılar ayrı tutulup yeniden çizimde iptal ediliyor; yoksa silinmiş
+   bir elemana sınıf eklemeye çalışıyordu. */
+let etiketZaman=[];
+function etiketDurdur(){
+  etiketZaman.forEach(clearTimeout); etiketZaman=[];
+  document.querySelectorAll("#sparkSatir text.parla")
+    .forEach(function(x){ x.classList.remove("parla"); });
+}
+function etiketTik(){
+  etiketDurdur();
+  /* İki yarı birlikte, her yarı kendi içinde soldan sağa. x niteliğine göre
+     sıralanıyor — DOM sırası çizim sırası, her zaman soldan sağa değil. */
+  ["spark","kytSpark"].forEach(function(id){
+    const sv=$(id); if(!sv) return;
+    const et=[].slice.call(sv.querySelectorAll("text.s-deger,text.k-deger"))
+      .sort(function(a,b){ return (+a.getAttribute("x")||0)-(+b.getAttribute("x")||0); });
+    et.forEach(function(el,i){
+      etiketZaman.push(setTimeout(function(){
+        el.classList.remove("parla"); void el.getBoundingClientRect();
+        el.classList.add("parla");
+        etiketZaman.push(setTimeout(function(){ el.classList.remove("parla"); }, 1000));
+      }, i*ETIKET_ARA));
+    });
+  });
+}
+function nabizDurdur(){
+  document.querySelectorAll("#haritaSar .il.nabiz")
+    .forEach(function(x){ x.classList.remove("nabiz"); });
+  nabizIller=null; nabizSira=0;
+}
+/* En çok ciro yapan iller. Şubelerin ili üzerinden toplanıyor; sonuç
+   önbelleğe alınıyor, her nabızda yeniden hesaplanmıyor. */
+function nabizIlleriBul(){
+  const per=donem(), k=S.kanal, sonG=Math.min(per.bit,BUGUN);
+  const top={};
+  SUBELER.forEach(function(su){
+    if(!su.il) return;
+    top[su.il]=(top[su.il]||0) + (sonG>=per.bas ? topArr(su.ciro[k],per.bas,sonG) : 0);
+  });
+  return Object.keys(top).sort(function(a,b){ return top[b]-top[a]; }).slice(0,NABIZ_SAYI);
+}
+function nabizTik(){
+  if(!nabizIller || !nabizIller.length) nabizIller=nabizIlleriBul();
+  if(!nabizIller.length) return;
+  const plaka=nabizIller[nabizSira++ % nabizIller.length];
+  const el=document.querySelector('#haritaSar .il[data-plaka="'+plaka+'"]');
+  if(!el) return;
+  el.classList.remove("nabiz"); void el.getBoundingClientRect();
+  el.classList.add("nabiz");
+  setTimeout(function(){ el.classList.remove("nabiz"); }, 1700);
+}
+function huniTik(){
+  const dol=document.querySelectorAll("#huni .kad .cub i");
+  dol.forEach(function(el,i){
+    setTimeout(function(){
+      el.classList.remove("akis"); void el.getBoundingClientRect();
+      el.classList.add("akis");
+      setTimeout(function(){ el.classList.remove("akis"); }, 1200);
+    }, i*180);
+  });
+}
+/* Halka 0'dan kendi oranına yeniden süpürülür. Açılışta kullanılan yolun
+   aynısı (payYaylari'nın dolum parametresi); değer değişmediği için hiçbir
+   bilgi kaybolmuyor. */
+function halkaSupur(){
+  const h=$("payHalka");
+  if(!h || !h.__toplam || h.__oran===undefined) return;
+  const oran=h.__oran, toplam=h.__toplam, perAd=h.__perAd;
+  akisiDurdur(h);
+  h.__akis = akit(function(d){ h.innerHTML = payYaylari(oran, toplam, perAd, d); }, 0, 1, 900);
+  h.__son = oran;
+}
+function ortamTik(){
+  if(!ortamUygun()){ nabizDurdur(); etiketDurdur(); ortamSayac=0; return; }
+  ortamSayac++;
+  if(ortamSayac % NABIZ_TIK === 0) nabizTik();
+  if(ortamSayac % HUNI_TIK  === 0) huniTik();
+  if(ortamSayac % HALKA_TIK === 0) halkaSupur();
+  if(ortamSayac % ETIKET_TIK === 0) etiketTik();
+}
+/* ---- 4) Harita saha turu ----
+   Her saha için aynı koreografi, sırayla:
+
+     0 ms     karta "gelinir"  — haritada o sahanın illeri öne çıkar, saha
+                                 kartı vurgulanır, üst bloklar o sahaya
+                                 önizleme yapar, rakamlar akarak geçer
+     1300 ms  KPI kutuları     — dört kutu o sahanın ADETLERİNE döner
+     2900 ms  sol seyir        — ciro -> kayıt sayısı
+     3300 ms  sağ seyir        — randevu -> kart sayısı  (400 ms sonra: bir-iki)
+     4900 ms  bölge listesi    — H/G -> ciro, yukarıdan aşağı dalga
+     6200 ms  hepsi normale    — dördü birden başlangıç yüzüne döner
+     7400 ms  sonraki saha
+
+   Dört saha x 7,4 sn = ~30 sn. Tur 60 sn'de bir geldiği için pano turda
+   değilken yarım dakika sakin kalıyor. Kartlar DÖNMÜYOR — bu bir okuma
+   turu, gösteri değil.
+   Adım adım gecikmeler TUR_ADIM'da; değiştirmek isteyen tek yere bakar.
+   Önizleme açıkken beklemeUygun() false döndüğü için tur kendi kendini
+   bölmüyor; sonunda sahaVurgula(null) ile Türkiye geneline dönülüyor. */
+const TUR_ADIM={kpi:1300, sol:2900, sag:3300, bolge:4900, geri:6200, saha:7400};
+function beklemeHaritaTur(){
+  const n=KOK.cocuk.length;
+  for(let i=0;i<n;i++){
+    const t0=i*TUR_ADIM.saha;
+    beklemeBekle(t0,                   function(){ sahaVurgula(i); });
+    beklemeBekle(t0+TUR_ADIM.kpi,      function(){ kpiYuzeGec("adet"); });
+    beklemeBekle(t0+TUR_ADIM.sol,      function(){ solSeyreGec("kyt"); });
+    beklemeBekle(t0+TUR_ADIM.sag,      function(){ sagSeyreGec("kart"); });
+    beklemeBekle(t0+TUR_ADIM.bolge,    function(){ bolgeYuzeGec("ciro"); });
+    beklemeBekle(t0+TUR_ADIM.geri,     function(){
+      kpiYuzeGec("kpi"); solSeyreGec("ciro"); sagSeyreGec("rnd"); bolgeYuzeGec("hg");
+    });
+  }
+  beklemeBekle(n*TUR_ADIM.saha, function(){ sahaVurgula(null); beklemeTemizle(); });
 }
 /* Bölge değerleri ciroya döner, sonra H/G'ye geri. */
 function beklemeBolge(){
@@ -3259,14 +3478,32 @@ function kpiYuzUygula(){
   if(sag) sag.classList.toggle("tes", S.kpiYuz==="teslimat");
   if(tes) tes.hidden = S.kpiYuz!=="teslimat";
 }
-function kpiYuzCevir(){
-  S.kpiYuz = KPI_YUZ[(KPI_YUZ.indexOf(S.kpiYuz)+1) % KPI_YUZ.length];
+/* Belirli bir yüze geç. Tur, "normale dön" adımında hangi yüzde olduğuna
+   bakmadan kpi'ya dönebilmek için bunu kullanıyor; üç yüzlü bir kutuda
+   "geri al" diye bir şey yok, tek tek çevirmek gerekirdi. */
+function kpiYuzeGec(yuz){
+  if(S.kpiYuz===yuz) return;
+  S.kpiYuz = yuz;
+  yuzHedefYaz();
   akislariBitir();
+  const sure=CEVIR_SURE.kpi;
   const yaz=function(){
     const per=donem(), kap=kapsam(), k=S.kanal, o=olcum(kap,k,per);
     cizCiro(kap,k,per,o); cizRandevu(kap,k,per,o);
+    /* Orta nokta: teslimat katmanı buradan itibaren dönüşün ikinci
+       yarısını kendisi oynuyor. */
+    const tes=$("tesYuz");
+    if(tes && yuz==="teslimat"){
+      tes.classList.remove("giris"); void tes.getBoundingClientRect();
+      tes.style.setProperty("--cg",(sure/2/1000)+"s");
+      tes.classList.add("giris");
+      setTimeout(function(){ tes.classList.remove("giris"); tes.style.removeProperty("--cg"); }, sure/2+40);
+    }
   };
   if(SAKIN.matches) yaz(); else onizlemeCevir(yaz);
+}
+function kpiYuzCevir(){
+  kpiYuzeGec(KPI_YUZ[(KPI_YUZ.indexOf(S.kpiYuz)+1) % KPI_YUZ.length]);
 }
 function beklemeKpi(){
   /* Adetler → teslimat → başa: üç yüz de görülsün. */
@@ -3277,61 +3514,55 @@ function beklemeKpi(){
 /* Seyrin sağ yarısı randevu sayısına döner, sonra kayda geri. */
 /* Dönüş kendi zamanlayıcısını kullanıyor: elle çevirme bekleme modunun
    sırasını kilitlemesin. */
-let yariZaman=[];
-function yariTemizle(){ yariZaman.forEach(clearTimeout); yariZaman=[]; }
-function seyirYariCevir(sonra){
-  const yari=document.querySelector("#sparkSatir .s-yari + .s-yari");
+/* İki yarı bağımsız döndüğü için zamanlayıcılar da ayrı tutulur: sol yarının
+   dönüşü sağdakinin yarıda kalan geri yazmasını iptal etmesin. */
+const yariZaman=[[],[]];
+function yariTemizle(idx){
+  if(idx==null){ yariZaman.forEach(function(a,i){ a.forEach(clearTimeout); yariZaman[i]=[]; }); return; }
+  yariZaman[idx].forEach(clearTimeout); yariZaman[idx]=[];
+}
+function seyirYariCevir(idx,sonra){
+  const yari=document.querySelectorAll("#sparkSatir .s-yari")[idx];
   if(!yari){ sonra(); return; }
-  yariTemizle();
-  yari.classList.remove("cevir"); void yari.offsetWidth; yari.classList.add("cevir");
-  yariZaman.push(setTimeout(sonra,300));
-  yariZaman.push(setTimeout(function(){ yari.classList.remove("cevir"); },700));
+  const sure=CEVIR_SURE.yari;
+  yariTemizle(idx);
+  yari.classList.remove("cevir"); void yari.offsetWidth;
+  yari.style.setProperty("--cs",(sure/1000)+"s");
+  yari.classList.add("cevir");
+  yariZaman[idx].push(setTimeout(sonra, sure/2));
+  yariZaman[idx].push(setTimeout(function(){
+    yari.classList.remove("cevir"); yari.style.removeProperty("--cs"); }, sure+20));
 }
-function sagYuzCevir(){
-  S.sagSeyir = S.sagSeyir==="rnd" ? "kyt" : "rnd";
-  if(SAKIN.matches) sagSeyirCiz(); else seyirYariCevir(sagSeyirCiz);
+/* Belirli bir ölçüye geç. Tur "normale dön" adımında hangi yüzde olduğuna
+   bakmadan başlangıç ölçüsüne dönebilmek için bunları kullanıyor. */
+function solSeyreGec(alan){
+  if(S.solSeyir===alan) return;
+  S.solSeyir=alan;
+  yuzHedefYaz();
+  if(SAKIN.matches) solSeyirCiz(); else seyirYariCevir(0,solSeyirCiz);
 }
-function beklemeSagSeyir(){
-  sagYuzCevir();
-  beklemeBekle(BEKLE_RND, function(){ sagYuzCevir(); beklemeTemizle(); });
+function sagSeyreGec(alan){
+  if(S.sagSeyir===alan) return;
+  S.sagSeyir=alan;
+  yuzHedefYaz();
+  if(SAKIN.matches) sagSeyirCiz(); else seyirYariCevir(1,sagSeyirCiz);
 }
-setInterval(beklemeTik, BEKLE_ARA);
-
-function gosteriBaslat(){
-  if(GOSTERI.acik || S.seviye!=="genel") return;
-  S.secimSabit=null; S.secimHover=null;
-  secimGoster(null,null);
-  GOSTERI.acik=true;
-  document.body.classList.add("gosteri-acik");
-  const b=$("gosteri");
-  b.classList.add("acik"); b.setAttribute("aria-pressed","true");
-  b.setAttribute("aria-label","Gösteriyi durdur");
-  gosteriTur();
+function solYuzCevir(){ solSeyreGec(S.solSeyir==="ciro" ? "kyt" : "ciro"); }
+function sagYuzCevir(){ sagSeyreGec(S.sagSeyir==="rnd" ? "kart" : "rnd"); }
+/* Bekleme modunda SIRAYLA: önce sol yarı kayda döner ve geri gelir, sonra
+   sağ yarı karta döner ve geri gelir. Aynı karede iki hareket olmuyor, göz
+   tek değişimi takip ediyor. Araya 1,2 sn konuldu, yoksa soldaki geri
+   dönüşle sağdaki gidiş birbirine değiyor. Toplam 19,2 sn — bir sonraki
+   bekleme tikinden (20 sn) kısa. */
+const SEYIR_ARA = 1200;
+function beklemeSeyir(){
+  solYuzCevir();
+  beklemeBekle(BEKLE_RND,                     function(){ solYuzCevir(); });
+  beklemeBekle(BEKLE_RND   + SEYIR_ARA,       function(){ sagYuzCevir(); });
+  beklemeBekle(BEKLE_RND*2 + SEYIR_ARA,       function(){ sagYuzCevir(); beklemeTemizle(); });
 }
-function gosteriDurdur(cizmeden){
-  if(!GOSTERI.acik) return;
-  GOSTERI.acik=false; gosteriTemizle();
-  document.body.classList.remove("gosteri-acik");
-  const b=$("gosteri");
-  b.classList.remove("acik"); b.setAttribute("aria-pressed","false");
-  b.setAttribute("aria-label","Gösteriyi başlat");
-  kartlariCoz();
-  document.querySelectorAll(".pair > div").forEach(function(x){ x.classList.remove("cevir"); });
-  document.querySelectorAll("#sahaKartlar .kart").forEach(function(x){
-    x.classList.remove("cevir"); x.classList.remove("arkada"); x.style.removeProperty("--cs"); });
-  /* Yarıda kalmış kutular KPI değerlerine geri yazılır. */
-  if(GOSTERI.kpi) GOSTERI.kpi.forEach(gosteriGeriYaz);
-  const vardi = !!S.onizleme;
-  onizlemeSifirla();
-  /* ciz() içinden çağrıldığında zaten her şey yeniden çizilecek; tuşla
-     durdurulduğunda üstteki blokları Türkiye geneline döndürmek gerekiyor. */
-  if(!cizmeden && vardi){
-    NEDEN="filtre";
-    const per=donem(), kap=kapsam(), k=S.kanal, o=olcum(kap,k,per);
-    cizCiro(kap,k,per,o); cizSeyir(kap,k,per,o); cizRandevu(kap,k,per,o);
-    cizHuni(kap,k,per); cizTeslimat(kap,k,per); cizPay(per); cizBolgeListe(per);
-  }
-}
+/* 1 sn'lik tik; gerçek bekleme süresi beklemeTik içinde ölçülüyor. */
+setInterval(beklemeTik, 1000);
 
 /* ===== SATIŞ HUNİSİ =====
    Randevu → kart → kayıt. Üç kademe de adet; aralarındaki yüzde bir üst
@@ -3376,9 +3607,36 @@ function cizTeslimat(kap,k,per){
 /* Haritanın yanındaki bölge listesi. Kapsam neyse onun bölgeleri: kökte
    22 bölgenin tamamı, bir saha kartının üstüne gelinince yalnız o sahanın
    bölgeleri (cizPay ile aynı mantık, S.onizleme izleniyor).
-   Sütun sayısı satır yüksekliğine göre: 11 satırdan uzun liste ikiye,
-   22'den uzun olursa üçe bölünür — sığmayan satır kalmasın. */
+   SÜTUNLAR DENGELENMİYOR: ilk sütun kutunun dibine kadar iner, sığmayan
+   satırlar yandaki sütundan devam eder. Satır sayısı sabit değil, ölçülen
+   yükseklikten çıkar (bolgeSatirSayisi) — eskiden sabit 11'di ve 22 bölge
+   her zaman düzgün iki sütuna bölünüyordu; kutunun boyu haritaya bağlı
+   olduğu için o 11 satır bazen dibe varmıyor, boşluk bırakıyordu.
+   Aşağıdaki sabit yalnız İLK çizimdeki tahmin: o anda ölçülecek satır
+   henüz yok. */
 const BOLGE_SATIR = 11;
+/* Kutuya kaç satır sığar? Kutunun boyu haritaya bağlı, listenin kendi
+   içeriğine değil — o yüzden ölçüm listeyi büyütüp küçülten bir döngü
+   kurmuyor. Ölçü güvenilmezse (henüz çizilmemiş, boy sıfır) null döner ve
+   önceki satır sayısı korunur. */
+function bolgeSatirSayisi(kutu,n){
+  const kol=kutu.closest(".bolge-kol");
+  const bas=kol?kol.querySelector("h3"):null;
+  const ornek=kutu.querySelector(".bsat");
+  /* offsetHeight / clientHeight, getBoundingClientRect DEĞİL: pano tek ekrana
+     bir transform ile sığdırılıyor ve rect ölçeklenmiş boyu veriyor; ayrıca
+     değer dönüşü (.btl.cevir) sırasında satırı scaleY ile kısaltıyor.
+     Ölçülen: rect ile satır 14,58 px okunuyordu, dönüşün ortasında daha da
+     küçük — 18 satır seçilip 3 satır kırpılıyordu (taşma 46 px). offsetHeight
+     düzen boyunu verir, transform'u saymaz; kolH ile aynı uzayda kalıyor. */
+  const sh=ornek?ornek.offsetHeight:0;
+  const kolH=kol?kol.clientHeight:0;
+  let basH=0;
+  if(bas) basH=bas.offsetHeight+(parseFloat(getComputedStyle(bas).marginBottom)||0);
+  const bos=kolH-basH;
+  if(!(sh>0.5) || !(bos>sh)) return null;
+  return Math.max(1,Math.min(n,Math.floor(bos/sh)));
+}
 function cizBolgeListe(per){
   const kutu=$("bolgeListe"); if(!kutu) return;
   const kap = S.bolgeListeKap || KOK;
@@ -3393,7 +3651,8 @@ function cizBolgeListe(per){
      hedef tanımlı değil, orada H/G yüzü kendiliğinden ciroya düşer. */
   const veri=bl.map(function(n){
     const o=olcum(n,k,per);
-    return {n:n,ad:n.ad, c: sonG>=per.bas ? topArr(n.ciro[k],per.bas,sonG) : 0, hg:o.hg};
+    return {n:n,ad:n.ad, kisa:n.kisa||n.ad,
+            c: sonG>=per.bas ? topArr(n.ciro[k],per.bas,sonG) : 0, hg:o.hg};
   });
   const hgVar = veri.some(function(v){ return v.hg!==null && isFinite(v.hg); });
   const yuz = (S.bolgeYuz==="hg" && hgVar) ? "hg" : "ciro";
@@ -3404,18 +3663,28 @@ function cizBolgeListe(per){
                   : function(a,b){ return b.c-a.c; });
   kutu.__veri=veri;
 
-  const sutun=Math.max(1,Math.ceil(veri.length/BOLGE_SATIR));
-  const satir=Math.ceil(veri.length/sutun);
-  kutu.style.gridTemplateRows="repeat("+satir+",auto)";
+  /* Satır yüksekliği ancak iskelet kurulduktan sonra ölçülebiliyor. Önce
+     bilinen son değer (ilk çizimde BOLGE_SATIR tahmini) yazılır, iskeletten
+     sonra gerçek ölçüyle düzeltilir — ikisi aynı karede olduğu için ara
+     adım görünmüyor. Izgara önce yazılmazsa grid-auto-flow:column her
+     satırı kendi sütununa koyup listeyi yatayda taşırıyor. */
+  kutu.style.gridTemplateRows=
+    "repeat("+Math.min(kutu.__satir||BOLGE_SATIR, veri.length)+",auto)";
 
   const yeniIskelet=iskelet(kutu, veri.map(v=>v.ad).join("|"), function(){
     return veri.map(function(v,i){
-      return '<button type="button" class="bsat" data-i="'+i+'"><span class="bad">'+v.ad+
+      return '<button type="button" class="bsat" data-i="'+i+'"><span class="bad">'+v.kisa+
         '</span><span class="btl"><span class="hg-iz"><i class="hg-dol"></i><span class="hg-deger"></span></span>'+
         '<span class="ciro-deger"></span></span></button>';
     }).join("");
   });
   if(yeniIskelet) bicemiSabitle(kutu);
+
+  const olculenSatir=bolgeSatirSayisi(kutu,veri.length);
+  if(olculenSatir){
+    kutu.__satir=olculenSatir;
+    kutu.style.gridTemplateRows="repeat("+olculenSatir+",auto)";
+  }
 
   /* H/G çubuğu mutlak 0–100 ölçeğindedir; yazı gerçek yüzdeyi korur.
      Ciroda çubuk yoktur, renkler görünen bölgelerin cirosunu kıyaslar. */
@@ -3450,18 +3719,38 @@ function cizBolgeListe(per){
 let bolZaman=[];
 function bolTemizle(){ bolZaman.forEach(clearTimeout); bolZaman=[];
   document.querySelectorAll("#bolgeListe .btl.cevir").forEach(function(x){ x.classList.remove("cevir"); }); }
-function bolgeYuzCevir(){
-  S.bolgeYuz = S.bolgeYuz==="hg" ? "ciro" : "hg";
+/* Bölge listesi yukarıdan aşağı DALGA hâlinde dönüyor: her satır kendi
+   sırasında, 48 ms arayla. Eskiden 16 ms'ydi, gözle fark edilmiyordu —
+   hepsi birlikte dönmüş gibi duruyordu.
+   Dalganın mümkün olmasının sebebi: satırın İKİ YÜZÜ de zaten DOM'da.
+   cizBolgeListe her çizimde hem H/G çubuğunu hem ciro değerini yazıyor,
+   hangisinin görüneceğine satırdaki .hg-yuz sınıfı karar veriyor. O yüzden
+   tek bir toptan yeniden çizim yerine her satırın sınıfını kendi yarı
+   noktasında çevirmek yeterli — gerçek bir iki yüzlü dönüş. Sonda bir kez
+   cizBolgeListe çağrılıp durum normalleştiriliyor. */
+const BOLGE_DALGA=48;
+function bolgeYuzCevir(){ bolgeYuzeGec(S.bolgeYuz==="hg" ? "ciro" : "hg"); }
+function bolgeYuzeGec(yuz){
+  if(S.bolgeYuz===yuz) return;
+  S.bolgeYuz = yuz;
+  yuzHedefYaz();
   if(SAKIN.matches){ cizBolgeListe(donem()); return; }
   bolTemizle();
-  const b=[].slice.call(document.querySelectorAll("#bolgeListe .btl"));
-  b.forEach(function(x,i){
+  const hg = S.bolgeYuz==="hg";
+  const sure=CEVIR_SURE.bolge;
+  const sat=[].slice.call(document.querySelectorAll("#bolgeListe .bsat"));
+  sat.forEach(function(el,i){
+    const deger=el.querySelector(".btl");
     bolZaman.push(setTimeout(function(){
-      x.classList.remove("cevir"); void x.offsetWidth; x.classList.add("cevir");
-    }, i*16));
+      if(deger){ deger.classList.remove("cevir"); void deger.offsetWidth;
+                 deger.style.setProperty("--cs",(sure/1000)+"s");
+                 deger.classList.add("cevir"); }
+      /* Satır tam yan dönmüşken yüz değişir. */
+      bolZaman.push(setTimeout(function(){ el.classList.toggle("hg-yuz",hg); }, sure/2));
+    }, i*BOLGE_DALGA));
   });
-  bolZaman.push(setTimeout(function(){ cizBolgeListe(donem()); }, 230));
-  bolZaman.push(setTimeout(bolTemizle, 700+b.length*16));
+  const son = sat.length*BOLGE_DALGA + sure + 40;
+  bolZaman.push(setTimeout(function(){ cizBolgeListe(donem()); bolTemizle(); }, son));
 }
 
 /* Kanal payı: cironun ne kadarı şubeden, ne kadarı saha personelinden (SPY).
@@ -3475,11 +3764,8 @@ function cizPay(per,kapsamD,el){
   const saha   = sonG>=per.bas ? topArr(kap.ciro.spy,per.bas,sonG) : 0;
   const sube   = Math.max(0,toplam-saha);
 
-  /* Başlık "payı" değil "dağılımı" diyor: bu blok üstteki kanal filtresini
-     izlemiyor, her zaman iki kanalın toplamını bölüyor. Dipnotta yazıyordu
-     ama davranış beklenti dışı olduğu için başlığa taşındı. */
-  if(el.baslik) el.baslik.textContent =
-    kap===KOK ? "Toplam kanal dağılımı" : "Toplam kanal dağılımı · "+kap.ad;
+  /* Kapsam değişse de kart başlığı sabit kalır. */
+  if(el.baslik) el.baslik.textContent = "Kanal dağılımı";
 
   /* Halka sıfırlanıp yeniden çizilmez: şube payı eski orandan yenisine
      akar, yay ucu kayar. Önceki oran halkanın kendi üstünde tutulur, çünkü
@@ -3489,6 +3775,9 @@ function cizPay(per,kapsamD,el){
   akisiDurdur(h);
   const onceki=h.__oran;
   const yaz = x => { h.__son=x; h.innerHTML = payYaylari(x, toplam, per.ad); };
+  /* Halka süpürmesi (bekleme modu) buradan okuyor: yayları yeniden
+     üretebilmek için toplam ve dönem adı gerekiyor. */
+  h.__toplam=toplam; h.__perAd=per.ad;
   if(acilisMi() && toplam && onceki===undefined){
     /* Açılışta halka tepeden başlayıp saat yönünde yayılır. */
     h.__akis = akit(function(d){ h.innerHTML = payYaylari(oran, toplam, per.ad, d); }, 0, 1, 850);
@@ -3756,7 +4045,7 @@ function cizSahaDetay(k,per){
           '<svg id="sdSvg'+i+'" role="img" aria-label="'+v.n.ad+' dönem içi seyri"></svg>'+
         '</div>'+
         '<div class="sdet-pay">'+
-          '<h3>Toplam kanal dağılımı</h3>'+
+          '<h3>Kanal dağılımı</h3>'+
           '<svg id="sdPay'+i+'" viewBox="0 0 200 200" role="img" aria-label="'+v.n.ad+' kanal payı"></svg>'+
           '<div class="pay-leg" id="sdPayLeg'+i+'"></div>'+
         '</div>'+
@@ -3964,7 +4253,7 @@ function cizSahaKartlar(k,per){
   const yeni = iskelet(kutu, veri.map(v=>v.n.ad).join("|")+"|"+(yilMi?"yil":"donem"), function(){
     return veri.map(function(v,i){
       return '<button type="button" class="kart" data-i="'+i+'" aria-pressed="false" '+
-        'title="Tek tık: seç · çift tık: bölgelerine in" style="--sira:'+i+'">'+
+        'title="Tek tık: seç · tekrar tık: bölgelerine in" style="--sira:'+i+'">'+
         '<div class="ad"><span class="kad"></span><span class="pay"></span></div>'+
         '<div class="v"></div>'+
         '<div class="hg"><span class="hgv"></span>'+(yilMi?'<span class="ort">ort.</span>':'')+'</div>'+
@@ -3974,7 +4263,7 @@ function cizSahaKartlar(k,per){
           '<dt class="k1"></dt><dd class="d1"></dd>'+
           '<dt>Randevu</dt><dd class="d2"></dd>'+
           '<dt class="k3"></dt><dd class="d3"></dd>'+
-        '</dl><div class="arka"></div></button>';
+        '</dl></button>';
     }).join("");
   });
 
@@ -4018,9 +4307,6 @@ function cizSahaKartlar(k,per){
     const bl=v.n.cocuk.map(function(x){
       return {ad:x.ad, c: sonG>=per.bas ? topArr(x.ciro[k],per.bas,sonG) : 0};
     }).sort((a,c)=>c.c-a.c);
-    b.querySelector(".arka").innerHTML=
-      '<div class="abas">'+v.n.ad+' · '+bl.length+' bölge</div>'+
-      bl.map(x=>'<div class="asat"><span>'+x.ad+'</span><b>'+TL(x.c)+'</b></div>').join("");
   });
   kartSigdir();
 
@@ -4028,16 +4314,13 @@ function cizSahaKartlar(k,per){
     /* Kartın üstüne gelince haritada o sahanın illeri öne çıkar. */
     b.onmouseenter=function(){ if($("secHarita") && !$("secHarita").hidden) secimHover(kutu.__veri[i].n,kutu.__veri[i].n); };
     b.onmouseleave=function(){ if($("secHarita") && !$("secHarita").hidden) secimHover(null); };
-    /* Tek tıklama sabitler; çift tıklama ayrıntıya iner. */
+    /* Tek tıklama sabitler; aynı karta ikinci tıklama ayrıntıya iner.
+       Çift tıklama ayrı bir dinleyici istemiyor: ikinci click olayını
+       zaten bu dal yakalıyor. */
     b.onclick=function(ev){
       ev.stopPropagation();
       const n=kutu.__veri[+b.dataset.i].n;
-      secimSabitle(n,n);
-    };
-    b.ondblclick=function(){
-      S.filtre.saha=kutu.__veri[+b.dataset.i].n; S.filtre.bolge=null; S.filtre.sube=null;
-      S.seviye="bolge"; S.limit=60; S.listeLimit=40;
-      window.scrollTo({top:0,behavior:"smooth"}); ciz("seviye");
+      if(sabitMi(n)) detayaIn(n); else secimSabitle(n,n);
     };
   });
 }
@@ -4058,12 +4341,15 @@ document.querySelectorAll(".seviye button").forEach(function(b){
 document.querySelectorAll(".tabs button").forEach(function(b){
   b.onclick=function(){S.per=b.dataset.p;S.ofs=0;S.limit=60;S.listeLimit=40;ciz("donem");};
 });
-$("gosteri").onclick=function(){ GOSTERI.acik ? gosteriDurdur() : gosteriBaslat(); };
 /* Elle çevirme tuşları: bekleme modunun yaptığı dönüşü istenildiği anda
    yapar. Bekleme sayacına dokunmuyor, bir sonraki tur normal işliyor. */
-$("kpiTus").onclick=function(){ if(!GOSTERI.acik) kpiYuzCevir(); };
-$("sagTus").onclick=function(){ if(!GOSTERI.acik) sagYuzCevir(); };
-$("bolTus").onclick=function(){ if(!GOSTERI.acik) bolgeYuzCevir(); };
+/* Elle çevirme: sayaç baştan başlar (beklemeGecikti), yoksa bekleme modu
+   kullanıcının hemen ardından aynı kutuyu tekrar çevirebiliyordu. */
+function elleCevir(is){ return function(){ beklemeGecikti(); is(); }; }
+$("kpiTus").onclick=elleCevir(kpiYuzCevir);
+$("solTus").onclick=elleCevir(solYuzCevir);
+$("sagTus").onclick=elleCevir(sagYuzCevir);
+$("bolTus").onclick=elleCevir(bolgeYuzCevir);
 /* Bölge satırları yeniden üretilebildiği için olaylar listeye bağlanır. */
 const bolgeOlayKutu=$("bolgeListe");
 function bolgeOlaySatir(t){ return t && t.closest ? t.closest("#bolgeListe .bsat") : null; }
@@ -4080,7 +4366,11 @@ bolgeOlayKutu.addEventListener("mouseout",function(ev){
 bolgeOlayKutu.addEventListener("click",function(ev){
   const sat=bolgeOlaySatir(ev.target);
   const v=sat && this.__veri && this.__veri[+sat.dataset.i];
-  if(v){ ev.stopPropagation(); secimSabitle(v.n,S.bolgeListeKap||KOK); }
+  if(!v) return;
+  ev.stopPropagation();
+  /* Kartlarla aynı kural: ilk tık sabitler, ikincisi iner. Liste kapsamına
+     göre satır ya saha ya bölgedir; detayaIn ikisini de biliyor. */
+  if(sabitMi(v.n)) detayaIn(v.n); else secimSabitle(v.n,S.bolgeListeKap||KOK);
 });
 /* Seçim alanlarının dışına yapılan tek tıklama Genel görünümüne döner. */
 document.addEventListener("click",function(ev){

@@ -254,9 +254,66 @@ göre ölçeklendiği için yanında her zaman epey boşluk kalıyordu.
 - **Satır boyu sıkı (20 px):** 11 satır + başlık haritanın boyuna sığmalı.
   Gevşek bırakıldığında harita satırı 323 → **369 px**'e çıkıyor ve tek-ekran
   ölçeği bütün panoyu küçültüyordu (0,864 → 0,824).
-- Sütun sayısı satır sayısına göre: 11 satırdan uzun liste ikiye bölünüyor
-  (`BOLGE_SATIR`). Ölçülen: 1920×940'ta ve 1280×720'de 22 satır, 2 sütun,
-  taşma yok.
+- **Sütun KAYMAZ, yalnız dönüş tuşu sağa dayanır.** Başlık da satırlar da
+  her zaman haritanın hemen sağındaki aynı yerde başlar; ilk sütun dibe
+  kadar iner, fazlası sağdaki sütundan devam eder.
+
+  > Önce `margin-left:auto` ile bütün sütun sağa yapıştırılmıştı. Hata:
+  > az bölgeli bir saha seçilince (tek sütun) "Bölgeler" başlığı da onunla
+  > sağa kaçıyordu. Doğrusu, tuşun konumlanma bağlamını sütundan KARTA
+  > taşımak: `position:relative` `.bolge-kol`'dan alınıp `.hrt-kol`'a
+  > verildi. Ölçülen sonuç — 22 bölgede ve 6 bölgeli sahada başlığın sol
+  > kenarı ikisinde de haritadan 16,5 px, tuş ikisinde de kart kenarından
+  > 6 px, harita 490 px'i koruyor.
+- **Sığmayan isimler sağa yapışmakla çözülmüyor** — darboğaz listenin yeri
+  değil satırın içi. Ölçülen (1600×900, ölçeksiz px): satır 165, isim kutusu
+  **64** (H/G yüzü) / 72 (ciro yüzü), değer kutusu 96 / 88, aradaki boşluk 5.
+  En uzun ad ("Muğla–Batı Akdeniz") 130 px istiyordu; 22 addan 16'sı
+  kırpılıyordu. Tam sığması için satırın 231 px olması gerekiyordu, yani sütun
+  başına +66 px. İki kolla çözüldü, ikisi de düzenden feragat istemiyor:
+  - **H/G çubuğu 96 -> 60 px** (`.hg-iz`). Boşalan 36 px isme gitti:
+    **isim kutusu 64 -> 100 px**, kırpılan ad 16 -> 10. Yüzde yazısının
+    gezinme payı daralmasın diye kenar payı da 17 -> 13 px yapıldı.
+  - **Kısa ad tablosu** (`BOLGE_KISA`, ağaçta `b.kisa`). Yalnız sığmayan 11 ad
+    için: "İstanbul Anadolu 1" -> "İst. Anadolu 1", "Muğla–Batı Akdeniz" ->
+    "Muğla–B. Akd." gibi. **TAM ad korunuyor**: bütün öteki sayfalarda, satırın
+    `title`ında ve `aria-label`ında tam hâliyle duruyor — kısa ad yalnız bu
+    dar listenin gösterdiği metin. Tabloda olmayan ad kendi tam hâliyle yazılır.
+
+  Ölçülen sonuç: **H/G yüzünde hiç kırpılma yok** (0/22).
+- **Ciro yüzü hâlâ kırpıyor** (13/22): orada darboğaz sabit çubuk değil, tam
+  tutar yazısı. "₺28.848.453" `white-space:nowrap` ile 88 px istiyor ve isme
+  72 px kalıyor. Çözmek için tek kol var: bu listede kısa para biçimi
+  ("₺28,8 M"), ~45 px kazandırır. Bir biçim/kesinlik kararı olduğu için
+  yapılmadı; tam ad zaten `title`da.
+- **Sütunlar dengelenmiyor: ilk sütun dibe kadar iner, fazlası yana geçer.**
+  Satır sayısı sabit değil, `bolgeSatirSayisi()` ile ölçülen kutu boyundan
+  çıkar (`floor(boş ÷ satır boyu)`). Eskiden sabit `BOLGE_SATIR = 11`'di ve
+  22 bölge her zaman düzgün iki sütuna bölünüyordu; kutunun boyu haritaya
+  bağlı olduğu için o 11 satır dibe varmıyor, altta boşluk bırakıyordu.
+  Sabit artık yalnız ilk çizimdeki tahmin — o anda ölçülecek satır yok.
+  Ölçülen: 1600×900'de 15 + 7, 1366×768'de 14 + 8; taşma yok.
+- **Sütun geni tavanlı** (`minmax(0,clamp(120px,10.3vw,172px))`), `1fr`
+  değil. `1fr` listeye verilen bütün genişliği bölüşüyor, ölçülen 1600×900'de
+  sütun 185 px çıkıyor ve ad ile değer arasında gereksiz boşluk kalıyordu.
+  Boşalan genişlik haritaya geçti (`.harita-sar max-width` 52% → 58%):
+  **liste 389 → 299 px, harita 439 → 490 px (+%11,5)**, aradaki boşluk
+  16,5 px. Harita genişlerken UZAMIYOR — boyu `height:clamp()` ile açıkça
+  verili, genişlik yalnız kutunun içindeki letterbox boşluğunu yiyor; satır
+  boyu 248,8 px'te sabit kaldığı için **tek-ekran ölçeği değişmedi**.
+
+> **İki tuzak, ikisi de ölçümle yakalandı.** (1) Liste `flex:1 1 auto` iken
+> kendi içeriği sütunun "varsayılan boyu" oluyor, `align-items:stretch`
+> satırı ona göre uzatıyor, uzayan kutuya daha çok satır sığıyor ve ölçüm
+> kendi kuyruğunu kovalıyordu: satır 248,8 → 349,4 px, ölçek 0,859 → 0,822,
+> yani bütün pano küçülüyordu. Çözüm `flex:1 1 0` + `min-height:0` +
+> `overflow:hidden` — kutunun boyunu harita belirliyor, liste ona uyuyor.
+> (2) Satır boyu `getBoundingClientRect()` ile okunuyordu; pano tek ekrana
+> bir transform ile sığdırıldığı için rect ölçeklenmiş boy veriyor, üstelik
+> değer dönüşü (`.btl.cevir`) satırı `scaleY` ile kısaltıyor — dönüşün
+> ortasında 18 satır seçilip 3 satır kırpılıyordu (taşma 46 px).
+> `offsetHeight` / `clientHeight` düzen boyunu verir, transformu saymaz ve
+> ikisi aynı uzayda kalır.
 - Rakamlar akarak geçiyor (`iskelet` + `sayiAk`), liste değişmedikçe
   yeniden kurulmuyor.
 - **H/G yüzü:** çubuk yüzdeyle aynı satırda; doluluk `H/G ÷ 100` ve en çok
@@ -307,6 +364,12 @@ ve 42 px (kanal)**. Boşluğu bir yere yığmak yerine içeriğe dağıtıldı:
   dolduruyor hem kademe farkını okunur kılıyor — aralık **9 px**.
 - Halka sütunun verdiği kadar büyür (`max-height` 160 → 200 px tavan,
   ölçülen 132 → 169 px), lejant hemen altında.
+- Harita sütununun yanındaki **bölge listesi başlığın hemen altından başlar**
+  (`.bolge-liste{align-content:start}`). Önce `center` idi: artan yeri
+  satırların üstüne ve altına bölüştürüyor, "Bölgeler" başlığıyla ilk satır
+  arasında — liste haritadan kısa kaldığı her durumda — boşluk açılıyordu ve
+  başlık listeden kopuk duruyordu. Satırın geri kalanındaki kuralın aynısı:
+  artan yer üste yığılmaz.
 - Üç sütunun da alt kenarı artık aynı hizada bitiyor (10 px).
 
 ## Türkiye haritası
@@ -375,13 +438,19 @@ değil etkileşime bırakıldı: bir ilin üstüne gelince o sahanın illeri ön
   hafif çerçevelenir. Harita ile kartlar bu sırada **yeniden çizilmez**: fare
   onların üstünde durduğu için yeniden üretim vurgulamayı düşürürdü.
 - Saha kartına tek tıklama önizlemeyi sabitler; başka sahaya tıklamak seçimi
-  değiştirir, ekranın başka yerine tıklamak genele döner. Çift tıklama o
-  sahanın Bölge sayfasına iner. Bölge satırları da hover ve tek tıklamayla
-  kendi verisine geçer/sabitlenir.
+  değiştirir, ekranın başka yerine tıklamak genele döner. Bölge satırları da
+  hover ve tek tıklamayla kendi verisine geçer/sabitlenir.
+- **İkinci tık ayrıntıya iner** (`detayaIn`): zaten sabitlenmiş olan karta ya da
+  satıra bir kez daha tıklamak bir alt kırılımı açar — saha → **Bölge** sayfası
+  (o saha filtreli), bölge → **Şube** sayfası (o bölge filtreli). Kararı
+  `sabitMi()` verir: ölçüt sabit seçimdir, hover değil — hover sabit seçimin
+  üstüne önizleme bindirebiliyor, ama inilecek yeri sabit olan belirler.
 
-> Dokunmatik kullanım için tek tıklamayla sabitleme eklendi. Saha ayrıntısına
-> inmek için çift tıklama kullanılır; gerçek dokunmatik ekranda bu hareketin
-> rahatlığı ayrıca denenmelidir.
+> Önceden bu iş çift tıklamadaydı (`ondblclick`). Dokunmatikte çift dokunma
+> hem zor hem görünmez olduğu için "bir kez daha seç" hareketine taşındı.
+> Ayrı bir çift tık dinleyicisi gerekmiyor: çift tıklamanın ikinci click
+> olayını zaten aynı dal yakalıyor, yani fareyle çift tıklama da çalışıyor.
+> Aynı tıkla sabitlemeyi çözme (toggle) yok; genele dönüş dışa tıklamayla.
 - İlin üstünde küçük bir balon açılır: il adı, dönem cirosu ve şube sayısı.
 - Dinleyiciler tek tek illere değil **SVG'nin kendisine** bağlanır
   (`mouseover` / `mouseout` delegasyonu); iller her çizimde yeniden üretildiği
@@ -436,7 +505,7 @@ Veri, gecikmeli bir kayıt serisinden türer (`TES_GECIKME = 75` gün): yılın 
 günlerinde gecikmeli kaynak olmadığı için o aralık kısılarak doldurulur.
 Ölçülen: 299/gün · 8.190/ay · 67.487/yıl.
 
-## Toplam kanal dağılımı
+## Kanal dağılımı
 
 Haritanın sağında. Cironun ne kadarının **şubeden**, ne kadarının **saha
 personelinden** (SPY) geldiğini gösterir — iki dilim, yanında tutar ve yüzde.
@@ -445,7 +514,7 @@ personelinden** (SPY) geldiğini gösterir — iki dilim, yanında tutar ve yüz
   seçiliyken pay %100 saha çıkardı, o da hiçbir şey anlatmazdı. Halka her zaman
   iki kanalın toplamı üzerinden hesaplanır; panelin altında bu not yazılıdır.
 - **Saha önizlemesini izler:** haritada ya da bir saha kartında bir sahanın
-  üstüne gelince o sahanın kanal kırılımına iner (başlık "Toplam kanal dağılımı · Batı").
+  üstüne gelince o sahanın kanal kırılımına iner; kart başlığı sabit kalır.
 - Terim çakışmasına dikkat: buradaki **"Saha"** satış kanalıdır (SPY), ekranın
   geri kalanındaki **saha bölgesi** (İstanbul / Batı / Orta / Doğu) değildir.
 
@@ -532,6 +601,18 @@ Başlık şeridi ve gezinme çubuğu `position:sticky` ile yukarıda kalır. Gez
 değiştiği için `ustOlc()` onu ölçüp `--top-h` değişkenine yazar (açılışta ve her
 yeniden boyutlandırmada). Şerit yükseklikleri daraltıldı: başlık 8 px, gezinme
 7/8 px iç boşluk, düğmeler 32 px.
+
+**Dönem adımlayıcısının genişliği sabit.** `.stepper span` önce
+`min-width:118px` ile duruyordu, ama etiketin kendisi bundan uzun olabiliyor:
+ölçülen (12 px gövde) **"25 Ağustos – 31 Ağustos" 132 px**, "28 Ağustos
+Pazartesi" 113 px, "Ağustos 2026" 74 px, "2026 yılı" 46 px. Adımlayıcı
+büyüyünce `.zaman` `margin-left:auto` ile sağa yapışık olduğundan **dönem
+düğmeleri sola kayıyordu** — Gün ↔ Hafta ↔ Ay arasında gezinirken şerit
+görünür biçimde git gel yapıyordu. Çözüm, en uzun etikete göre sabit
+`width:13em` (11,01em metin + 2×10 px padding; `box-sizing:border-box`).
+px değil **em**, çünkü `--f4` kırılımla değişiyor ama metnin punto oranı
+değişmiyor — dar ekranda padding kısaldığı için `12.6em`. Ölçüm: dört dönemde
+de adımlayıcı **225,3 px**, etikette taşma yok.
 
 ## Hareket katmanı
 
@@ -692,7 +773,21 @@ kendini tekrar çağırmaz). Ölçülen: dönem, kırılım, kanal, hızlı tık
 `resize` — hepsinde ölçek 0,867 ve kart 190 px'te sabit (1280×720'de 0,760
 ve 137 px).
 
-## Bekleme modu — kendi kendine dönen iki değişim
+## Gösteri (play) modu kaldırıldı
+
+Sunum için yapılmış gösteri modu artık kullanılmıyor ve kodda da yok. Silinen:
+play tuşu, `GOSTERI` nesnesi ve zamanlayıcıları, `gosteriTur` / `gosteriBaslat`
+/ `gosteriDurdur` / `gosteriAdetCevir` / `gosteriAnlik` / `gosteriGeriYaz` /
+`gosteriCevir`, kart çevirme yardımcıları (`kartCevir`, `kartlariSabitle`,
+`kartlariCoz`), kartların arka yüzü (markup + `.arka` / `.arkada` CSS) ve on
+kadar yerdeki `if(GOSTERI.acik) return` koruması.
+
+Kalanlar, çünkü bekleme modu kullanıyor: `adetler` / `adetleriYaz` (KPI
+kutularının adet yüzü — `GOSTERI_KUTU` artık `KPI_KUTU`), `sahaVurgula`
+(harita turu), `onizlemeCevir`. `body.hazir:not(.gosteri-acik)` biçimindeki
+dört kural düz `body.hazir` oldu.
+
+## Bekleme modu — panonun kendi kendine canlılığı
 
 Ekran duvarda dururken çalışan iki değişim. **Gösteriden farkı: saha
 kartları dönmez**, kartlar yerinde kalır.
@@ -909,12 +1004,77 @@ paylaşır; her satırın altın çizgisi kendi hedefinde durur. Hafta içi ile
 hafta sonu çizgileri toplandığında hafta çizgisini verir — dağılım doğrudan
 okunur.
 
-### Seyir ikiye bölündü: ciro · kayıt sayısı
+### Ciro grafiği alan oldu, sağ yarı çubuk kaldı
 
-`.spark` iki yarıya ayrıldı. **Solda ciro** (tutar, birikimli çizgi ya da
-çubuk — döneme göre), **sağda kayıt sayısı** (adet, çubuk). Aynı dönemin iki
-farklı ölçüsü yan yana durunca "tutar mı arttı, adet mi" sorusu doğrudan
-okunuyor.
+İki yarı karşılaştırıldı; durum şu:
+
+| dönem | SOL (ciro) | SAĞ (randevu/kart) | sol mantık | sağ mantık |
+|---|---|---|---|---|
+| Gün | birikimli **alan + çizgi** + hedef + tahmin + "şu an" | **çubuk**, 10 saat | birikimli | birikimli |
+| Hafta | **çubuk**, 7 gün, hafta içi/sonu öbek + hedef çizgisi | **çubuk**, 7 gün, aynı öbek | gün gün | gün gün |
+| Ay | birikimli **alan + çizgi** + projeksiyon | **çubuk**, 5 haftalık dilim | birikimli | birikimli |
+| Yıl | **çubuk**, 12 ay + geçen yıl | **çubuk**, 12 ay | ay ay | ay ay |
+
+**Mantık dört dönemde de aynı** — iki yarı aynı dilimlemeyi kullanıyor, yani
+asıl tekrar görsel değil mantıksal. Sol tarafın dönemden döneme tür
+değiştirmesi (çizgi -> çubuk -> çizgi -> çubuk) gerekçeli: tür değişimi
+mantık değişimine bağlı (birikimli / gün gün).
+
+Çizginin "güzel gözükmemesi" **incelik sorunuydu**: 628 px genişlikte 2,5-3 px
+tek bir çizgi boşluk bırakıyordu. Çözüm çizgiyi atmak değil **altını
+doldurmak** oldu (`alanTanimi` + `alanYolu`, yumuşak gradyan, %28 -> %2).
+Dolgu YALNIZ çizginin altına giriyor: hedef çizgisi, tahmin projeksiyonu,
+noktalar ve etiketler aynen duruyor, hiçbir okuma kaybolmadı. Alan yolu
+eksenden hemen sonra, çizgilerden ve noktalardan önce basılıyor (ölçülen
+z-sırası 0), yoksa yarı saydam dolgu "şu an" noktasının üstüne biniyor.
+Gradyan kimliği SVG başına (`<svg id>-alan`): aynı sayfada Genel'in grafiği
+ve saha bloklarının grafikleri var, sabit bir id çakışırdı.
+
+> **Yapılmayan, bilinçli:** sağ yarı Gün ve Ay'da **birikimli kaldı**.
+> Birikimli çubuk zayıf bir seçim — her çubuk tanım gereği öncekinden
+> büyük ya da eşit, grafik asla düşemez, ve çubuk yüksekliği "o saatte ne
+> oldu"yu değil "o ana kadarki toplam"ı kodluyor. Dilim başına çevirmek
+> önerildi (sol = birikimli yolculuk, sağ = dilim başına ritim) ama
+> birikimli kalmasına karar verildi. Fikir değişirse dokunulacak tek yer
+> `kayitDilim()`'in Gün ve Ay dallarındaki `birik` toplaması.
+
+### Seyir ikiye bölündü, iki yarı da dönüyor
+
+`.spark` iki yarıya ayrıldı ve **her yarı iki ölçü arasında dönüyor**:
+
+| yarı | yüzler | okuma |
+|---|---|---|
+| **sol** | **Ciro ↔ Kayıt sayısı** | sonuç: tutar ve onun adet karşılığı |
+| **sağ** | **Randevu ↔ Kart sayısı** | sonuca giden yol: huninin ilk iki kademesi |
+
+Aynı dönemin iki farklı ölçüsü yan yana durunca "tutar mı arttı, adet mi"
+sorusu doğrudan okunuyor; dönüşlerle de huninin tamamı (randevu → kart →
+kayıt) tek satırda gezilebiliyor. Hangi yüzün açık olduğu `S.solSeyir` ve
+`S.sagSeyir`'de durur, yeniden çizim onu bozmaz; tuşlar ile bekleme modu aynı
+yolu (`solYuzCevir` / `sagYuzCevir`) kullanır.
+
+Ölçü adları tek yerde: `SEYIR_AD` / `SEYIR_ETIKET` — başlık, `aria-label` ve
+dönüş tuşunun yanındaki hedef etiketi hepsi oradan okunuyor. Çubuk renkleri
+huni sırasını izler (`KAYIT_RENK`): randevu turkuaz `#2B8C8A`, kart ara ton
+`#2F6B7A`, kayıt lacivert `#1E3856`.
+
+**İki yarı bağımsız döndüğü için zamanlayıcılar da ayrı** (`yariZaman[0]` /
+`yariZaman[1]`): sol yarının dönüşü sağdakinin yarıda kalan geri yazmasını
+iptal etmesin.
+
+**Rakamlar bir kademe büyütüldü.** Punto SVG birimi, ekrana ölçekle iniyor:
+ölçülen 1600×900'de seyir SVG'si 628 px'e sığıyor, ölçek 0,628 — yani eski
+15 birim ekranda yalnız **9,4 px**, 16 birim 10,05 px çıkıyordu. Gövde yazısı
+14 px, grafik başlığı 17,9 px olduğu için rakamlar ikisinin de altında kalıp
+okunmuyordu. Yeni değerler: taban 15, kalın 16, eksen 16, değer **18** birim —
+ölçülen sonuç: değer rakamları ekranda **9,4 → 11,3 px**, eksen 9,4 → 10,1 px.
+
+> **Özgüllük tuzağı.** Değer yazıları `font-weight="700"` niteliği taşıyor ve
+> `.spark svg text[font-weight="700"]` seçicisi (0,2,2) salt
+> `.spark svg .s-deger`'den (0,2,1) daha güçlü. Sıra sonra olmasına rağmen
+> yenemiyordu: `.s-deger`'e 18 yazılmışken rakamlar ölçümde 16 birimde
+> kalıyordu. Seçici `text.s-deger` yapılınca (0,2,2) eşitleniyor ve sıra
+> kazanıyor. Bu bloğun puntosuna dokunulacaksa ikisi birlikte okunmalı.
 
 **Kayıt = gerçekleşen cironun adet karşılığı.** Ciro ÷ ortalama sözleşme
 tutarından türer (`ORT_SOZLESME = 228.000`); sözleşme tutarı kişiden kişiye
@@ -942,6 +1102,25 @@ rakam sığmıyordu; haftalık dilim bu yüzden seçildi.
 konuşulmuş her rakam değişti. Üretim `kayitUret()` adlı ayrı bir geçişe ve
 ayrı tohumlu (`mulberry32(20260930)`) bir akışa alındı. **Yeni bir seri
 eklenecekse aynısı yapılmalı.**
+
+### Dönüş tuşları nereye döneceğini söylüyor
+
+Dönen her blokta (`.yuz-sar`) tuşun **yanında** sıradaki yüzün adı yazıyor.
+↻ işareti "bu kutu dönüyor" diyordu ama neye döneceğini söylemiyordu; hangi
+ölçünün geleceği ancak dönünce anlaşılıyordu. Dört tuşun hepsi aynı
+işlevden besleniyor (`yuzHedefYaz`), böylece bir yüz eklenince etiket
+kendiliğinden doğru kalıyor:
+
+| tuş | blok | etiket |
+|---|---|---|
+| `kpiTus` | KPI kutuları | sıradaki yüz — KPI değerleri → Organizasyon adetleri → Teslimat |
+| `solTus` | seyrin sol yarısı | Kayıt sayısı ↔ Ciro |
+| `sagTus` | seyrin sağ yarısı | Kart sayısı ↔ Randevu sayısı |
+| `bolTus` | bölge listesi | Ciro ↔ Hedefe göre |
+
+Konumlama sarmala taşındı (`.yuz-sar{position:absolute}`), tuş artık akışın
+içinde (`position:static`) — etiket tuşun solunda, çünkü tuş sağ üst köşeye
+yapışık. Gösteri açıkken ikisi birlikte gizleniyor.
 
 ### Ciro çubuğunun ucundaki yüzde
 
@@ -1068,6 +1247,156 @@ Saha/bölge sabitlemesi ve yeni koşullu biçimlendirme öncesi temiz sürüm
 Masaüstü ve telefon için ayrı düzen vardır. 720 px altında grafikler daha kare bir
 viewBox'a, personel tablosu 7 sütundan 3 sütuna geçer. Ayrı bir televizyon modu yoktur;
 genel müdürlükteki büyük ekran masaüstü düzenini kullanır.
+
+### Attract mode: etkileşim sayacı sıfırlar
+
+Kiosk tasarımında yaygın desen: ekran boştayken ince, döngüsel hareketle
+canlı olduğunu gösterir, biri dokununca hareket geri çekilir. Pano da böyle
+davranıyor — **her elle çevirme ve her seçim bekleme sayacını baştan
+başlatıyor** (`beklemeGecikti`). Kullanıcı panoyla uğraşırken kendi kendine
+hiçbir şey oynamıyor.
+
+Bunun için sayaç sabit bir `setInterval(beklemeTik, BEKLE_ARA)` olmaktan
+çıktı: tik artık 1 sn'de bir çalışıyor ve etkiyi ancak
+`Date.now() - beklemeSonHareket >= BEKLE_ARA` olduğunda başlatıyor. Eski
+hâlinde sabit aralık, elle çevirmenin hemen ardından tetiklenebiliyordu.
+
+`beklemeUygun()` şunlara da bakıyor: Genel kırılımı, önizleme yok, **sabit
+seçim yok**, sekme önde, hareket azaltma kapalı, sürmekte olan etki yok.
+
+### Sıra: 15 sn'de bir, dört etki
+
+`BEKLE_ARA` 20 → **15 sn**. Dört etki sırayla, yani her biri 60 sn'de bir:
+
+| # | etki | ne yapar |
+|---|---|---|
+| 1 | `beklemeKpi` | dört KPI kutusu adetlere, sonra teslimata döner |
+| 2 | `beklemeSeyir` | seyrin iki yarısı SIRAYLA öteki ölçüsüne döner |
+| 3 | `beklemeBolge` | bölge listesi H/G ↔ ciro, yukarıdan aşağı dalga |
+| 4 | `beklemeHaritaTur` | dört saha sırayla vurgulanır (`BEKLE_SAHA` 3 sn) |
+
+### Harita turunun koreografisi
+
+Her saha için aynı sıra (gecikmeler `TUR_ADIM`'da, tek yerde):
+
+| offset | olan |
+|---|---|
+| 0 | karta "gelinir": o sahanın illeri öne çıkar, kart vurgulanır, üst bloklar o sahaya önizleme yapar, rakamlar akarak geçer |
+| 1.300 ms | KPI kutuları o sahanın **adetlerine** döner |
+| 2.900 ms | sol seyir: ciro -> kayıt sayısı |
+| 3.300 ms | sağ seyir: randevu -> kart sayısı (400 ms sonra — bir-iki) |
+| 4.900 ms | bölge listesi: H/G -> ciro, yukarıdan aşağı dalga |
+| 6.200 ms | hepsi birden başlangıç yüzüne döner |
+| 7.400 ms | sonraki saha |
+
+Dört saha x 7,4 sn = **~30 sn**; tur 60 sn'de bir geldiği için pano turda
+değilken yarım dakika sakin kalıyor. **Kartlar dönmüyor** — tur bir okuma
+turu, gösteri değil. Önizleme açıkken `beklemeUygun()` false döndüğü için
+tur kendi kendini bölmüyor; sonunda `sahaVurgula(null)` ile Türkiye
+geneline dönülüyor.
+
+"Normale dön" adımı için **belirli yüze geç** işlevleri eklendi
+(`kpiYuzeGec` / `solSeyreGec` / `sagSeyreGec` / `bolgeYuzeGec`); toggle'lar
+artık bunlara devrediyor. Üç yüzlü KPI kutusunda "geri al" diye bir şey
+yok — hangi yüzde olduğuna bakmadan `kpi`'ya dönebilmek gerekiyordu.
+
+Ölçülen tur (İstanbul adımı, 120 ms örnekleme): +1,4 KPI / +3,3 sol /
++3,8 sağ / +5,0 bölge / +6,3 normale / +7,5 sonraki saha — dört saha birebir
+aynı tekrarladı, 49,1. sn'de Türkiye Geneli.
+
+> Duvar panosu kaynaklarındaki 15–30 sn / 30–60 sn tavsiyeleri **sayfa
+> değiştirme** süreleri; buradaki ise tek sayfa içinde yüz dönüşü. O yüzden
+> 15 sn bu ölçekte rahat — kritik olan, 15 sn'ye birden fazla etki
+> sıkıştırmamak.
+
+### Ortam hareketleri — sıraya girmeyen üç hareket
+
+Üçü de **veriye dokunmuyor**; ekrandaki hiçbir sayı değişmiyor, yalnız
+panonun canlı olduğu görünüyor. Sıraya girmemeleri bilinçli: sıradaki dört
+etki "bak, başka bir ölçü" diyor, bunlar yalnız "buradayım" diyor. Hepsi aynı
+1 sn'lik tikten besleniyor, ayrı `setInterval` açılmıyor (`ortamTik`).
+
+| hareket | periyot | ne yapar |
+|---|---|---|
+| **il nabzı** | 3 sn | en çok ciro yapan 6 il sırayla kısa bir nabız atar (`filter:brightness`) |
+| **huni akışı** | 14 sn | dolu çubukların içinden soldan sağa ışık geçer, üç kademe 180 ms arayla |
+| **halka süpürmesi** | 22 sn | kanal halkası 0'dan kendi oranına yeniden süpürülür |
+| **etiket parlaması** | 9 sn | seyir veri etiketleri soldan sağa teker teker parlar (95 ms aralıkla) |
+
+Etiket parlaması `x` niteliğine göre sıralanıyor, DOM sırasına göre DEĞİL:
+DOM sırası çizim sırasıdır ve her zaman soldan sağa olmuyor. Ölçülen yanma
+sırası (viewBox x): 32 -> 136 -> 239 -> 343 -> 446 -> 550 -> 653 -> 757 ->
+860 -> 964, yani tam zaman yönünde. `transform-box:fill-box` zorunlu —
+SVG'de varsayılan referans kutusu viewBox'ın kendisi, o yüzden `scale`
+etiketi kendi merkezinden değil grafiğin köşesinden büyütüp yerinden
+fırlatıyor. Etiketler her çizimde yeniden üretildiği için zamanlayıcılar
+ayrı tutulup yeniden çizimde iptal ediliyor (`etiketDurdur`).
+
+İl nabzı önizleme açıkken (`.harita-sar.vurgu`) susuyor — o sırada haritanın
+kendi vurgusu okunuyor, iki işaret birbirine karışır. İller şubelerin ili
+üzerinden toplanıp önbelleğe alınıyor (`nabizIlleriBul`), her nabızda
+yeniden hesaplanmıyor. Ölçülen: 25 sn'de 6 il sırayla (34, 35, 6, 16, 31, 48),
+huni 1, halka 4 kez.
+
+Halka süpürmesi yeni kod istemedi: `payYaylari`'nın açılışta kullanılan
+`dolum` parametresi yeniden çağrılıyor. Yayları üretebilmek için gereken
+toplam ve dönem adı `cizPay` sırasında elemanın üstünde saklanıyor
+(`h.__toplam`, `h.__perAd`).
+
+### Dönüş neden daha doğal
+
+`kutuCevir` zaten 3D'ydi (`rotateX` + `perspective`). Üç şey onu
+plastikleştiriyordu, üçü de düzeltildi:
+
+1. **Simetrik tek eğri iki fazı birden yönetiyordu.** Artık yumuşatma
+   **asimetrik**, kare başına `animation-timing-function` ile: çıkışta
+   hızlanır (`cubic-bezier(.45,.05,1,.6)`), inişte yavaşlar
+   (`cubic-bezier(0,.5,.3,1)`). Gerçek bir kart dönüşü böyledir.
+2. **Tepede `opacity:.2` vardı.** Panel 88°'de %20 opaklığa inip dönmek
+   yerine "yanıp sönmüş" gibi görünüyordu. Kaldırıldı — tam **90°**'de
+   kenarına geldiği için zaten görünmez oluyor. Onun yerine yan dönmüşken
+   hafif koyulaşıyor (`brightness(.88)`), ışık açısı değişmiş gibi.
+3. **İçerik takası elle yazılmış sayılarla zamanlanıyordu** (220 / 230 /
+   300 ms), her blok biraz farklı kayıyordu. Artık süreler tek yerde
+   (`CEVIR_SURE`) ve takas **tam sürenin yarısında**, yani kutu tam
+   kenarına geldiği anda.
+
+> **Teslimat yüzü dönmüyordu, PAT DİYE geliyordu.** Dönüş animasyonu
+> `.pair > div` kutularının üzerinde, teslimat ise kardeş bir katman
+> (`.tes-yuz`) ve `.hero-r.tes .pair{visibility:hidden}`. Kutular dönüşün
+> orta noktasında görünmez olunca kalan 220 ms boşa oynuyor, yazı hiç
+> dönmeden beliriyordu. Çözüm: katman dönüşün İKİNCİ yarısını kendisi
+> oynuyor (`yuzGir`, `--cg` = süre/2) — tam kenarından açılıyor. Çıkışta
+> düzeltme gerekmedi: orta noktada kutular geri gelip dönüşün ikinci
+> yarısını zaten oynuyorlar. `.giris` oynarken `tesNabiz` bastırılıyor,
+> ikisi aynı `transform`ı yazıyor.
+
+**Yüz başına bekleme 6.500 -> 5.000 ms** (`BEKLE_ADET`): üç yüz 19,5 sn
+sürüyordu, yani 15 sn'lik bekleme sayacını aşıyordu. Şimdi tam 15 sn.
+
+### Bölge listesi: gerçek iki yüzlü dalga
+
+Bölge listesi artık yukarıdan aşağı **dalga** hâlinde dönüyor, satır başına
+48 ms (`BOLGE_DALGA`). Eskiden 16 ms'ydi ve gözle fark edilmiyordu — hepsi
+birlikte dönmüş gibi duruyordu.
+
+Dalganın mümkün olmasının sebebi: **satırın iki yüzü de zaten DOM'da.**
+`cizBolgeListe` her çizimde hem H/G çubuğunu hem ciro değerini yazıyor,
+hangisinin görüneceğine satırdaki `.hg-yuz` sınıfı karar veriyor. O yüzden
+tek bir toptan yeniden çizim yerine her satırın sınıfını kendi yarı
+noktasında çevirmek yetiyor — kitapta yazan iki yüzlü (`backface-visibility`)
+dönüşün bu bloktaki karşılığı. Sonda bir kez `cizBolgeListe` çağrılıp durum
+normalleştiriliyor.
+
+Ölçülen dalga: dönen satır 2 → 7 → 12 → 17 → 22, yüzü değişen satır
+22 → 16 → 11 → 6 → 0; satır sayısı dönüş öncesi ve sonrası aynı kalıyor.
+
+> **KPI kutuları ve seyir yarıları hâlâ tek elemanlı.** KPI'da üç yüz var
+> (değer / adet / teslimat), iki yüzlü bir kart üçü taşıyamaz. Seyirde ise
+> iki yüz aynı `<svg>`'ye çizilen iki ayrı render; gerçek iki yüzlü yapı
+> için yarı başına ikinci bir `<svg>` gerekir. İkisinde de yukarıdaki üç
+> düzeltme (asimetrik eğri, opaklık yok, tam yarıda takas) uygulandı; daha
+> da ileri gitmek istenirse seyir için ikinci SVG ayrı bir iş.
 
 ## Sıradaki adımlar
 
@@ -1272,8 +1601,9 @@ sonra beş sayfa × dört dönem taraması çalıştırılacak (hata, boş böl�
 - Hedef toplamları kırılımlar arasında farklıdır (saha toplamı ≠ şube toplamı).
   Bu bilinçlidir — her kırılımın kendi hedefi vardır.
 - Versiyon kontrolü yoktur (git repo değil).
-- Saha ve bölge önizlemesi tek tıklamayla sabitlenebilir; çift tıklamayla saha
-  ayrıntısına giriş gerçek dokunmatik ekranda ayrıca doğrulanmalıdır.
+- Saha ve bölge önizlemesi tek tıklamayla sabitlenir, ikinci tıkla ayrıntıya
+  inilir; bu iki aşamalı hareket gerçek dokunmatik ekranda ayrıca
+  doğrulanmalıdır.
 - Genel sayfası kullanılabilir ekran yüksekliği ve genişliğine otomatik,
   orantılı olarak sığdırılıyor. Dar görünümde de masaüstü kompozisyonu
   korunuyor; pano en az 1180 px doğal genişlikte kurulup bütün olarak
