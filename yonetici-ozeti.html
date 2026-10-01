@@ -315,6 +315,12 @@ body.sekme-pasif #hgBox .v{animation-play-state:paused}
 }
 .spark svg text.parla{transform-box:fill-box;transform-origin:center;
   animation:degerParla .92s cubic-bezier(.33,0,.5,1)}
+/* H/G değerleri sütunun İÇİNDE ve beyaz: yeşil zeminde beyaz rakam en okunur
+   eşleşme, ve sütunların üstündeki şerit boşaldığı için %100 çizgisiyle
+   rakamlar artık aynı hatta düşmüyor. Beyaz kontur (paint-order) burada ters
+   çalışırdı — beyaz yazıya beyaz kontur — o yüzden kapatılıyor.
+   .s-deger'den SONRA gelmeli: ikisi de (0,2,2) özgüllükte, sıra kazanıyor. */
+.spark svg text.hg-ic{fill:#fff;stroke:none;paint-order:normal}
 @keyframes yanipSon{
   0%,100%{opacity:.95;transform:scale(1)}
   50%{opacity:.52;transform:scale(.82)}
@@ -2267,7 +2273,7 @@ function seyirBaslik(per){
 /* Her ölçünün adı tek yerde: başlık, aria etiketi ve dönüş tuşunun yanındaki
    hedef etiketi hep buradan okunuyor. */
 const SEYIR_AD={ciro:"Ciro", kyt:"Kayıt sayısı", rnd:"Randevu sayısı",
-                kart:"Kart sayısı", hg:"Hedefe göre"};
+                kart:"Kart sayısı", hg:"H/G"};
 const SEYIR_ETIKET={ciro:"Dönem içi ciro seyri", kyt:"Dönem içi kayıt sayısı",
                     rnd:"Dönem içi randevu sayısı", kart:"Dönem içi kart sayısı",
                     hg:"Dönem içi hedefe göre seyir"};
@@ -2317,15 +2323,11 @@ function solSeyirCiz(kap,k,per,o){
     if(acilisMi()) cizgiCizdir(sv);
   }else if(alan==="hg"){
     cizHg(kap,k,per,{svg:sv});
-    /* BÖLENİ SÖYLEMEK ZORUNLU. KPI kutusundaki "Hedefe göre" dönemin
-       TAMAMININ hedefine bölünür; grafikteki her sütun KENDİ diliminin
-       hedefine. Ölçülen: haftanın ilk gününde kutu %16 derken grafik %110
-       diyor — ikisi de doğru ama aynı etiket iki ayrı soruyu yanıtlıyor.
-       Not SVG'nin içinde değil başlık altındaki dönem satırında: içeride
-       eksen adlarıyla çakışıyordu. */
+    /* Ay'da dilimler kümülatif olduğu için bu tek satır kalıyor; öteki
+       dönemlerdeki "her sütun kendi hedefine göre" notu kaldırıldı
+       (kullanıcı isteği) — başlık zaten H/G diyor. */
     const dn=$("sparkDon");
-    if(dn) dn.textContent += " · " +
-      (per.tip==="ay" ? "dönem başından birikimli" : "her sütun kendi hedefine göre");
+    if(dn && per.tip==="ay") dn.textContent += " · dönem başından birikimli";
   }else{
     cizKayit(kap,k,per,{svg:sv, not:null}, alan);
   }
@@ -2464,8 +2466,9 @@ function cizKayit(kap,k,per,el,alan){
 
    Dilimleme ciro tarafıyla aynı, çünkü iki yüz aynı x eksenini paylaşıyor:
      Hafta → gün gün (hafta içi / hafta sonu iki öbek, cizKayit ile aynı)
+   Üçünde de üç dilimlik ağırlıklı hareketli ortalama çizgisi (hgHareketli).
      Ay    → kümülatif, dönem başından o haftaya kadar
-     Yıl   → ay ay + son üç ayın ortalamasıyla devam eden projeksiyon
+     Yıl   → ay ay
    Gün yok (bkz. solYuzler). */
 function hgDilim(d,k,per){
   const sonG=Math.min(per.bit,BUGUN);
@@ -2510,11 +2513,29 @@ function hgDilim(d,k,per){
 }
 /* Yıl'da gelecek aylar için son ÜÇ TAM ayın H/G ortalaması. Süren ay
    dışarıda: yarım ayın oranı tam ayların yanında ortalamayı bozuyor. */
-function hgSon3(dl){
-  const tam=dl.filter(function(d){ return !d.gelecek && !d.yarim && d.v!==null; });
-  if(!tam.length) return null;
-  const s3=tam.slice(-3);
-  return s3.reduce(function(a,d){ return a+d.v; },0)/s3.length;
+/* Üç dilimlik AĞIRLIKLI HAREKETLİ ortalama: her sütunda AYRI bir değer.
+   Ağırlıklar 3-2-1, en yenisi en ağır — son dilim eğilimi daha çok
+   belirlesin. Üçten az geçmiş varsa eldeki kadarıyla aynı oranlarla
+   hesaplanıyor, yani çizgi ilk sütundan itibaren var.
+
+   Eskiden tek bir sayıydı (son üç ayın düz ortalaması) ve dümdüz yatay bir
+   çizgi olarak çiziliyordu. Her sütunda aynı değeri gösterdiği için eğilim
+   hakkında hiçbir şey söylemiyordu; şimdi çizgi sütunları takip ediyor ve
+   nerede yukarı nerede aşağı döndüğü okunuyor. */
+const HG_AGIRLIK=[3,2,1];          /* en yeni -> en eski */
+function hgHareketli(dl){
+  const out=[];
+  for(let i=0;i<dl.length;i++){
+    if(dl[i].gelecek || dl[i].v===null){ out.push(null); continue; }
+    let t=0,w=0;
+    for(let j=0;j<HG_AGIRLIK.length;j++){
+      const d=dl[i-j];
+      if(!d || d.gelecek || d.v===null) break;
+      t+=d.v*HG_AGIRLIK[j]; w+=HG_AGIRLIK[j];
+    }
+    out.push(w>0 ? t/w : null);
+  }
+  return out;
 }
 
 /* H/G renkleri kurumsal paletten ve SABİT: sütun ve değer yeşil, iki
@@ -2546,18 +2567,21 @@ const HG_TURUNCU= "#B06A1F";   /* paletteki turuncu; kanal payında "Saha" dilim
    satırına ekleniyor (bkz. solSeyirCiz). */
 function cizHg(kap,k,per,el){
   const sv=el.svg;
-  const W2=SEYIR.W, H=SEYIR.H, L=SEYIR.L, R=SEYIR.R, B=SEYIR.B;
+  const W2=SEYIR.W, H=SEYIR.H, L=SEYIR.L, R=SEYIR.R;
   const T=52;                       /* üst bant SEYIR.T'den geniş: üç şerit sığsın */
+  /* Dip SEYIR.B'den yukarıda: sütunlar biraz kısalıyor ve %100 çizgisi
+     kareye göre az yukarı çıkıyor. Eksen adları dibin hemen altında
+     kalsın diye onlar da yukarı alındı (H-B yerine dip+20). */
+  const B=42;
   const ETIKET_UST=T-4;             /* değer etiketleri bunun üstüne çıkmaz */
   sv.setAttribute("viewBox","0 0 "+W2+" "+H);
 
   const dl=hgDilim(kap,k,per), n=dl.length;
   const dolu=dl.filter(function(d){ return !d.gelecek && d.v!==null; });
-  const proj = per.tip==="yil" ? hgSon3(dl) : null;
-  /* Ortalama: Yıl'da "son 3 ay" projeksiyonu, ötekilerde gerçekleşen
-     dilimlerin ortalaması. İkisi de bir ortalama, ikisi de turuncu kesik. */
-  const ort = proj!==null ? proj
-            : (dolu.length>1 ? dolu.reduce(function(a,d){return a+d.v;},0)/dolu.length : null);
+  /* Her sütunun kendi ağırlıklı ortalaması; dört dönemde de aynı kural. */
+  const ortD=hgHareketli(dl);
+  const ortDolu=ortD.filter(function(v){ return v!==null; });
+  const ort = ortDolu.length ? ortDolu[ortDolu.length-1] : null;   /* son değer: lejantta */
 
   /* Sıfır tabanlı ölçek: BÜTÜN SÜTUNLAR DİPTEN YUKARI büyür, %100 referans
      çizgisi de üzerlerinden geçer. Sütunun boyu değerin kendisidir.
@@ -2597,12 +2621,17 @@ function cizHg(kap,k,per,el){
        '" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+
        Math.max(0,(H-B)-y).toFixed(1)+'" rx="2" fill="'+HG_YESIL+'" fill-opacity="'+
        (d.yarim?".5":".85")+'"/>';
-    /* Etiket sütunun tepesinde. %100 çizgisiyle aynı hizaya düşse bile okunuyor:
-       .s-deger'in beyaz konturu (paint-order) altındaki çizgiyi kesiyor. */
-    const ey=Math.max(ETIKET_UST, y-8);
+    /* Değer sütunun İÇİNDE, dikeyde ortada, beyaz. +6 taban çizgisi payı:
+       SVG'de y metnin tabanı, ortalamak için yarım harf boyu aşağı iniyor.
+       Sütun rakamı taşıyamayacak kadar kısaysa (dar dönemlerde olabilir)
+       eski davranışa düşülüyor: üstte, yeşil. */
+    const boy=(H-B)-y;
+    const ortala = boy>=26;
+    const ey = ortala ? (y+(H-B))/2+6 : Math.max(ETIKET_UST, y-8);
     etiketYeri.push({i:i, x:x, y:ey});
-    g+='<text class="s-deger" x="'+x.toFixed(1)+'" y="'+ey.toFixed(1)+
-       '" text-anchor="middle" font-weight="700" fill="'+HG_YESIL+'">'+PCT(d.v)+'</text>';
+    g+='<text class="s-deger'+(ortala?" hg-ic":"")+'" x="'+x.toFixed(1)+'" y="'+ey.toFixed(1)+
+       '" text-anchor="middle" font-weight="700"'+(ortala?'':' fill="'+HG_YESIL+'"')+
+       '>'+PCT(d.v)+'</text>';
   });
 
   /* --- turuncu çizgiler --- */
@@ -2610,26 +2639,21 @@ function cizHg(kap,k,per,el){
   g+='<line x1="'+L+'" y1="'+y100.toFixed(1)+'" x2="'+(W2-R)+'" y2="'+y100.toFixed(1)+
      '" stroke="'+HG_TURUNCU+'" stroke-width="2.5"/>';
 
-  /* Ortalama: kesik turuncu, etiketi SAĞ uçta. Yıl'da son gerçekleşen aydan
-     başlayıp Aralık'a kadar gider ("bu tempoyla böyle biter"); ötekilerde
-     grafiğin boyunca yatay. */
-  if(yOrt!==null){
-    if(proj!==null){
-      let sonTam=-1;
-      dl.forEach(function(d,i){ if(!d.gelecek && d.v!==null) sonTam=i; });
-      const x0 = sonTam>=0 ? X(sonTam) : L;
-      const y0 = sonTam>=0 ? Y(dl[sonTam].v) : yOrt;
-      g+='<path d="M'+x0.toFixed(1)+' '+y0.toFixed(1)+
-         'L'+X(Math.min(n-1,sonTam+1)).toFixed(1)+' '+yOrt.toFixed(1)+
-         'L'+X(n-1).toFixed(1)+' '+yOrt.toFixed(1)+
-         '" fill="none" stroke="'+HG_TURUNCU+'" stroke-width="2.5" stroke-dasharray="6 5" '+
-         'stroke-linejoin="round"/>';
-      g+='<circle cx="'+X(n-1).toFixed(1)+'" cy="'+yOrt.toFixed(1)+
+  /* Ortalama: kesik turuncu çizgi, SÜTUNLARI TAKİP EDER. Her sütunun kendi
+     ağırlıklı hareketli ortalaması var (ortD), yani çizgi düz değil — nerede
+     yukarı nerede aşağı döndüğü okunuyor. Son noktada içi boş bir halka:
+     eğilimin şu an nerede olduğu. */
+  let oy="", sonOrt=-1;
+  ortD.forEach(function(v,i){
+    if(v===null) return;
+    oy+=(oy?"L":"M")+X(i).toFixed(1)+" "+Y(v).toFixed(1); sonOrt=i;
+  });
+  if(oy){
+    g+='<path d="'+oy+'" fill="none" stroke="'+HG_TURUNCU+
+       '" stroke-width="2.5" stroke-dasharray="6 5" stroke-linejoin="round"/>';
+    if(sonOrt>=0)
+      g+='<circle cx="'+X(sonOrt).toFixed(1)+'" cy="'+Y(ortD[sonOrt]).toFixed(1)+
          '" r="3.5" fill="#fff" stroke="'+HG_TURUNCU+'" stroke-width="2"/>';
-    } else {
-      g+='<line x1="'+L+'" y1="'+yOrt.toFixed(1)+'" x2="'+(W2-R)+'" y2="'+yOrt.toFixed(1)+
-         '" stroke="'+HG_TURUNCU+'" stroke-width="2.5" stroke-dasharray="6 5"/>';
-    }
   }
 
   /* Lejant: çizgilerin UCUNDA değil, en üstte kendi satırında. Önündeki kısa
@@ -2641,19 +2665,20 @@ function cizHg(kap,k,per,el){
   g+='<text x="'+(L+CENTIK+6)+'" y="'+LJ_Y+'" font-size="13" font-weight="700" fill="'+
      HG_TURUNCU+'">%100 hedef</text>';
   if(yOrt!==null){
-    const metin=(proj!==null?"son 3 ay ort. ":"ort. ")+PCT(ort);
+    const metin="ağırlıklı ort. "+PCT(ort);
     g+='<text x="'+(W2-R)+'" y="'+LJ_Y+'" text-anchor="end" font-size="13" '+
        'font-weight="700" fill="'+HG_TURUNCU+'">'+metin+'</text>';
-    /* Çentik yazının soluna; yazı genişliği kabaca 6,6 birim/karakter. */
-    const sag=(W2-R)-metin.length*6.6-6;
+    /* Çentik yazının soluna. Kaba gen bir tahmin (7,4 birim/karakter + 10
+       pay): dar tahminde çentik yazının ilk harflerinin altına giriyordu. */
+    const sag=(W2-R)-metin.length*7.4-10;
     g+='<line x1="'+(sag-CENTIK).toFixed(1)+'" y1="'+(LJ_Y-4)+'" x2="'+sag.toFixed(1)+
        '" y2="'+(LJ_Y-4)+'" stroke="'+HG_TURUNCU+
        '" stroke-width="2.5" stroke-dasharray="5 4"/>';
   }
 
-  /* --- eksen adları --- */
+  /* --- eksen adları: dibin hemen altında (dip yukarı alındı, adlar da) --- */
   dl.forEach(function(d,i){
-    g+='<text class="s-eksen" x="'+X(i).toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle"'+
+    g+='<text class="s-eksen" x="'+X(i).toFixed(1)+'" y="'+(H-B+20)+'" text-anchor="middle"'+
        (d.yarim?' fill="'+HG_YESIL+'"':'')+'>'+d.ad+'</text>';
   });
 
@@ -2662,9 +2687,11 @@ function cizHg(kap,k,per,el){
     const ax=L+bir*5+ARA/2;
     g+='<line x1="'+ax.toFixed(1)+'" y1="'+(T-6)+'" x2="'+ax.toFixed(1)+'" y2="'+(H-B)+
        '" stroke="var(--rule)" stroke-width="1"/>';
-    g+='<text x="'+(L+bir*2.5).toFixed(1)+'" y="31" text-anchor="middle" '+
+    /* y 40: lejant yazısının kutusu 21'e kadar iniyor (13 punto, taban 13).
+       31'de ölçülen çakışma vardı — "ağırlıklı ort. %110" ile "Hafta sonu". */
+    g+='<text x="'+(L+bir*2.5).toFixed(1)+'" y="40" text-anchor="middle" '+
        'font-size="12" fill="#58645F">Hafta içi</text>';
-    g+='<text x="'+(L+bir*6+ARA).toFixed(1)+'" y="31" text-anchor="middle" '+
+    g+='<text x="'+(L+bir*6+ARA).toFixed(1)+'" y="40" text-anchor="middle" '+
        'font-size="12" fill="#58645F">Hafta sonu</text>';
   }
 

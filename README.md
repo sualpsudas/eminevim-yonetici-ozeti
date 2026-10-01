@@ -1091,19 +1091,35 @@ geçer. Sütunun boyu değerin kendisidir.
 > yazılı ve %100 çizgisi nerede durduklarını söylüyor. Hassasiyet gerekirse tek
 > değişiklik: `Y()` tabanını yeniden %100'e almak.
 
-**Renkler kurumsal ve sabit:** sütun ve değer yeşil (`#00724C`), iki çizgi
-turuncu (`#B06A1F`, kanal payındaki "Saha" dilimiyle aynı). Düz turuncu = %100
-hedef, kesik turuncu = ortalama. Bir süre çubuklar `durum()` rengini alıyordu
-(yeşil/sarı/kırmızı); kaldırıldı, çünkü o zaman turuncu çizgiler sarı
+**Renkler kurumsal ve sabit:** sütun yeşil (`#00724C`), **değer beyaz ve sütunun
+İÇİNDE, dikeyde ortada** — yeşil zeminde beyaz rakam en okunur eşleşme ve
+sütunların üstündeki şerit boşaldığı için rakamlar %100 çizgisiyle aynı hatta
+düşmüyor. `.s-deger`'in beyaz konturu burada ters çalışırdı (beyaz yazıya beyaz
+kontur), `.hg-ic` onu kapatıyor. Sütun rakamı taşıyamayacak kadar kısayken
+(boy < 26 birim) eski davranışa düşülüyor: üstte, yeşil.
+
+İki çizgi turuncu (`#B06A1F`, kanal payındaki "Saha" dilimiyle aynı): düz =
+%100 hedef, kesik = ağırlıklı ortalama. Bir süre çubuklar `durum()` rengini
+alıyordu (yeşil/sarı/kırmızı); kaldırıldı, çünkü o zaman turuncu çizgiler sarı
 çubuklardan ayırt edilemiyordu.
 
-Değer etiketleri sütunların tepesinde. %100 çizgisiyle aynı hizaya düşseler bile
-okunuyorlar: `.s-deger`'in beyaz konturu (`paint-order:stroke fill`) altındaki
-çizgiyi kesiyor.
+**Sütunlar biraz kısa, çizgi az yukarıda:** H/G grafiği `SEYIR.B` yerine kendi
+dibini kullanıyor (B=42, eksen adları da dibin 20 birim altında). Sonuç: sütunlar
+kısalıyor ve %100 çizgisi kareye göre az yukarı çıkıyor.
 
-**Ortalama çizgisi** (turuncu kesik): Yıl'da son 3 TAM ayın ortalamasıyla
-Aralık'a kadar devam eden projeksiyon, Hafta/Ay'da gerçekleşen dilimlerin
-ortalaması. Tek dolu dilim varsa çizilmiyor — tek değerin ortalaması anlamsız.
+### Ağırlıklı hareketli ortalama
+
+Ortalama çizgisi **düz değil, sütunları takip ediyor**: her sütunun kendi
+**üç dilimlik ağırlıklı hareketli ortalaması** var (`hgHareketli`). Ağırlıklar
+**3-2-1**, en yenisi en ağır — son dilim eğilimi daha çok belirlesin. Üçten az
+geçmiş varsa eldeki kadarıyla aynı oranlarla hesaplanıyor, yani çizgi ilk
+sütundan itibaren var. Son noktada içi boş bir halka: eğilimin şu an nerede
+olduğu. Lejantta son değer yazılı ("ağırlıklı ort. %100").
+
+> **Eskisi tek bir sayıydı** (Yıl'da son üç ayın düz ortalaması, ötekilerde
+> gerçekleşen dilimlerin ortalaması) ve dümdüz yatay bir çizgi olarak
+> çiziliyordu. Her sütunda aynı değeri gösterdiği için eğilim hakkında hiçbir
+> şey söylemiyordu. Şimdi nerede yukarı nerede aşağı döndüğü okunuyor.
 
 ### Yerleşim: dört şerit
 
