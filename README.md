@@ -1072,10 +1072,57 @@ Ay'da H/G açıkken Gün'e basılırsa yüz sessizce ciroya düşüyor.
 | Ay | kümülatif çizgi + noktalar | dönem başından o haftaya kadar — ciro tarafıyla aynı okuma |
 | Yıl | ay ay çubuk + kesik projeksiyon çizgisi | her ay kendi hedefine göre; kesik çizgi **son 3 TAM ayın ortalamasıyla** Aralık'a kadar devam eder |
 
-Her üçünde **altın %100 çizgisi** var: ekranda altın "hedef" demek, H/G'nin
-okunduğu tek referans o. Çubuklar/çizgi `durum()` rengini alıyor (hedefte
-yeşil · izleme sarı · risk kırmızı). Projeksiyonda süren ay dışarıda
-(`hgSon3`): yarım ayın oranı tam ayların yanında ortalamayı bozuyor.
+### Sütunlar %100 çizgisinden büyür
+
+**Her dönemde sütun** (Ay'daki kümülatif çizgi de sütuna döndü). Kümülatif bir
+seriyi sütunla göstermek genelde zayıftır ama H/G bunun istisnası: bir **oran**,
+toplam değil — %100'ün iki yanında gezindiği için sütunlar iniş çıkış yapıyor.
+
+**Taban sıfır değil %100.** Sıfır tabanlı ölçekte sorun şuydu: oran hep %100
+civarında geziniyor. Ölçülen (Yıl): dokuz ay %98–%103 arasında, ölçek 0–119;
+en kısa sütun 96,9 en uzun 101,7 birim, aradaki fark çizim alanının yalnız
+**%4,1'i**. Dokuz sütun gözle birbirinin aynıydı, bütün bilgi en tepedeki ince
+şeritte sıkışıyordu. Taban %100'e alınınca sütun boyu **hedeften sapmayı**
+gösteriyor — bakılan şey zaten o. Ölçülen sonuç: fark oranı **%4,1 -> %36,7**.
+
+> Bu **kesik eksen değil**. Sıfırı kaydırılmış bir çubuk yanıltıcı olurdu;
+> buradaki işaretli (diverging) bir çubuk: uzunluk gerçek bir büyüklüğü
+> (sapmayı) orantılı gösteriyor, yön de işaretini. Hedefin 3 puan üstü ile 3
+> puan altı aynı boyda çıkıyor (simetrik ölçek).
+
+En az **±3 puanlık** açıklık tutuluyor: bütün dilimler %100 olduğu bir dönemde
+mikroskobik fark büyütülerek gürültü gösterilmesin. Bedeli, Ay gibi her şeyin
+%100–%101 olduğu dönemlerde sütunların küçük kalması — bilinçli.
+
+**Renkler kurumsal ve sabit:** sütun ve değer yeşil (`#00724C`), iki çizgi
+turuncu (`#B06A1F`, kanal payındaki "Saha" dilimiyle aynı). Düz turuncu = %100
+hedef, kesik turuncu = ortalama. Bir süre çubuklar `durum()` rengini alıyordu
+(yeşil/sarı/kırmızı); kaldırıldı, çünkü o zaman turuncu çizgiler sarı
+çubuklardan ayırt edilemiyordu. Durum bilgisi zaten sütunun yönünde.
+
+**Ortalama çizgisi** (turuncu kesik): Yıl'da son 3 TAM ayın ortalamasıyla
+Aralık'a kadar devam eden projeksiyon, Hafta/Ay'da gerçekleşen dilimlerin
+ortalaması. Tek dolu dilim varsa çizilmiyor — tek değerin ortalaması anlamsız.
+
+### Yerleşim: dört şerit
+
+Şikayet "yazılar, rakamlar, çizgiler karışıyor"du. Çizim alanı ayrıştırıldı,
+hiçbiri öbürüne girmiyor:
+
+| y | ne |
+|---|---|
+| 13 | lejant: solda "%100 hedef", sağda ortalama — önülerinde düz/kesik çentik |
+| 31 | hafta öbek başlıkları (yalnız Hafta'da) |
+| 48+ | sütun değerleri — yukarı sütunda üstte, aşağı sütunda altta |
+| 192 | eksen adları |
+
+Çizgi etiketleri artık çizgilerin UCUNDA değil lejantta: Yıl'da "%99" ile
+"%100 hedef" iç içe giriyordu. Böleni söyleyen not da SVG'den çıkıp başlık
+altındaki dönem satırına taşındı; içeride "Eki/Kas/Ara" ile çakışıyordu.
+Dipteki gri taban çizgisi kaldırıldı — sütunlar orada başlamıyor, eksen %100
+çizgisinin kendisi.
+
+**Ölçülen: üç dönemde de yazı çakışması 0** (önce Hafta 2, Ay 1, Yıl 4).
 
 > **BUGÜN yarım, böleni de yarım olmalı.** Bugünün cirosu `GUN_PAY` ile
 > (16:30'a kadarki pay) ölçeklenmiş; hedefinin de aynı payı alınmazsa günün
