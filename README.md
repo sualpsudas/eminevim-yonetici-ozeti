@@ -1098,10 +1098,16 @@ düşmüyor. `.s-deger`'in beyaz konturu burada ters çalışırdı (beyaz yazı
 kontur), `.hg-ic` onu kapatıyor. Sütun rakamı taşıyamayacak kadar kısayken
 (boy < 26 birim) eski davranışa düşülüyor: üstte, yeşil.
 
-İki çizgi turuncu (`#B06A1F`, kanal payındaki "Saha" dilimiyle aynı): düz =
-%100 hedef, kesik = ağırlıklı ortalama. Bir süre çubuklar `durum()` rengini
-alıyordu (yeşil/sarı/kırmızı); kaldırıldı, çünkü o zaman turuncu çizgiler sarı
-çubuklardan ayırt edilemiyordu.
+Tek çizgi var ve turuncu (`#B06A1F`, kanal payındaki "Saha" dilimiyle aynı):
+kesik = ağırlıklı ortalama. Bir süre çubuklar `durum()` rengini alıyordu
+(yeşil/sarı/kırmızı); kaldırıldı, çünkü o zaman turuncu çizgi sarı çubuklardan
+ayırt edilemiyordu.
+
+> **%100 hedef çizgisi KALDIRILDI.** Karşılaştırma artık sütun ile hedef
+> arasında değil, sütun ile kendi **ağırlıklı ortalaması** arasında: "bu dilim,
+> son üç dilimin eğilimine göre nerede?" Buna bağlı olarak ölçek artık %100'ü
+> ZORLAMIYOR — ekranda o çizgi olmadığı için oraya yer ayırmanın karşılığı yok;
+> tavan veriden çıkıyor ve sütunlar kareyi daha dolu kullanıyor.
 
 **Sütunlar biraz kısa, çizgi az yukarıda:** H/G grafiği `SEYIR.B` yerine kendi
 dibini kullanıyor (B=42, eksen adları da dibin 20 birim altında). Sonuç: sütunlar
@@ -1114,7 +1120,13 @@ Ortalama çizgisi **düz değil, sütunları takip ediyor**: her sütunun kendi
 **3-2-1**, en yenisi en ağır — son dilim eğilimi daha çok belirlesin. Üçten az
 geçmiş varsa eldeki kadarıyla aynı oranlarla hesaplanıyor, yani çizgi ilk
 sütundan itibaren var. Son noktada içi boş bir halka: eğilimin şu an nerede
-olduğu. Lejantta son değer yazılı ("ağırlıklı ort. %100").
+olduğu. Lejant tek kalem ve solda: "3 dilimlik ağırlıklı ortalama · %100".
+
+Ölçülen (Yıl, ortalamanın viewBox y değerleri): 66,6 · 68,8 · 70,0 · 70,8 ·
+70,5 · 70,4 · 70,0 · 70,2 · 69,6 — dokuz noktanın **sekizi ayrı değerde**, yani
+çizgi gerçekten her sütunda farklı. Düze yakın görünmesinin sebebi verinin
+%98–%103'e sıkışık olması: 4,2 birimlik oynama ~106 birimlik çizim alanında
+%4 ediyor.
 
 > **Eskisi tek bir sayıydı** (Yıl'da son üç ayın düz ortalaması, ötekilerde
 > gerçekleşen dilimlerin ortalaması) ve dümdüz yatay bir çizgi olarak

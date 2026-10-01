@@ -2554,11 +2554,9 @@ const HG_TURUNCU= "#B06A1F";   /* paletteki turuncu; kanal payında "Saha" dilim
 
    YERLEŞİM. Şikayet "yazılar, rakamlar, çizgiler karışıyor"du. Çizim alanı
    dört şeride ayrıldı, hiçbiri öbürüne girmiyor:
-     y 13   LEJANT: solda "%100 hedef", sağda ortalama. Çizgilerin yanında
-             değil, kendi satırında; önünde çizginin biçimini gösteren kısa bir
-             çentik var (düz = hedef, kesik = ortalama). Eskiden etiketler
-             çizgilerin ucunda duruyordu ve Yıl'da bir sütun değeriyle
-             çakışıyordu — ölçülen: "%99" ile "%100 hedef" iç içeydi.
+     y 13   LEJANT: tek kalem — ağırlıklı ortalama, solda. Çizginin yanında
+             değil, kendi satırında; önünde kesik bir çentik. (%100 hedef
+             çizgisi ve lejantı kaldırıldı.)
      y 31   hafta öbek başlıkları (yalnız Hafta'da)
      y>=48  sütun değerleri (tepelerinde, ETIKET_UST ile kelepçelenmiş)
      y 192  eksen adları
@@ -2595,8 +2593,11 @@ function cizHg(kap,k,per,el){
      karşılaştırma hassasiyetinden önce geliyor. Rakamlar zaten sütunların
      üstünde yazılı ve %100 çizgisi nerede durduklarını söylüyor.
      Hassasiyet gerekirse tek değişiklik: tabanı yeniden %100'e almak. */
+  /* Ölçek artık %100'ü ZORLAMIYOR: ekranda %100 çizgisi kalmadığı için
+     oraya yer ayırmanın bir karşılığı yok. Tavan veriden çıkıyor, sütunlar
+     kareyi daha dolu kullanıyor. */
   const dd=dolu.map(function(d){ return d.v; });
-  const enb=Math.max(100, ort||0, dd.length?Math.max.apply(null,dd):0)*1.16||1;
+  const enb=Math.max(ort||0, dd.length?Math.max.apply(null,dd):0)*1.16||1;
   const Y=function(v){ return H-B-(Math.max(0,Math.min(enb,v))/enb)*(H-B-T); };
 
   /* x yerleşimi cizKayit ile birebir: iki yarı aynı ekseni okuyor. */
@@ -2609,7 +2610,7 @@ function cizHg(kap,k,per,el){
   /* Sütunların oturduğu dip çizgisi. */
   let g='<line x1="'+L+'" y1="'+(H-B)+'" x2="'+(W2-R)+'" y2="'+(H-B)+
         '" stroke="#AEB7B1" stroke-width="1.2"/>';
-  const y100=Y(100), yOrt=(ort!==null)?Y(ort):null;
+  const yOrt=(ort!==null)?Y(ort):null;
 
   /* --- sütunlar ve değerleri (hepsi yeşil) --- */
   const bw=Math.min(haftaMi?44:40, bir*0.62);
@@ -2634,11 +2635,10 @@ function cizHg(kap,k,per,el){
        '>'+PCT(d.v)+'</text>';
   });
 
-  /* --- turuncu çizgiler --- */
-  /* %100 hedef: düz turuncu, etiketi SOL uçta. */
-  g+='<line x1="'+L+'" y1="'+y100.toFixed(1)+'" x2="'+(W2-R)+'" y2="'+y100.toFixed(1)+
-     '" stroke="'+HG_TURUNCU+'" stroke-width="2.5"/>';
-
+  /* --- turuncu ortalama çizgisi ---
+     %100 REFERANS ÇİZGİSİ KALDIRILDI (kullanıcı isteği). Artık karşılaştırma
+     sütun ile hedef arasında değil, sütun ile kendi AĞIRLIKLI ORTALAMASI
+     arasında: "bu dilim, son üç dilimin eğilimine göre nerede?" */
   /* Ortalama: kesik turuncu çizgi, SÜTUNLARI TAKİP EDER. Her sütunun kendi
      ağırlıklı hareketli ortalaması var (ortD), yani çizgi düz değil — nerede
      yukarı nerede aşağı döndüğü okunuyor. Son noktada içi boş bir halka:
@@ -2656,24 +2656,15 @@ function cizHg(kap,k,per,el){
          '" r="3.5" fill="#fff" stroke="'+HG_TURUNCU+'" stroke-width="2"/>';
   }
 
-  /* Lejant: çizgilerin UCUNDA değil, en üstte kendi satırında. Önündeki kısa
-     çentik hangi çizgi olduğunu söylüyor (düz = hedef, kesik = ortalama).
-     Böylece sütun değerleriyle çakışması yapısal olarak imkânsız. */
+  /* Lejant: tek kalem kaldı (ortalama), en üstte SOLDA. Önündeki kısa kesik
+     çentik hangi çizgi olduğunu söylüyor. Sütun değerleri sütunların içinde
+     olduğu için lejantla çakışması yapısal olarak imkânsız. */
   const LJ_Y=13, CENTIK=18;
-  g+='<line x1="'+L+'" y1="'+(LJ_Y-4)+'" x2="'+(L+CENTIK)+'" y2="'+(LJ_Y-4)+
-     '" stroke="'+HG_TURUNCU+'" stroke-width="2.5"/>';
-  g+='<text x="'+(L+CENTIK+6)+'" y="'+LJ_Y+'" font-size="13" font-weight="700" fill="'+
-     HG_TURUNCU+'">%100 hedef</text>';
   if(yOrt!==null){
-    const metin="ağırlıklı ort. "+PCT(ort);
-    g+='<text x="'+(W2-R)+'" y="'+LJ_Y+'" text-anchor="end" font-size="13" '+
-       'font-weight="700" fill="'+HG_TURUNCU+'">'+metin+'</text>';
-    /* Çentik yazının soluna. Kaba gen bir tahmin (7,4 birim/karakter + 10
-       pay): dar tahminde çentik yazının ilk harflerinin altına giriyordu. */
-    const sag=(W2-R)-metin.length*7.4-10;
-    g+='<line x1="'+(sag-CENTIK).toFixed(1)+'" y1="'+(LJ_Y-4)+'" x2="'+sag.toFixed(1)+
-       '" y2="'+(LJ_Y-4)+'" stroke="'+HG_TURUNCU+
-       '" stroke-width="2.5" stroke-dasharray="5 4"/>';
+    g+='<line x1="'+L+'" y1="'+(LJ_Y-4)+'" x2="'+(L+CENTIK)+'" y2="'+(LJ_Y-4)+
+       '" stroke="'+HG_TURUNCU+'" stroke-width="2.5" stroke-dasharray="5 4"/>';
+    g+='<text x="'+(L+CENTIK+6)+'" y="'+LJ_Y+'" font-size="13" font-weight="700" fill="'+
+       HG_TURUNCU+'">3 dilimlik ağırlıklı ortalama · '+PCT(ort)+'</text>';
   }
 
   /* --- eksen adları: dibin hemen altında (dip yukarı alındı, adlar da) --- */
