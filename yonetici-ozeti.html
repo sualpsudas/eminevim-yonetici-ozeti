@@ -780,7 +780,7 @@ body.sekme-pasif #harita .hrt-parla{animation-play-state:paused}
 .clegend i.blok{height:10px;border:0;background:var(--good);border-radius:1px}
 
 
-/* KPI kutuları gösteri sırasında yatay eksende dönerek içerik değiştirir. */
+/* KPI kutuları yatay eksende dönerek içerik değiştirir. */
 .pair{perspective:700px}
 /* Dönüş iki ayrı fazdır ve yumuşatması ASİMETRİK: çıkışta hızlanır
    (ease-in), tam yan dönmüşken içerik değişir, inişte yavaşlar (ease-out).
@@ -801,11 +801,8 @@ body.sekme-pasif #harita .hrt-parla{animation-play-state:paused}
   100%{transform:rotateX(0deg);   filter:brightness(1)}
 }
 .pair > div.cevir{animation:kutuCevir var(--cs,.62s) cubic-bezier(.45,0,.25,1)}
-/* Seyrin sağ yarısı da aynı biçimde dönüyor: kayıt sayısı ↔ randevu sayısı. */
+/* Seyrin iki yarısı da aynı biçimde dönüyor. */
 .spark{perspective:1100px}
-/* Dönen iki yüzün sağ üstünde elle çevirme tuşu. Bekleme modu kendiliğinden
-   çeviriyor; bu tuş istenildiği anda öbür yüze geçmeyi sağlıyor. Sönük
-   duruyor, üstüne gelince beliriyor — sunumda göze batmasın. */
 /* Dönüş tuşunun YANINDA nereye döneceğinin adı. ↻ işareti "bu kutu
    dönüyor" diyor ama neye döneceğini söylemiyordu; hangi ölçünün geleceği
    ancak dönünce anlaşılıyordu. Etiket ile tuş tek sarmalda: konumlama
@@ -1855,9 +1852,9 @@ function akisiDurdur(el){
   if(el && el.__akis){ bitir(el.__akis); el.__akis=null; }
 }
 
-/* Akan bütün değerleri son hâllerine sabitler. Gösteri kutulara kendi metnini
-   yazacağı zaman gerekiyor: sürmekte olan bir akış, yazılan adedin üstüne
-   kendi ara değerini basardı. */
+/* Akan bütün değerleri son hâllerine sabitler. Kutulara adet yazılacağı
+   zaman gerekiyor: sürmekte olan bir akış, yazılan adedin üstüne kendi ara
+   değerini basardı. */
 function akislariBitir(){
   AKIS.forEach(function(a){ a.uygula(a.v1); bitir(a); });
 }
@@ -2022,7 +2019,6 @@ function cizSeviye(){
   document.querySelectorAll('.seviye button').forEach(function(b){
     b.setAttribute("aria-pressed", b.dataset.s===S.seviye?"true":"false");
   });
-  /* Gösteri ciro kartı ile saha kartlarını kullanıyor; yalnız Genel'de var. */
 }
 function cizZaman(per){
   document.querySelectorAll('.tabs button').forEach(function(b){
@@ -3113,10 +3109,9 @@ function secimGoster(hedef,listeKap){
        listeyi yeniden çizmek sayı akışını kesip satırları oynatıyordu. */
     if(eskiKap!==S.bolgeListeKap) cizBolgeListe(per);
   };
-  /* Kutu dönüşü burada değil. Vurgulama — elle de, gösteride de — kutulara
-     o sahanın KPI DEĞERLERİNİ yazar ve rakamlar akarak geçer. Adetlere
-     dönüş gösterinin ayrı bir adımıdır (gosteriAdetCevir): önce sahanın
-     kendi KPI'ları okunuyor, sonra kutular dönüp adetleri gösteriyor. */
+  /* Kutu dönüşü burada değil: vurgulama kutulara o sahanın KPI
+     DEĞERLERİNİ yazar ve rakamlar akarak geçer. Adetlere dönüş bekleme
+     modunun (ya da turun) ayrı bir adımı. */
   yaz();
 }
 function secimUygula(){
@@ -3156,14 +3151,12 @@ function detayaIn(n){
 /* Sabitlenmiş olan tam olarak bu düğüm mü? Hover'a bakmaz: hover sabit
    seçimin üstüne önizleme bindirebiliyor, ama inme kararını sabit olan verir. */
 function sabitMi(n){ return !!S.secimSabit && S.secimSabit.node===n; }
-/* Gösteri mevcut saha sırasını doğrudan sürer. */
+/* Harita turu mevcut saha sırasını doğrudan sürer. */
 function sahaVurgula(si){
   secimGoster(si===null?null:KOK.cocuk[si],si===null?null:KOK.cocuk[si]);
 }
 
-/* Dört kutuyu birden çevirir — yalnız gösterinin saha turunda kullanılır.
-   Gösterinin birinci evresindeki sıralı dönüşten farklı: burada dördü
-   birden ve daha hızlı döner. */
+/* Dört KPI kutusunu birden çevirir. */
 let onizlemeZaman=null, onizlemeBitir=null;
 /* Dönüş süreleri tek yerde. Takas TAM yarıda olmalı (kutuCevir %50'de
    kenarına geliyor); eskiden 440 ms'lik dönüşte 220 yerine elle yazılmış
@@ -3252,7 +3245,7 @@ const KPI_KUTU=["hgBox","oncBox","kalanBox","rndBox"];
 function adetleriYaz(liste){
   KPI_KUTU.forEach(function(id,i){
     const el=$(id); if(!el||!liste[i]) return;
-    /* Yıl'da "Hedefe kalan" gizli; gösteri boyunca görünür olmalı. */
+    /* Yıl'da "Hedefe kalan" gizli; adet yüzünde görünür olmalı. */
     el.classList.remove("bos"); el.removeAttribute("aria-hidden");
     adetleriYaz.tek(el, liste[i]);
   });
@@ -3292,7 +3285,7 @@ const BEKLE_ADET  = 5000;    /* her KPI yüzü ne kadar durur — üç yüz = 15
                                 üç yüz 19,5 sn sürüyor, yani sayacı aşıyordu. */
 const BEKLE_RND   = 9000;    /* ikinci ölçü ne kadar durur */
 const BEKLE_SAHA  = 3000;    /* harita turunda her saha ne kadar durur */
-const BEKLE={zaman:[], kpiKar:null};
+const BEKLE={zaman:[]};
 let beklemeSayac=0;
 /* Son etkileşim ya da son etkinin bitiş anı. Sayaç setInterval ile değil
    bunun üstünden yürüyor: sabit bir setInterval, elle çevirmenin hemen
@@ -3309,7 +3302,6 @@ function beklemeGecikti(){ beklemeSonHareket=Date.now(); }
    edilir ve durum başlangıç hâline döner. */
 function beklemeSifirla(){
   beklemeTemizle(); yariTemizle(); nabizDurdur(); etiketDurdur();
-  BEKLE.kpiKar=null;
   S.solSeyir="ciro"; S.sagSeyir="rnd"; S.kpiYuz="kpi"; S.bolgeYuz="hg";
   bolTemizle();
   const sg=document.querySelector(".hero-r"); if(sg) sg.classList.remove("tes");
@@ -3552,8 +3544,9 @@ function sagYuzCevir(){ sagSeyreGec(S.sagSeyir==="rnd" ? "kart" : "rnd"); }
 /* Bekleme modunda SIRAYLA: önce sol yarı kayda döner ve geri gelir, sonra
    sağ yarı karta döner ve geri gelir. Aynı karede iki hareket olmuyor, göz
    tek değişimi takip ediyor. Araya 1,2 sn konuldu, yoksa soldaki geri
-   dönüşle sağdaki gidiş birbirine değiyor. Toplam 19,2 sn — bir sonraki
-   bekleme tikinden (20 sn) kısa. */
+   dönüşle sağdaki gidiş birbirine değiyor. Toplam 19,2 sn; BEKLE_ARA'dan
+   (15 sn) uzun ama sorun değil — BEKLE.zaman doluyken tik yeni etki
+   başlatmıyor, sıra kendiliğinden bekliyor. */
 const SEYIR_ARA = 1200;
 function beklemeSeyir(){
   solYuzCevir();
@@ -4302,11 +4295,6 @@ function cizSahaKartlar(k,per){
     d3.className="d3 "+degisimSinif(v.deg);
     sayiAk(d3, v.deg, x=>(x===null?"—":IMZ(x)), "imz");
 
-    /* Arka yüz: o sahanın bölgeleri, dönem cirosuna göre sıralı. */
-    const sonG=Math.min(per.bit,BUGUN);
-    const bl=v.n.cocuk.map(function(x){
-      return {ad:x.ad, c: sonG>=per.bas ? topArr(x.ciro[k],per.bas,sonG) : 0};
-    }).sort((a,c)=>c.c-a.c);
   });
   kartSigdir();
 
