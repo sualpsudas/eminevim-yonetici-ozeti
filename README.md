@@ -1044,7 +1044,7 @@ ve saha bloklarının grafikleri var, sabit bir id çakışırdı.
 
 | yarı | yüzler | okuma |
 |---|---|---|
-| **sol** | **Ciro ↔ Kayıt sayısı** | sonuç: tutar ve onun adet karşılığı |
+| **sol** | **Ciro → Kayıt sayısı → Hedefe göre** | sonuç: tutar, adet karşılığı ve hedef tutma |
 | **sağ** | **Randevu ↔ Kart sayısı** | sonuca giden yol: huninin ilk iki kademesi |
 
 Aynı dönemin iki farklı ölçüsü yan yana durunca "tutar mı arttı, adet mi"
@@ -1057,6 +1057,42 @@ yolu (`solYuzCevir` / `sagYuzCevir`) kullanır.
 dönüş tuşunun yanındaki hedef etiketi hepsi oradan okunuyor. Çubuk renkleri
 huni sırasını izler (`KAYIT_RENK`): randevu turkuaz `#2B8C8A`, kart ara ton
 `#2F6B7A`, kayıt lacivert `#1E3856`.
+
+### Sol yarının üçüncü yüzü: H/G
+
+Yalnız yüzde; tutar yok (`cizHg`). **GÜN'DE YOK**: günün hedefi saatlik
+profilden (`SAAT_W`) türetilmiş bir dağıtımdır, ölçülmüş bir şey değil —
+saat saat H/G okumak tahmini bir böleni kesin bir orana çevirip olmayan bir
+hassasiyet gösterirdi. Yüz listesi döneme göre `solYuzler()`'den çıkıyor;
+Ay'da H/G açıkken Gün'e basılırsa yüz sessizce ciroya düşüyor.
+
+| dönem | çizim | okuma |
+|---|---|---|
+| Hafta | gün gün çubuk (hafta içi / hafta sonu iki öbek) | her gün kendi hedefine göre |
+| Ay | kümülatif çizgi + noktalar | dönem başından o haftaya kadar — ciro tarafıyla aynı okuma |
+| Yıl | ay ay çubuk + kesik projeksiyon çizgisi | her ay kendi hedefine göre; kesik çizgi **son 3 TAM ayın ortalamasıyla** Aralık'a kadar devam eder |
+
+Her üçünde **altın %100 çizgisi** var: ekranda altın "hedef" demek, H/G'nin
+okunduğu tek referans o. Çubuklar/çizgi `durum()` rengini alıyor (hedefte
+yeşil · izleme sarı · risk kırmızı). Projeksiyonda süren ay dışarıda
+(`hgSon3`): yarım ayın oranı tam ayların yanında ortalamayı bozuyor.
+
+> **BUGÜN yarım, böleni de yarım olmalı.** Bugünün cirosu `GUN_PAY` ile
+> (16:30'a kadarki pay) ölçeklenmiş; hedefinin de aynı payı alınmazsa günün
+> TAMAMININ hedefine bölünüyor ve bugün her zaman düşük çıkıyor — ölçülen:
+> Pazartesi **%80** görünüyordu, düzeltmeyle **%110**. `olcum()` aynı
+> düzeltmeyi `hedefAgir` için zaten yapıyor.
+
+> **Böleni söylemek zorunlu.** KPI kutusundaki "Hedefe göre" dönemin
+> TAMAMININ hedefine bölünür; grafikteki her nokta KENDİ diliminin hedefine.
+> Ölçülen: haftanın ilk gününde kutu **%16** derken grafik **%110** diyor —
+> ikisi de doğru ama aynı etiket iki ayrı soruyu yanıtlıyor. O yüzden grafiğin
+> sağ üstünde böleni söyleyen bir satır var: "her dilim kendi hedefine göre"
+> (Ay'da "dönem başından birikimli"). Bu satır olmadan grafik yanlış okunuyor.
+
+**Üç yüz bekleme modunu değiştirdi.** "Çevir, sonra bir daha çevir" artık başa
+getirmiyor; `beklemeSeyir` nereye döneceğini açıkça saklıyor
+(`solGeri` / `sagGeri`) ve `solSeyreGec` ile oraya dönüyor.
 
 **İki yarı bağımsız döndüğü için zamanlayıcılar da ayrı** (`yariZaman[0]` /
 `yariZaman[1]`): sol yarının dönüşü sağdakinin yarıda kalan geri yazmasını

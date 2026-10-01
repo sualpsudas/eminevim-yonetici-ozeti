@@ -2266,9 +2266,25 @@ function seyirBaslik(per){
 
 /* Her ölçünün adı tek yerde: başlık, aria etiketi ve dönüş tuşunun yanındaki
    hedef etiketi hep buradan okunuyor. */
-const SEYIR_AD={ciro:"Ciro", kyt:"Kayıt sayısı", rnd:"Randevu sayısı", kart:"Kart sayısı"};
+const SEYIR_AD={ciro:"Ciro", kyt:"Kayıt sayısı", rnd:"Randevu sayısı",
+                kart:"Kart sayısı", hg:"Hedefe göre"};
 const SEYIR_ETIKET={ciro:"Dönem içi ciro seyri", kyt:"Dönem içi kayıt sayısı",
-                    rnd:"Dönem içi randevu sayısı", kart:"Dönem içi kart sayısı"};
+                    rnd:"Dönem içi randevu sayısı", kart:"Dönem içi kart sayısı",
+                    hg:"Dönem içi hedefe göre seyir"};
+
+/* Sol yarının yüz sırası: ciro → kayıt → H/G → başa.
+   GÜN'DE H/G YOK. Günün hedefi saatlik profilden (SAAT_W) türetilmiş bir
+   dağılımdır, ölçülmüş bir şey değil — saat saat H/G okumak tahmini bir
+   böleni kesin bir orana çevirip olmayan bir hassasiyet gösterirdi.
+   O yüzden Gün'de yüz listesi iki ölçüde kalıyor. */
+const SOL_YUZ=["ciro","kyt","hg"];
+function solYuzler(per){
+  return (per||donem()).tip==="gun" ? ["ciro","kyt"] : SOL_YUZ;
+}
+function solSonraki(per){
+  const l=solYuzler(per), i=l.indexOf(S.solSeyir);
+  return l[(i<0 ? 0 : i+1) % l.length];
+}
 
 function cizSeyir(kap,k,per,o){
   /* Başlıklar sabit değil — gösterilen ölçünün adı. Dönem ikisinin de
@@ -2288,6 +2304,9 @@ function cizSeyir(kap,k,per,o){
    onu bozmaz, bekleme modu ile tuşlar aynı yolu kullanır. */
 function solSeyirCiz(kap,k,per,o){
   per=per||donem(); kap=kap||kapsam(); k=k||S.kanal;
+  /* Gün'e geçilince H/G yüzü düşer: kullanıcı Ay'da H/G açıkken Gün'e
+     basabiliyor, o yüzde çizilecek bir şey olmadığı için ciroya dönülür. */
+  if(solYuzler(per).indexOf(S.solSeyir)<0) S.solSeyir="ciro";
   const alan=S.solSeyir, sv=$("spark");
   const bas=$("solBas"); if(bas) bas.textContent=SEYIR_AD[alan];
   if(sv) sv.setAttribute("aria-label", SEYIR_ETIKET[alan]);
@@ -2296,6 +2315,8 @@ function solSeyirCiz(kap,k,per,o){
     if(per.tip==="gun") cizSpark(kap,k,per);
     else cizGrafik(kap,k,per,o||olcum(kap,k,per),{svg:sv, leg:null, not:null});
     if(acilisMi()) cizgiCizdir(sv);
+  }else if(alan==="hg"){
+    cizHg(kap,k,per,{svg:sv});
   }else{
     cizKayit(kap,k,per,{svg:sv, not:null}, alan);
   }
@@ -2318,7 +2339,7 @@ function yuzHedefYaz(){
   const yaz=function(id,metin){ const el=$(id); if(el) el.textContent=metin; };
   const sonraKpi=KPI_YUZ[(KPI_YUZ.indexOf(S.kpiYuz)+1) % KPI_YUZ.length];
   yaz("kpiHedef", KPI_YUZ_AD[sonraKpi]);
-  yaz("solHedef", SEYIR_AD[S.solSeyir==="ciro" ? "kyt" : "ciro"]);
+  yaz("solHedef", SEYIR_AD[solSonraki()]);
   yaz("sagHedef", SEYIR_AD[S.sagSeyir==="rnd" ? "kart" : "rnd"]);
   yaz("bolHedef", S.bolgeYuz==="hg" ? "Ciro" : "Hedefe göre");
 }
@@ -2421,6 +2442,188 @@ function cizKayit(kap,k,per,el,alan){
                           : dl.reduce((a,d)=>a+d.v,0);
     el.not.textContent = (birikimli?"birikimli · ":"")+"dönem toplamı "+AD(top);
   }
+}
+
+/* ===== SOL YARININ ÜÇÜNCÜ YÜZÜ: H/G =====
+   Yalnız yüzde; tutar yok. Her dilimin ölçüsü "o dilimde hedefin ne kadarı
+   tutuldu": gerçekleşen ÷ o dilimin hedefi.
+
+   SÜREN dilimde bölen, dilimin tamamının hedefi DEĞİL, o ana kadar birikmiş
+   hedef payıdır (topHed ... min(son,BUGUN)). Yoksa yarısına gelinmiş bir
+   hafta her zaman ~%50 görünür ve yanında duran tam haftalarla
+   kıyaslanamazdı — ekrandaki hiçbir yerde H/G böyle okunmuyor.
+
+   Dilimleme ciro tarafıyla aynı, çünkü iki yüz aynı x eksenini paylaşıyor:
+     Hafta → gün gün (hafta içi / hafta sonu iki öbek, cizKayit ile aynı)
+     Ay    → kümülatif, dönem başından o haftaya kadar
+     Yıl   → ay ay + son üç ayın ortalamasıyla devam eden projeksiyon
+   Gün yok (bkz. solYuzler). */
+function hgDilim(d,k,per){
+  const sonG=Math.min(per.bit,BUGUN);
+  /* b..s arasının H/G'si; bölen de pay da aynı güne kadar kesilir.
+     BUGÜN yarım: cirosu GUN_PAY ile (saat 16:30'a kadarki pay) ölçeklenmiş
+     olduğu için hedefinin de aynı payı alınmalı. Alınmazsa günün tamamının
+     hedefine bölünüyor ve bugün her zaman düşük çıkıyor — ölçülen: Pazartesi
+     %80 görünüyordu. olcum() aynı düzeltmeyi hedefAgir için yapıyor. */
+  const hgAralik=function(b,s){
+    const s2=Math.min(s,sonG);
+    if(s2<b) return null;
+    const g=topArr(d.ciro[k],b,s2);
+    let h=topHed(d.hed[k],b,s2);
+    if(s2===BUGUN) h-=gunlukHedef(d.hed[k],BUGUN)*(1-GUN_PAY);
+    return h>0 ? g/h*100 : null;
+  };
+  if(per.tip==="hafta"){
+    const out=[];
+    for(let i=per.bas;i<=per.bit;i++)
+      out.push({ad:GUN_KISA[idxTarih(i).getDay()], v:hgAralik(i,i),
+                yarim:i===BUGUN, gelecek:i>BUGUN});
+    return out;
+  }
+  if(per.tip==="ay"){
+    const out=[];
+    for(let g0=per.bas; g0<=per.bit; g0+=7){
+      const g1=Math.min(g0+6,per.bit);
+      /* kümülatif: her nokta dönem BAŞINDAN o haftanın sonuna kadar */
+      out.push({ad:idxTarih(g0).getDate()+"–"+idxTarih(g1).getDate(),
+                v:hgAralik(per.bas,g1),
+                yarim:(g0<=BUGUN&&g1>BUGUN), gelecek:g0>BUGUN});
+    }
+    return out;
+  }
+  const out=[];
+  for(let m=0;m<12;m++){
+    const b=AY_BAS[m], son=b+AY_GUN[m]-1;
+    out.push({ad:AY_AD[m].slice(0,3), v:hgAralik(b,son),
+              yarim:(b<=BUGUN&&son>BUGUN), gelecek:b>BUGUN});
+  }
+  return out;
+}
+/* Yıl'da gelecek aylar için son ÜÇ TAM ayın H/G ortalaması. Süren ay
+   dışarıda: yarım ayın oranı tam ayların yanında ortalamayı bozuyor. */
+function hgSon3(dl){
+  const tam=dl.filter(function(d){ return !d.gelecek && !d.yarim && d.v!==null; });
+  if(!tam.length) return null;
+  const s3=tam.slice(-3);
+  return s3.reduce(function(a,d){ return a+d.v; },0)/s3.length;
+}
+
+function cizHg(kap,k,per,el){
+  const sv=el.svg;
+  const W2=SEYIR.W, H=SEYIR.H, L=SEYIR.L, R=SEYIR.R, T=SEYIR.T, B=SEYIR.B;
+  sv.setAttribute("viewBox","0 0 "+W2+" "+H);
+  const dl=hgDilim(kap,k,per), n=dl.length;
+  const proj = per.tip==="yil" ? hgSon3(dl) : null;
+
+  /* Ölçek %100'ü HER ZAMAN içerir: H/G'nin tek referansı o. */
+  const dd=dl.filter(d=>d.v!==null).map(d=>d.v);
+  const enb=Math.max(100, proj||0, dd.length?Math.max.apply(null,dd):0)*1.16||1;
+  const Y=v=>H-B-(Math.max(0,Math.min(enb,v))/enb)*(H-B-T);
+
+  /* Hafta'da x yerleşimi cizKayit ile birebir: iki yarı aynı ekseni okuyor. */
+  const haftaMi = per.tip==="hafta" && n>5;
+  const ARA = haftaMi ? 54 : 0;
+  const bir = (W2-L-R-ARA)/Math.max(1,n);
+  const X = haftaMi ? (i=>L+bir*(i+0.5)+(i>=5?ARA:0))
+                    : (per.tip==="ay" ? (i=>(n<=1 ? L+(W2-L-R)/2 : L+i*(W2-L-R)/(n-1)))
+                                      : (i=>L+bir*(i+0.5)));
+
+  let g='<line x1="'+L+'" y1="'+(H-B)+'" x2="'+(W2-R)+'" y2="'+(H-B)+
+        '" stroke="#AEB7B1" stroke-width="1.2"/>';
+
+  /* %100 çizgisi altın: ekranın her yerinde altın "hedef" demek. */
+  const y100=Y(100);
+  g+='<line x1="'+L+'" y1="'+y100.toFixed(1)+'" x2="'+(W2-R)+'" y2="'+y100.toFixed(1)+
+     '" stroke="'+"#C9A961"+'" stroke-width="2.5"/>';
+  g+='<text x="'+(L+2)+'" y="'+(y100-7).toFixed(1)+'" font-size="13" font-weight="700" '+
+     'fill="#7A5E1F">%100 hedef</text>';
+
+  const RENK={ok:"#00724C", watch:"#8A6410", no:"#9B342C"};
+  const bw=Math.min(haftaMi?44:40, bir*0.62);
+
+  if(per.tip==="ay"){
+    /* Kümülatif: ciro tarafıyla aynı okuma — çizgi ve noktalar. */
+    let yol="", son=-1;
+    dl.forEach(function(d,i){
+      if(d.gelecek||d.v===null) return;
+      yol+=(yol?"L":"M")+X(i).toFixed(1)+" "+Y(d.v).toFixed(1); son=i;
+    });
+    const sonD = son>=0 ? dl[son] : null;
+    const renk = sonD ? (RENK[durum(sonD.v)]||RENK.watch) : RENK.watch;
+    if(yol) g+='<path d="'+yol+'" fill="none" stroke="'+renk+
+               '" stroke-width="3" stroke-linejoin="round"/>';
+    dl.forEach(function(d,i){
+      if(d.gelecek||d.v===null) return;
+      const x=X(i), y=Y(d.v);
+      g+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(i===son?4:2.6)+
+         '" fill="'+renk+'"/>';
+      const anc = i>=n-2 ? "end" : (i<=1 ? "start" : "middle");
+      g+='<text class="s-deger" x="'+x.toFixed(1)+'" y="'+Math.max(14,y-10).toFixed(1)+
+         '" text-anchor="'+anc+'" font-weight="700" fill="'+renk+'">'+PCT(d.v)+'</text>';
+    });
+  } else {
+    /* Hafta ve Yıl: dilim dilim çubuk, her çubuk kendi durum renginde. */
+    dl.forEach(function(d,i){
+      if(d.gelecek||d.v===null) return;
+      const x=X(i), y=Y(d.v), renk=RENK[durum(d.v)]||RENK.watch;
+      g+='<rect'+(d.yarim?' id="bugunCubuk"':'')+' style="--sira:'+i+'" x="'+(x-bw/2).toFixed(1)+
+         '" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+
+         Math.max(0,(H-B)-y).toFixed(1)+'" rx="2" fill="'+renk+'" fill-opacity="'+
+         (d.yarim?".5":".85")+'"/>';
+      g+='<text class="s-deger" x="'+x.toFixed(1)+'" y="'+Math.max(14,y-7).toFixed(1)+
+         '" text-anchor="middle" font-weight="700" fill="'+renk+'">'+PCT(d.v)+'</text>';
+    });
+  }
+
+  /* Yıl: son üç ayın ortalamasıyla devam eden çizgi. Son gerçekleşen aydan
+     başlayıp Aralık'a kadar o seviyede gider — "bu tempoyla böyle biter".
+     Kesik çizgi, çünkü tahmin; turkuaz, çünkü ekranda tahmin turkuaz. */
+  if(proj!==null){
+    let sonTam=-1;
+    dl.forEach(function(d,i){ if(!d.gelecek && d.v!==null) sonTam=i; });
+    if(sonTam>=0 && sonTam<n-1){
+      const yp=Y(proj);
+      g+='<path d="M'+X(sonTam).toFixed(1)+' '+Y(dl[sonTam].v).toFixed(1)+
+         'L'+X(sonTam+1).toFixed(1)+' '+yp.toFixed(1)+
+         'L'+X(n-1).toFixed(1)+' '+yp.toFixed(1)+
+         '" fill="none" stroke="#2B8C8A" stroke-width="2.5" stroke-dasharray="6 5" '+
+         'stroke-linejoin="round"/>';
+      g+='<circle cx="'+X(n-1).toFixed(1)+'" cy="'+yp.toFixed(1)+
+         '" r="3.5" fill="#fff" stroke="#2B8C8A" stroke-width="2"/>';
+      g+='<text x="'+(W2-R).toFixed(1)+'" y="'+Math.max(13,yp-11).toFixed(1)+
+         '" text-anchor="end" font-size="13" font-weight="700" fill="#2B8C8A">'+
+         PCT(proj)+' · son 3 ay ort.</text>';
+    }
+  }
+
+  /* Eksen etiketleri */
+  dl.forEach(function(d,i){
+    const day = per.tip==="ay" ? (i===0?"start":(i===n-1?"end":"middle")) : "middle";
+    g+='<text class="s-eksen" x="'+X(i).toFixed(1)+'" y="'+(H-8)+'" text-anchor="'+day+'"'+
+       (d.yarim?' fill="#00724C"':'')+'>'+d.ad+'</text>';
+  });
+
+  if(haftaMi){
+    const ax=L+bir*5+ARA/2;
+    g+='<line x1="'+ax.toFixed(1)+'" y1="'+T+'" x2="'+ax.toFixed(1)+'" y2="'+(H-B)+
+       '" stroke="var(--rule)" stroke-width="1"/>';
+    g+='<text x="'+(L+bir*2.5).toFixed(1)+'" y="'+(T-8)+'" text-anchor="middle" '+
+       'font-size="12" fill="#58645F">Hafta içi</text>';
+    g+='<text x="'+(L+bir*6+ARA).toFixed(1)+'" y="'+(T-8)+'" text-anchor="middle" '+
+       'font-size="12" fill="#58645F">Hafta sonu</text>';
+  }
+
+  /* BÖLENİ SÖYLEMEK ZORUNLU. KPI kutusundaki "Hedefe göre" dönemin
+     TAMAMININ hedefine bölünür; buradaki her nokta KENDİ diliminin
+     hedefine. Ölçülen: haftanın ilk gününde kutu %16 derken grafik %110
+     diyor — ikisi de doğru ama aynı etiket iki ayrı soruyu yanıtlıyor.
+     Küçük de olsa bu satır olmadan grafik yanlış okunuyor. */
+  g+='<text x="'+(W2-R).toFixed(1)+'" y="'+(T-14)+'" text-anchor="end" '+
+     'font-size="12" fill="#58645F">'+
+     (per.tip==="ay" ? "dönem başından birikimli" : "her dilim kendi hedefine göre")+
+     '</text>';
+
+  sv.innerHTML=g;
 }
 
 /* Açılışta seyir çizgisi soldan sağa çizilir. Kesik çizgiye (tahmin)
@@ -3543,7 +3746,7 @@ function sagSeyreGec(alan){
   yuzHedefYaz();
   if(SAKIN.matches) sagSeyirCiz(); else seyirYariCevir(1,sagSeyirCiz);
 }
-function solYuzCevir(){ solSeyreGec(S.solSeyir==="ciro" ? "kyt" : "ciro"); }
+function solYuzCevir(){ solSeyreGec(solSonraki()); }
 function sagYuzCevir(){ sagSeyreGec(S.sagSeyir==="rnd" ? "kart" : "rnd"); }
 /* Bekleme modunda SIRAYLA: önce sol yarı kayda döner ve geri gelir, sonra
    sağ yarı karta döner ve geri gelir. Aynı karede iki hareket olmuyor, göz
@@ -3553,10 +3756,13 @@ function sagYuzCevir(){ sagSeyreGec(S.sagSeyir==="rnd" ? "kart" : "rnd"); }
    başlatmıyor, sıra kendiliğinden bekliyor. */
 const SEYIR_ARA = 1200;
 function beklemeSeyir(){
-  solYuzCevir();
-  beklemeBekle(BEKLE_RND,                     function(){ solYuzCevir(); });
-  beklemeBekle(BEKLE_RND   + SEYIR_ARA,       function(){ sagYuzCevir(); });
-  beklemeBekle(BEKLE_RND*2 + SEYIR_ARA,       function(){ sagYuzCevir(); beklemeTemizle(); });
+  /* Nereye dönüleceği SAKLANIYOR, "bir daha çevir" ile değil: sol yarı artık
+     üç yüzlü (ciro → kayıt → H/G), iki kez çevirmek başa getirmiyor. */
+  const solGeri=S.solSeyir, sagGeri=S.sagSeyir;
+  solSeyreGec(solSonraki());
+  beklemeBekle(BEKLE_RND,               function(){ solSeyreGec(solGeri); });
+  beklemeBekle(BEKLE_RND   + SEYIR_ARA, function(){ sagSeyreGec(S.sagSeyir==="rnd"?"kart":"rnd"); });
+  beklemeBekle(BEKLE_RND*2 + SEYIR_ARA, function(){ sagSeyreGec(sagGeri); beklemeTemizle(); });
 }
 /* 1 sn'lik tik; gerçek bekleme süresi beklemeTik içinde ölçülüyor. */
 setInterval(beklemeTik, 1000);
