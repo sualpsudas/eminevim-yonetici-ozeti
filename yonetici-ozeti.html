@@ -2539,7 +2539,7 @@ const HG_TURUNCU= "#B06A1F";   /* paletteki turuncu; kanal payında "Saha" dilim
              çizgilerin ucunda duruyordu ve Yıl'da bir sütun değeriyle
              çakışıyordu — ölçülen: "%99" ile "%100 hedef" iç içeydi.
      y 31   hafta öbek başlıkları (yalnız Hafta'da)
-     y>=48  sütun değerleri (ETIKET_UST ile kelepçelenmiş)
+     y>=48  sütun değerleri (tepelerinde, ETIKET_UST ile kelepçelenmiş)
      y 192  eksen adları
    Böleni söyleyen not SVG'DEN ÇIKTI: eksen adlarıyla aynı satıra düşüyordu
    (ölçülen: "Eki", "Kas", "Ara" ile iç içe). Artık başlığın altındaki dönem
@@ -2559,31 +2559,21 @@ function cizHg(kap,k,per,el){
   const ort = proj!==null ? proj
             : (dolu.length>1 ? dolu.reduce(function(a,d){return a+d.v;},0)/dolu.length : null);
 
-  /* SÜTUNLAR %100 ÇİZGİSİNDEN BÜYÜR, dipten değil.
-     Sıfır tabanlı ölçekte sorun şuydu: H/G bir ORAN, toplam değil — hep
-     %100 civarında geziniyor. Ölçülen: Yıl'da dokuz ay %98–%103 arasında,
-     ölçek 0–119; en kısa sütun 96,9 en uzun 101,7 birim, yani aradaki fark
-     çizim alanının yalnız **%4,1**'i. Dokuz sütun gözle birbirinin aynıydı,
-     bütün bilgi en tepedeki ince şeritte sıkışıyordu.
+  /* Sıfır tabanlı ölçek: BÜTÜN SÜTUNLAR DİPTEN YUKARI büyür, %100 referans
+     çizgisi de üzerlerinden geçer. Sütunun boyu değerin kendisidir.
 
-     Çözüm tabanı %100'e almak: sütun boyu artık HEDEFTEN SAPMAYI gösteriyor
-     ve bakılan şey zaten o. Kesik eksen değil — sıfırı kaydırılmış bir
-     çubuk değil, işaretli (diverging) bir çubuk: uzunluk gerçek bir
-     büyüklüğü (sapmayı) orantılı gösteriyor, yön de işaretini.
-
-     Ölçek %100'ün iki yanında SİMETRİK: hedefin 3 puan üstü ile 3 puan altı
-     aynı boyda görünür. En az ±3 puanlık bir açıklık tutuluyor, yoksa
-     bütün aylar %100 olduğu bir dönemde mikroskobik fark büyütülüp
-     gürültü gösterilirdi. */
-  const ALT_PAY=16;                       /* aşağı sütunların etiketine yer */
-  const ustSinir=T, altSinir=H-B-ALT_PAY;
-  const y100=(ustSinir+altSinir)/2, yari=(altSinir-ustSinir)/2;
-  const sapmalar=dolu.map(function(d){ return Math.abs(d.v-100); });
-  if(ort!==null) sapmalar.push(Math.abs(ort-100));
-  const enSapma=Math.max(3, sapmalar.length?Math.max.apply(null,sapmalar):0)*1.25;
-  const Y=function(v){
-    return y100 - Math.max(-1,Math.min(1,(v-100)/enSapma))*yari;
-  };
+     Bir ara tabanı %100'e alan sapma (diverging) sütunu denendi: H/G bir oran
+     olduğu için hep %100 civarında geziniyor ve sıfır tabanlı ölçekte sütunlar
+     birbirine çok benziyor — ölçülen: Yıl'da dokuz ay %98–%103 arasında, en
+     kısa sütun 96,9 en uzun 101,7 birim, fark çizim alanının %4,1'i. Sapma
+     sütunu o farkı %36,7'ye çıkarıyordu. Buna rağmen sıfır tabanlı hâle
+     dönüldü (kullanıcı kararı): sütun boyunun doğrudan değerin kendisi olması,
+     karşılaştırma hassasiyetinden önce geliyor. Rakamlar zaten sütunların
+     üstünde yazılı ve %100 çizgisi nerede durduklarını söylüyor.
+     Hassasiyet gerekirse tek değişiklik: tabanı yeniden %100'e almak. */
+  const dd=dolu.map(function(d){ return d.v; });
+  const enb=Math.max(100, ort||0, dd.length?Math.max.apply(null,dd):0)*1.16||1;
+  const Y=function(v){ return H-B-(Math.max(0,Math.min(enb,v))/enb)*(H-B-T); };
 
   /* x yerleşimi cizKayit ile birebir: iki yarı aynı ekseni okuyor. */
   const haftaMi = per.tip==="hafta" && n>5;
@@ -2592,27 +2582,24 @@ function cizHg(kap,k,per,el){
   const X = haftaMi ? function(i){ return L+bir*(i+0.5)+(i>=5?ARA:0); }
                     : function(i){ return L+bir*(i+0.5); };
 
-  /* Dipteki gri taban çizgisi YOK: sütunlar artık orada başlamıyor, eksen
-     %100 çizgisinin kendisi. Dipte bir çizgi bırakılsaydı sütunlar havada
-     asılı duruyormuş gibi görünürdü. */
-  let g='';
-  const yOrt=(ort!==null)?Y(ort):null;
+  /* Sütunların oturduğu dip çizgisi. */
+  let g='<line x1="'+L+'" y1="'+(H-B)+'" x2="'+(W2-R)+'" y2="'+(H-B)+
+        '" stroke="#AEB7B1" stroke-width="1.2"/>';
+  const y100=Y(100), yOrt=(ort!==null)?Y(ort):null;
 
   /* --- sütunlar ve değerleri (hepsi yeşil) --- */
   const bw=Math.min(haftaMi?44:40, bir*0.62);
   const etiketYeri=[];
   dl.forEach(function(d,i){
     if(d.gelecek||d.v===null) return;
-    const x=X(i), y=Y(d.v), ust=d.v>=100;
-    /* Sütun %100 ile değer arasında; yön işareti veriyor. */
-    const y0=Math.min(y,y100), boy=Math.abs(y-y100);
+    const x=X(i), y=Y(d.v);
     g+='<rect'+(d.yarim?' id="bugunCubuk"':'')+' style="--sira:'+i+'" x="'+(x-bw/2).toFixed(1)+
-       '" y="'+y0.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+
-       Math.max(1.5,boy).toFixed(1)+'" rx="2" fill="'+HG_YESIL+'" fill-opacity="'+
+       '" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+
+       Math.max(0,(H-B)-y).toFixed(1)+'" rx="2" fill="'+HG_YESIL+'" fill-opacity="'+
        (d.yarim?".5":".85")+'"/>';
-    /* Etiket sütunun DIŞ ucunda: yukarı sütunda üstte, aşağı sütunda altta.
-       Böylece ne sütunun içine ne de %100 çizgisinin üstüne biniyor. */
-    const ey = ust ? Math.max(ETIKET_UST, y-8) : Math.min(H-B+2, y+16);
+    /* Etiket sütunun tepesinde. %100 çizgisiyle aynı hizaya düşse bile okunuyor:
+       .s-deger'in beyaz konturu (paint-order) altındaki çizgiyi kesiyor. */
+    const ey=Math.max(ETIKET_UST, y-8);
     etiketYeri.push({i:i, x:x, y:ey});
     g+='<text class="s-deger" x="'+x.toFixed(1)+'" y="'+ey.toFixed(1)+
        '" text-anchor="middle" font-weight="700" fill="'+HG_YESIL+'">'+PCT(d.v)+'</text>';

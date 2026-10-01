@@ -1072,33 +1072,34 @@ Ay'da H/G açıkken Gün'e basılırsa yüz sessizce ciroya düşüyor.
 | Ay | kümülatif çizgi + noktalar | dönem başından o haftaya kadar — ciro tarafıyla aynı okuma |
 | Yıl | ay ay çubuk + kesik projeksiyon çizgisi | her ay kendi hedefine göre; kesik çizgi **son 3 TAM ayın ortalamasıyla** Aralık'a kadar devam eder |
 
-### Sütunlar %100 çizgisinden büyür
+### Sıfır tabanlı ölçek, sütunlar dipten yukarı
 
 **Her dönemde sütun** (Ay'daki kümülatif çizgi de sütuna döndü). Kümülatif bir
 seriyi sütunla göstermek genelde zayıftır ama H/G bunun istisnası: bir **oran**,
 toplam değil — %100'ün iki yanında gezindiği için sütunlar iniş çıkış yapıyor.
 
-**Taban sıfır değil %100.** Sıfır tabanlı ölçekte sorun şuydu: oran hep %100
-civarında geziniyor. Ölçülen (Yıl): dokuz ay %98–%103 arasında, ölçek 0–119;
-en kısa sütun 96,9 en uzun 101,7 birim, aradaki fark çizim alanının yalnız
-**%4,1'i**. Dokuz sütun gözle birbirinin aynıydı, bütün bilgi en tepedeki ince
-şeritte sıkışıyordu. Taban %100'e alınınca sütun boyu **hedeften sapmayı**
-gösteriyor — bakılan şey zaten o. Ölçülen sonuç: fark oranı **%4,1 -> %36,7**.
+**Bütün sütunlar dipten yukarı büyür**, %100 referans çizgisi de üzerlerinden
+geçer. Sütunun boyu değerin kendisidir.
 
-> Bu **kesik eksen değil**. Sıfırı kaydırılmış bir çubuk yanıltıcı olurdu;
-> buradaki işaretli (diverging) bir çubuk: uzunluk gerçek bir büyüklüğü
-> (sapmayı) orantılı gösteriyor, yön de işaretini. Hedefin 3 puan üstü ile 3
-> puan altı aynı boyda çıkıyor (simetrik ölçek).
-
-En az **±3 puanlık** açıklık tutuluyor: bütün dilimler %100 olduğu bir dönemde
-mikroskobik fark büyütülerek gürültü gösterilmesin. Bedeli, Ay gibi her şeyin
-%100–%101 olduğu dönemlerde sütunların küçük kalması — bilinçli.
+> **Denenip geri alınan: sapma (diverging) sütunu.** H/G bir oran olduğu için hep
+> %100 civarında geziniyor ve sıfır tabanlı ölçekte sütunlar birbirine çok
+> benziyor — ölçülen (Yıl): dokuz ay %98–%103 arasında, en kısa sütun 96,9 en
+> uzun 101,7 birim, fark çizim alanının yalnız **%4,1'i**. Tabanı %100'e alıp
+> sütunları yukarı/aşağı çıkarmak o farkı **%36,7'ye** çıkarıyordu. Buna rağmen
+> sıfır tabanlı hâle dönüldü: sütun boyunun doğrudan **değerin kendisi** olması,
+> karşılaştırma hassasiyetinden önce geliyor. Rakamlar zaten sütunların üstünde
+> yazılı ve %100 çizgisi nerede durduklarını söylüyor. Hassasiyet gerekirse tek
+> değişiklik: `Y()` tabanını yeniden %100'e almak.
 
 **Renkler kurumsal ve sabit:** sütun ve değer yeşil (`#00724C`), iki çizgi
 turuncu (`#B06A1F`, kanal payındaki "Saha" dilimiyle aynı). Düz turuncu = %100
 hedef, kesik turuncu = ortalama. Bir süre çubuklar `durum()` rengini alıyordu
 (yeşil/sarı/kırmızı); kaldırıldı, çünkü o zaman turuncu çizgiler sarı
-çubuklardan ayırt edilemiyordu. Durum bilgisi zaten sütunun yönünde.
+çubuklardan ayırt edilemiyordu.
+
+Değer etiketleri sütunların tepesinde. %100 çizgisiyle aynı hizaya düşseler bile
+okunuyorlar: `.s-deger`'in beyaz konturu (`paint-order:stroke fill`) altındaki
+çizgiyi kesiyor.
 
 **Ortalama çizgisi** (turuncu kesik): Yıl'da son 3 TAM ayın ortalamasıyla
 Aralık'a kadar devam eden projeksiyon, Hafta/Ay'da gerçekleşen dilimlerin
