@@ -49,6 +49,35 @@ h1,h2,h3{margin:0;font-weight:650;letter-spacing:-.01em}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 .wrap{width:var(--sayfa-en);margin:0 auto;padding:14px 20px 24px;
   transform-origin:top left}
+/* ===== BAYRAK =====
+   Arada bir bütün sayfanın ARKASINDAN soldan sağa çok açık yeşil, geniş ve
+   hafif eğik bir şerit geçer — rüzgârda bayrak gibi. Kartların ve bölümlerin
+   kendi zeminleri opak olduğu için şerit yalnız aralardan ve kenar
+   boşluklarından görünür; hiçbir rakamın üstünden geçmiyor, o yüzden
+   okumayı bozmuyor.
+   z-index 0 yeterli: .top ve .navbar yapışkan ve z-index'li (30/25),
+   .wrap ise transform taşıdığı için konumlanmış katmanda ve DOM'da bundan
+   SONRA geliyor — üçü de şeridin üstünde kalıyor. */
+.bayrak{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+/* Renk kurumsal koyu yeşilden (#00724C) AÇIK yeşile alındı (#62BE90) ve
+   opaklık yükseltildi: koyu yeşili belirginleştirmek için opaklığı artırmak
+   şeridi kirli/gri bir gölgeye çeviriyordu, açık yeşil ise aynı opaklıkta
+   daha fazla "renk" gösteriyor. Ölçülen sonuç — blok aralarında (saydam
+   yüzey yok) %24: #FCFBF7 üstünde yaklaşık #DCF0E6, net ama yumuşak; cam
+   yüzeylerin altında %24 x %28 = %6,7: yaklaşık #F4FAF6, okumayı bozmayan
+   bir yıkama. */
+.bayrak i{position:absolute;top:-25%;bottom:-25%;left:0;width:54vw;
+  transform:translateX(-80vw) skewX(-9deg);opacity:0;
+  background:linear-gradient(100deg,rgba(98,190,144,0) 0%,rgba(98,190,144,.24) 42%,
+             rgba(98,190,144,.15) 62%,rgba(98,190,144,0) 100%)}
+@keyframes bayrakGec{
+  0%{opacity:0;transform:translateX(-80vw) skewX(-9deg)}
+  14%{opacity:1}
+  86%{opacity:1}
+  100%{opacity:0;transform:translateX(190vw) skewX(-9deg)}
+}
+.bayrak.gec i{animation:bayrakGec 5.2s cubic-bezier(.42,0,.28,1)}
+body.sekme-pasif .bayrak i{animation-play-state:paused}
 /* Genel pano, başlık ve gezinme altında kalan kullanılabilir yüksekliğe
    orantılı olarak sığdırılır. Ayrıntı/listeler okunabilirlik için normal
    akışta ve kaydırılabilir kalır. Ölçek JS tarafından hesaplanır. */
@@ -94,7 +123,7 @@ body.genel-tek-ekran .paypan{border-left:1px solid var(--rule);padding-left:var(
   0%,100%{filter:brightness(1) drop-shadow(0 0 0 rgba(0,114,76,0))}
   50%{filter:brightness(1.85) drop-shadow(0 0 12px rgba(0,114,76,.42))}
 }
-body.hazir .big{animation:ciroNabiz 2.8s ease-in-out infinite}
+body.hazir .big{animation:ciroNabiz 1.5s ease-in-out infinite}
 body.sekme-pasif .big{animation-play-state:paused}
 @media (prefers-reduced-motion:reduce){.big{animation:none}}
 
@@ -248,7 +277,7 @@ section.sec{margin:36px 0 0}
 }
 body.hazir #hgBox .v{
   display:inline-block;transform-origin:center;
-  animation:hgOdak 3.2s ease-in-out infinite}
+  animation:hgOdak 1.9s ease-in-out infinite}
 body.sekme-pasif #hgBox .v{animation-play-state:paused}
 @media (prefers-reduced-motion:reduce){#hgBox .v{animation:none}}
 .pair .d{font-size:clamp(12px,0.96vw,15px);color:var(--mut);margin-top:2px;line-height:1.35;min-height:2.7em}
@@ -292,43 +321,48 @@ body.sekme-pasif #hgBox .v{animation-play-state:paused}
    Gövde yazısı 14 px, grafik başlığı 17,9 px olduğu için rakamlar ikisinin
    de altında kalıyor ve okunmuyordu. Bir kademe büyütüldü; kalın değerler
    eksen/saat etiketlerinden yine bir kademe daha büyük kalır. */
-.spark svg text{font-size:15px}
-.spark svg text[font-weight="700"]{font-size:16px}
-.spark svg .s-eksen{fill:#34433D;font-weight:700;font-size:16px}
+.spark svg text{font-size:14px}
+.spark svg text[font-weight="700"]{font-size:15px}
+.spark svg .s-eksen{fill:#34433D;font-weight:700;font-size:15px}
 /* text.s-deger, .s-deger DEĞİL: değer yazıları font-weight="700" niteliği
    taşıyor ve yukarıdaki text[font-weight="700"] seçicisi (0,2,2) salt
    .s-deger'den (0,2,1) daha güçlü — sıra sonra olsa da yenemiyordu, ölçülen:
    buraya 18 yazılıyken rakamlar 16 birimde kalıyordu. text eklenince (0,2,2)
    eşitlenip sıra kazanıyor. */
 .spark svg text.s-deger,.spark svg text.k-deger{
-  font-size:18px;paint-order:stroke fill;stroke:#fff;stroke-width:3px;stroke-linejoin:round
+  font-size:16.5px;paint-order:stroke fill;stroke:#fff;stroke-width:3px;stroke-linejoin:round
 }
-/* Veri etiketleri pano boştayken soldan sağa teker teker parlar. Rakamın
-   kendisi değişmiyor, yalnız sırayla "okunuyor" gibi oluyor — gözü grafiğin
-   üstünde soldan sağa, yani zaman yönünde gezdiriyor.
-   transform-box:fill-box ZORUNLU: SVG'de varsayılan referans kutusu
-   viewBox'ın kendisi, o yüzden scale etiketi kendi merkezinden değil
-   grafiğin köşesinden büyütüp yerinden fırlatıyor. */
-@keyframes degerParla{
-  0%,100%{transform:scale(1);filter:none}
-  38%{transform:scale(1.16);filter:brightness(.78)}
-}
-.spark svg text.parla{transform-box:fill-box;transform-origin:center;
-  animation:degerParla .92s cubic-bezier(.33,0,.5,1)}
+/* VERİ ETİKETİ PARLAMASI KALDIRILDI (kullanıcı isteği). Pano boştayken
+   seyir rakamları soldan sağa teker teker büyüyüp küçülüyordu; okunan
+   rakamın boyu değiştiği için hareket "canlı" değil huzursuz duruyordu.
+   Grafiğin üstündeki hareket artık yalnız gezinme şeridinin kendisi.
+   (Kodda etiketTik / etiketDurdur da kaldırıldı.) */
 /* H/G değerleri sütunun İÇİNDE ve beyaz: yeşil zeminde beyaz rakam en okunur
    eşleşme, ve sütunların üstündeki şerit boşaldığı için %100 çizgisiyle
    rakamlar artık aynı hatta düşmüyor. Beyaz kontur (paint-order) burada ters
    çalışırdı — beyaz yazıya beyaz kontur — o yüzden kapatılıyor.
    .s-deger'den SONRA gelmeli: ikisi de (0,2,2) özgüllükte, sıra kazanıyor. */
 .spark svg text.hg-ic{fill:#fff;stroke:none;paint-order:normal}
+/* ===== GEZİNME ŞERİTLERİ =====
+   Değer etiketleri sığdığı kadar yazılıyor (bkz. etiketAdimi); atlanan
+   dilimlerin tam rakamı kayıp olmasın diye her dilimin üstünde görünmez bir
+   şerit var. Fare girince şerit hafifçe yeşile dönüyor ve balon o dilimin
+   adıyla tam değerini veriyor. Şeritler SVG'nin en sonunda basılır, yani
+   çizimin üstünde durur; görünür hiçbir şeyi kapatmıyorlar çünkü dolguları
+   saydam. */
+.spark svg .s-vur{fill:var(--brand);fill-opacity:0;pointer-events:all;
+  transition:fill-opacity .12s}
+.spark svg .s-vur:hover{fill-opacity:.07}
+/* Balon haritadakinin aynısı (.il-balon); yalnız yarının içine konumlanıyor. */
+.spark .s-balon{z-index:6}
 @keyframes yanipSon{
   0%,100%{opacity:.95;transform:scale(1)}
   50%{opacity:.52;transform:scale(.82)}
 }
 #suAnNokta{transform-box:fill-box;transform-origin:center;
-  animation:yanipSon 2.2s ease-in-out infinite}
+  animation:yanipSon 1.3s ease-in-out infinite}
 @keyframes cubukNabiz{0%,100%{fill-opacity:.68}50%{fill-opacity:.92}}
-#bugunCubuk{animation:cubukNabiz 2.4s ease-in-out infinite}
+#bugunCubuk{animation:cubukNabiz 1.4s ease-in-out infinite}
 /* Arka sekmede görünmeyen sürekli hareketler boşuna çalışmasın. */
 body.sekme-pasif #suAnNokta,body.sekme-pasif #bugunCubuk{animation-play-state:paused}
 @media (prefers-reduced-motion:reduce){#suAnNokta,#bugunCubuk{animation:none}}
@@ -573,9 +607,30 @@ body:not(.genel-tek-ekran) .yilan{visibility:hidden}
    az bölgeli bir saha seçilince (tek sütun) "Bölgeler" başlığı da onunla
    sağa kaçıyordu. position:relative de kaldırıldı — dönüş tuşu artık bu
    sütuna değil .hrt-kol'a, yani kartın sağ kenarına dayanıyor. */
-.bolge-kol{flex:0 1 auto;min-width:0;display:flex;flex-direction:column}
-.bolge-kol h3{font-size:clamp(13px,1vw,16px);font-weight:650;color:var(--mut);
-  margin-bottom:6px}
+/* Liste artık bir TABLO: başlık satırı, iki sütun arasında ince bir çizgi,
+   şeritli satırlar ve boş satırlarla dibe kadar inen bir gövde. Izgara
+   ölçüleri tek yerden okunuyor — başlık satırı ile gövdenin sütunları
+   birebir üst üste gelmek zorunda. */
+.bolge-kol{flex:0 1 auto;min-width:0;display:flex;flex-direction:column;
+  /* Sütun 10,3vw/172 -> 11,2vw/186: değer sütunu artık ölçülen ene sahip
+     (1600x920'de 93 px, eski sabit çubuk 60 px'ti) ve bölge adına kalan yer
+     72 px'e düşmüştü, adların çoğu üç noktayla kesiliyordu. Fark haritanın
+     payından alındı — harita boyu CSS'ten sabit, satır yüksekliği ve
+     tek-ekran ölçeği bundan etkilenmiyor. */
+  --bsut:minmax(0,clamp(124px,11.2vw,186px));   /* bir liste sütununun eni */
+  --bara:clamp(12px,1.2vw,24px);                /* iki liste sütunu arası */
+  --bdeg:68px}   /* değer sütununun eni — JS ölçüp yazıyor, bu yalnız ilk kare */
+/* Başlık satırı: her liste sütununun üstünde ayrı ayrı "Bölge" ve ölçünün
+   adı. Tek bir "Bölgeler" başlığı iki sütunlu listede sağdaki sütunu
+   başlıksız bırakıyordu. */
+.bolge-bas{display:grid;grid-auto-flow:column;grid-auto-columns:var(--bsut);
+  gap:0 var(--bara);margin-bottom:3px;font-size:clamp(10px,0.82vw,13px);
+  font-weight:700;color:var(--mut);letter-spacing:.02em}
+.bolge-bas .bbas{display:grid;grid-template-columns:minmax(0,1fr) var(--bdeg);
+  align-items:end;border-bottom:1px solid var(--rule);padding-bottom:2px}
+.bolge-bas .bbas .bad{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bolge-bas .bbas .bdeg{text-align:right;border-left:1px solid var(--rule);
+  padding-left:6px;color:var(--ink-2)}
 /* min-height:0 + overflow:hidden ZORUNLU: yoksa izgara kendi boyuyla
    sütunu büyütüyor, büyüyen sütuna daha çok satır sığıyor ve satır
    sayısı ölçümü kendi kuyruğunu kovalıyor. Ölçülen: serbest bırakılınca
@@ -592,29 +647,46 @@ body:not(.genel-tek-ekran) .yilan{visibility:hidden}
      bölüşüyordu, ölçülen 1600x920'de sütun 185 px çıkıyor ve ad ile değer
      arasında gereksiz boşluk kalıyordu. Tavanla sütun daralır, boşalan yer
      haritaya geçer. max-content denenmemesinin gerekçesi yukarıda. */
-  grid-auto-flow:column;grid-auto-columns:minmax(0,clamp(120px,10.3vw,172px));
-  gap:0 clamp(12px,1.2vw,24px);font-size:clamp(11px,0.9vw,15px);line-height:1.18;perspective:600px}
+  grid-auto-flow:column;grid-auto-columns:var(--bsut);
+  gap:0 var(--bara);font-size:clamp(11px,0.9vw,15px);line-height:1.18;perspective:600px}
 /* Satır boyu sıkı: 11 satır + "Bölgeler" başlığı haritanın boyuna sığmalı,
    yoksa harita satırı uzuyor ve tek-ekran ölçeği bütün panoyu küçültüyor
    (ölçülen: gevşek hâlde satır 369 px, ölçek 0,824). */
 /* Satırın altındaki 3 px'lik şerit hem ayırıcı hem çubuk: dolu kısmı o
    satırın gösterilen ölçüdeki göreli payı. Eski 1 px kenarlığın yerine
    geçiyor, satır boyu değişmesin diye satır yüksekliği kısıldı. */
-.bolge-liste .bsat{display:flex;align-items:center;gap:5px;min-width:0;
+/* Satır iki hücre: ad ve değer. flex değil ızgara — değer sütunu her satırda
+   AYNI yerde başlasın ki aradaki ince çizgi baştan sona tek bir hat olsun.
+   flex'te değer kendi enine göre sağa yaslanıyordu, çizgi tırtıklı çıkardı. */
+.bolge-liste .bsat{display:grid;grid-template-columns:minmax(0,1fr) var(--bdeg);
+  align-items:center;min-width:0;
   width:100%;padding:0;border:0;background:transparent;text-align:left;
   font:inherit;line-height:1.18;cursor:pointer;position:relative}
+/* ŞERİTLİ SATIR. Göz, haritanın yanındaki iki-üç sütunlu listede satırı
+   soldan sağa takip ederken kayıyordu (ad solda, değer sağda, aradaki boşluk
+   sütun geninin yarısı). Zebra şerit o izi veriyor.
+   :nth-child İLE YAPILMIYOR: izgara grid-auto-flow:column, yani DOM sırası
+   sütun sütun ilerliyor. Sütuna çift sayıda satır düşerse (ölçülen: 12)
+   ikinci sütun yine şeritle başlıyor ve iki sütunun şeritleri birbirinin
+   aynası oluyor. Şerit bu yüzden JS'te, ÖLÇÜLEN satır sayısına göre
+   veriliyor (bkz. cizBolgeListe) — her sütun kendi içinde tek/çift. */
+.bolge-liste .bsat.serit{background:var(--surf-2)}
 .bolge-liste .bsat:hover,.bolge-liste .bsat.sec{background:var(--brand-soft)}
 .bolge-liste .bsat:focus-visible{outline:2px solid var(--brand);outline-offset:1px}
 .bolge-liste .bad{flex:1 1 auto;min-width:0;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2);font-weight:600}
-.bolge-liste .btl{margin-left:auto;font-weight:700;white-space:nowrap;color:var(--ink);
-  padding:0 7px;border-radius:3px;transition:background .45s cubic-bezier(.22,.61,.36,1)}
+.bolge-liste .btl{font-weight:700;white-space:nowrap;color:var(--ink);
+  text-align:right;padding-left:6px;border-left:1px solid var(--rule);
+  transition:background .45s cubic-bezier(.22,.61,.36,1)}
+/* Boş satırlar: veri bitince tablo yarıda kesilmesin, şerit ve çizgi dibe
+   kadar insin. Tıklanmaz, okuyucuya da verilmez. */
+.bolge-liste .bbos{cursor:default;pointer-events:none}
 /* Çubuk 96 -> 60 px: boşalan 36 px sütun başına isim kutusuna gidiyor
    (64 -> 100 px). Ölçüm ve gerekçe README'de. */
-.bolge-liste .hg-iz{display:none;position:relative;width:60px;height:10px;
+.bolge-liste .hg-iz{display:none;position:relative;width:100%;height:10px;
   border-radius:3px;background:#E1EBE5;overflow:visible}
 .bolge-liste .bsat.hg-yuz .hg-iz{display:block}
-.bolge-liste .bsat.hg-yuz .btl{width:60px;padding:0;background:none}
+.bolge-liste .bsat.hg-yuz .btl{background:none}
 .bolge-liste .hg-dol{display:block;height:100%;width:var(--hg-p,0%);
   border-radius:3px;background:var(--hg-renk,#00724C);transition:width .45s}
 .bolge-liste .hg-deger{position:absolute;z-index:1;top:-3px;
@@ -622,11 +694,10 @@ body:not(.genel-tek-ekran) .yilan{visibility:hidden}
      26 px'e düşürüyordu, yüzde yazısı neredeyse hiç kımıldamayacaktı. */
   left:clamp(13px,var(--hg-p,0%),calc(100% - 13px));transform:translateX(-50%);
   padding:0 2px;border-radius:2px;background:#fff;color:var(--brand-deep)}
-.bolge-liste .ciro-deger{display:block}
+.bolge-liste .ciro-deger{display:inline-block;padding:0 4px;border-radius:3px}
 .bolge-liste .bsat.hg-yuz .ciro-deger{display:none}
 /* Dönüşte yalnız değerler döner, satırların sırası hiç değişmez. */
 .bolge-liste .btl.cevir{animation:kutuCevir var(--cs,.52s) cubic-bezier(.45,0,.25,1)}
-.bolge-liste .bbos{border-bottom:0}
 /* Harita sütunun yarısını geçmiyordu (52%): geniş ekranda zaten kendi
    yüksekliğine sığıyor, dar ekranda ise bütün yeri alıp listeye yer
    bırakmıyordu. Bölge sütunları daraltılınca boşalan genişlik buraya verildi
@@ -669,12 +740,17 @@ body:not(.genel-tek-ekran) .yilan{visibility:hidden}
 }
 body.hazir .harita-sar:not(.vurgu) .il.nabiz{
   animation:ilNabiz 1.6s cubic-bezier(.33,0,.5,1)}
+/* Parıltı artık SÜREKLİ DEĞİL, ortam tikinden gelen TEK geçiş. Eskiden
+   9,5 sn'lik sonsuz bir döngüydü ve il nabzı (3 sn'de bir) ikisi aynı anda
+   düşünce ikisi de fark edilmiyordu — iki hareket birbirini yutuyordu.
+   Artık ortam hareketleri ÜST ÜSTE BİNMİYOR (bkz. ortamBasla): bir hareket
+   sürerken ikincisi başlamıyor, kendi periyodunda tekrar geliyor. */
 @keyframes haritaParla{
-  0%,62%{transform:translateX(-1160px)}
-  100%{transform:translateX(1160px)}
+  from{transform:translateX(-1160px)}
+  to{transform:translateX(1160px)}
 }
-body.hazir #harita .hrt-parla{
-  animation:haritaParla 9.5s cubic-bezier(.38,0,.22,1) 2.4s infinite}
+#harita .hrt-parla{transform:translateX(-1160px)}
+#harita .hrt-parla.gec{animation:haritaParla 2.4s cubic-bezier(.38,0,.22,1)}
 body.sekme-pasif #harita .hrt-parla{animation-play-state:paused}
 @media (prefers-reduced-motion:reduce){#harita .hrt-parla{display:none}}
 .harita-sar .il{stroke:#FCFBF7;stroke-width:.6;stroke-linejoin:round;cursor:default;
@@ -707,66 +783,284 @@ body.sekme-pasif #harita .hrt-parla{animation-play-state:paused}
   grid-template-columns:auto auto;justify-content:space-between;column-gap:18px;
   row-gap:calc(4px * var(--ko))}
 
-/* ---- saha detayı (alt alta) ----
-   Her blok Genel sayfasının minyatürü: üstte kimlik, ortada ciro + ilerleme
-   çubuğu ve dört KPI, altta dönem içi seyir ile kanal payı. */
-.sdet{border:1px solid var(--rule);border-top:3px solid var(--kr);border-radius:var(--r);
+/* ---- saha sayfası ----
+   İki durak: üstte sahaların karşılaştırması (dönem içi tablo + kartlar),
+   altta seçilen sahanın detayı. Genel gibi ölçeklenmez; her durak kendi
+   içinde ekrana sığdırılır (sdSigdir). */
+.sdk{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--gap)}
+@media (max-width:1000px){.sdk{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.sdk-kart{position:relative;display:block;width:100%;text-align:left;appearance:none;
+  font:inherit;color:inherit;cursor:pointer;
+  border:1px solid var(--rule);border-top:3px solid var(--kr);border-radius:var(--r);
   background:#fff;box-shadow:var(--golge-uf);
-  padding:clamp(12px,1.4vw,18px) clamp(14px,1.5vw,22px) clamp(10px,1.2vw,16px);
-  margin-bottom:var(--gap)}
-.sdet:last-child{margin-bottom:0}
+  padding:clamp(9px,1vw,13px) clamp(12px,1.15vw,16px) clamp(8px,.9vw,11px);
+  transition:background .15s,box-shadow .15s}
+.sdk-kart:hover{background:var(--surf-2)}
+.sdk-kart.sec{background:var(--brand-soft);box-shadow:0 0 0 2px var(--kr),var(--golge)}
+/* Seçili kartın altında detaya bakan küçük üçgen: aşağıdaki bölümün
+   hangi sahaya ait olduğu kartla bağlansın. */
+.sdk-kart.sec::after{content:"";position:absolute;left:50%;bottom:-11px;margin-left:-9px;
+  border:9px solid transparent;border-bottom:0;border-top-color:var(--kr)}
+.sdk-kart .ust{display:flex;align-items:center;gap:8px}
+.sdk-kart .ad{font-size:clamp(15px,1.2vw,20px);font-weight:700;color:var(--ink)}
+.sdk-kart .ust i{width:11px;height:11px;border-radius:2px;background:var(--kr);flex:0 0 auto}
+.sdk-kart .pay{margin-left:auto;font-size:var(--f4);font-weight:700;color:var(--mut)}
+.sdk-kart .v{font-size:clamp(20px,1.65vw,28px);font-weight:700;letter-spacing:-.02em;
+  line-height:1.05;margin:6px 0 4px}
+.sdk-kart .hg{display:flex;align-items:baseline;justify-content:space-between;gap:8px;
+  font-size:clamp(12px,0.95vw,15px);color:var(--ink-2)}
+.sdk-kart .hg b{font-weight:700}
+.sdk-kart .cub{position:relative;height:7px;background:#E2DFD4;border-radius:3px;
+  overflow:hidden;margin:5px 0 8px}
+.sdk-kart .cub i{position:absolute;left:0;top:0;bottom:0;border-radius:2px;
+  transition:width var(--ge)}
+.sdk-kart .cub b{position:absolute;top:0;bottom:0;width:2px;background:var(--gold)}
+.sdk-kart .alt{display:grid;grid-template-columns:repeat(3,auto);justify-content:space-between;gap:8px;
+  border-top:1px solid var(--rule-soft);padding-top:7px}
+.sdk-kart .alt .k{font-size:clamp(10px,0.78vw,12px);color:var(--mut);font-weight:600}
+.sdk-kart .alt .d{font-size:clamp(13px,1.05vw,17px);font-weight:700;margin-top:1px;white-space:nowrap}
 
-.sdet-bas{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
-  padding-bottom:9px;border-bottom:1px solid var(--rule-soft);margin-bottom:12px}
-.sdet .ad{display:flex;align-items:center;gap:8px;
-  font-size:clamp(15px,1.25vw,21px);font-weight:700;color:var(--ink)}
-.sdet .ad i{width:11px;height:11px;border-radius:2px;background:var(--kr);flex:0 0 auto}
-.sdet .kapsamBil{font-size:var(--f4);color:var(--mut);font-weight:600}
-.sdet .pay{margin-left:auto;font-size:var(--f4);font-weight:700;color:var(--brand)}
+.sdd{margin-top:calc(var(--gap) + 6px);border:1px solid var(--rule);border-top:3px solid var(--kr);
+  border-radius:var(--r);background:#fff;box-shadow:var(--golge-uf);
+  padding:clamp(14px,1.4vw,20px) clamp(16px,1.6vw,24px) clamp(16px,1.6vw,24px)}
+.sdd-bas{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding-bottom:12px;border-bottom:1px solid var(--rule-soft)}
+.sdd-bas .ad{display:flex;align-items:center;gap:10px;font-size:clamp(19px,1.6vw,27px);
+  font-weight:700;color:var(--ink)}
+.sdd-bas .ad i{width:14px;height:14px;border-radius:3px;background:var(--kr)}
+.sdd-bas .bil{font-size:var(--f3);color:var(--mut);font-weight:600}
+.sdd-git{margin-left:auto;appearance:none;background:none;border:1px solid var(--rule);
+  border-radius:var(--r);color:var(--brand);font:inherit;font-size:var(--f3);font-weight:650;
+  cursor:pointer;padding:6px 12px}
+.sdd-git:hover{background:var(--brand-soft);border-color:var(--brand)}
 
-.sdet-govde{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);
-  gap:clamp(14px,1.6vw,26px);align-items:center}
-.sdet-sol .lbl{font-size:var(--f4);color:var(--mut);font-weight:600}
-.sdet-sol .v{font-size:clamp(22px,2.1vw,36px);font-weight:700;letter-spacing:-.02em;
-  line-height:1.1;margin:3px 0 2px}
-.sdet-sol .sub{font-size:var(--f4);color:var(--ink-2)}
-.sdet-sol .sub b{font-weight:700}
-.sdet-bar{margin:11px 0 0}
-.sdet-bar .track{position:relative;height:clamp(16px,2.2vh,21px);background:#E2DFD4;
-  border-radius:3px;overflow:hidden}
-.sdet .fbox{border-top:1px solid var(--rule-soft);margin-top:11px;padding-top:9px}
-.sdet .fbox .v{font-size:clamp(15px,1.25vw,21px);font-weight:700;color:var(--fc);margin:1px 0 0}
+/* Bölüm içi alt başlıklar; hepsi aynı h3 biçimi. */
+.sdd-blok{margin-top:clamp(16px,1.8vw,24px)}
+.sdd h3{font-size:clamp(14px,1.05vw,17px);font-weight:700;color:var(--ink)}
+.sdd .not{font-size:var(--f4);color:var(--mut);font-weight:600}
+.sdd-h{display:flex;align-items:baseline;gap:12px;margin-bottom:8px}
+.sdd-h .not{margin-left:auto}
 
-/* dört KPI, Genel'deki ızgarayla aynı okuma */
-.sdet-kpi{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 14px;
-  text-align:center}
-.sdet-kpi > div{display:flex;flex-direction:column;justify-content:center;min-width:0}
-.sdet-kpi .k{font-size:clamp(10px,0.8vw,13px);color:var(--mut);font-weight:600;
-  min-height:2.6em;display:flex;align-items:flex-end;justify-content:center}
-.sdet-kpi .v{font-size:clamp(15px,1.35vw,24px);font-weight:700;line-height:1.2;
-  letter-spacing:-.01em;margin-top:2px}
-.sdet-kpi .d{font-size:clamp(10px,0.78vw,12px);color:var(--mut);margin-top:2px;
-  line-height:1.3;min-height:2.6em}
-@media (max-width:1100px){.sdet-govde{grid-template-columns:1fr}
-  .sdet-kpi{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* Arka sayfa sakin: Genel'in hareket dili (akış, dolma, dönüş) burada yok. */
+#secSahaDetay *, #secSahaDetay *::before, #secSahaDetay *::after{
+  animation:none !important;transition:none !important}
 
-.sdet-alt{display:grid;grid-template-columns:minmax(0,1fr) minmax(170px,210px);
-  gap:clamp(12px,1.4vw,22px);align-items:center;
-  margin-top:12px;padding-top:11px;border-top:1px solid var(--rule-soft)}
-@media (max-width:900px){.sdet-alt{grid-template-columns:1fr}}
-.sdet-grafik{min-width:0}
-.sdet-grafik .s-head{display:flex;align-items:baseline;gap:12px;margin-bottom:2px}
-.sdet-grafik .s-head h3{font-size:var(--f4);font-weight:650;color:var(--mut)}
-.sdet-grafik .s-head span{font-size:var(--f4);color:var(--ink-2);font-weight:600;margin-left:auto}
-.sdet-grafik svg{display:block;width:100%;height:auto;max-height:clamp(84px,12vh,130px)}
-.sdet-pay{min-width:0;border-left:1px solid var(--rule-soft);padding-left:clamp(12px,1.4vw,20px)}
-@media (max-width:900px){.sdet-pay{border-left:0;padding-left:0}}
-.sdet-pay h3{font-size:var(--f4);font-weight:650;color:var(--mut);margin-bottom:6px}
-.sdet-pay svg{display:block;width:min(100%,128px);height:auto;margin:0 auto}
+/* ortak panel */
+.sdd-ikili{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--gap)}
+@media (max-width:1000px){.sdd-ikili{grid-template-columns:1fr}}
+.sdd-panel{position:relative;min-width:0;border:1px solid var(--rule-soft);border-radius:var(--r);
+  padding:clamp(12px,1.1vw,16px) clamp(14px,1.3vw,20px)}
+.sdd-panel svg{display:block;width:100%;height:auto}
+#sddGovde{margin-top:clamp(14px,1.5vw,20px)}
 
-.sdet-git{margin-top:10px;background:none;border:0;color:var(--brand);
-  font-size:var(--f4);font-weight:650;cursor:pointer;padding:4px 0}
-.sdet-git:hover{color:var(--brand-deep);text-decoration:underline}
+/* ---- iki durak ----
+   Her durak bir ekran boyunda (boyu sdSigdir yazar); içerik sığmazsa
+   .sd-ic zoom ile küçülür. Duraklar arası yalnız aşağı/yukarı geçilir. */
+#secSahaDetay{margin-top:0}
+.sd-asama{overflow:hidden;display:flex;flex-direction:column}
+.sd-ic{display:flex;flex-direction:column;gap:var(--gap);flex:1 1 auto;min-height:0;padding:4px 0 14px}
+#sdA2 .sd-ic{padding-top:14px}
+#sdA1 .sec-h{margin-bottom:0}
+#sdA1 .sd-ic{justify-content:flex-start;gap:8px}
+#sdA2 .sdd{flex:1 1 auto;margin-top:0;display:flex;flex-direction:column}
+
+/* Birinci durak: ortak zaman eksenini paylaşan altı yatay ısı haritası.
+   Başlık yalnız ilk tabloda görünür; ölçüler ince kurallarla ayrılır. */
+.sdc-ust{display:flex;flex-direction:column;gap:0;flex:0 0 auto;border:1px solid var(--rule);border-radius:3px;overflow:hidden;background:rgba(255,255,255,.42)}
+.sdc-ust>.sdd-panel{border:0;border-top:1px solid var(--rule);border-radius:0;background:transparent;padding:3px 8px 2px}
+.sdc-ust>.sdd-panel:first-child{border-top:0;padding-top:4px}
+.sdc{flex:1 1 auto;display:grid;grid-template-columns:108px minmax(0,1fr);align-items:stretch;min-height:0}
+.sdc .sdd-h{grid-column:1;margin:0;padding:0 8px 0 1px;min-height:13px;align-items:center;border-right:1px solid var(--rule-soft)}
+.sdc .sdd-h h3{font-size:11.5px;line-height:1.2;letter-spacing:.005em}
+.sdc .sdd-h .not{font-size:8.5px;line-height:1.2;margin:2px 0 0}
+.sdc-ac{appearance:none;width:100%;border:0;background:transparent;padding:0;color:inherit;font:inherit;text-align:left;cursor:pointer;display:flex;flex-direction:column;justify-content:center;align-items:flex-start}
+.sdc-ac h3{color:var(--brand)!important}.sdc-ac::after{content:"↗";font-size:11px;font-weight:800;color:var(--brand);margin-left:4px}
+.sdc-ac:hover h3,.sdc-ac:focus-visible h3{text-decoration:underline;text-underline-offset:2px}
+.sdc-ac:focus-visible{outline:2px solid rgba(0,114,76,.35);outline-offset:3px}
+.sdc-kay{grid-column:2;overflow-x:auto;display:flex;align-items:flex-start;padding-left:5px}
+.sdc-tablo{width:100%;min-width:0;height:100%;border-collapse:separate;border-spacing:3px;
+  font-size:var(--f3);table-layout:fixed}
+.sdc-tablo.basliksiz thead{display:none}
+.sdc-tablo th,.sdc-tablo td{background:none;border:0;box-shadow:none;text-align:center;white-space:nowrap}
+.sdc-tablo thead th{font-size:var(--f4);font-weight:650;color:var(--mut);padding:4px 4px 6px;height:1px}
+.sdc-tablo thead th:first-child{width:clamp(110px,10vw,150px)}
+.sdc-tablo tbody th{text-align:left !important;font-weight:700;color:var(--ink);font-size:clamp(13px,1vw,16px);
+  padding:0 10px 0 4px}
+.sdc-tablo tbody th i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:8px;vertical-align:0}
+.sdc-tablo td{border-radius:3px;padding:4px 3px;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis}
+.sdc-tablo td b{display:block;font-size:clamp(13px,1vw,16px);font-weight:700;line-height:1.1}
+.sdc-tablo td span{display:block;font-size:clamp(10px,0.78vw,12.5px);color:var(--ink-2);margin-top:2px}
+.sdc-tablo td.bos{background:var(--surf-2)}
+.sdc-tablo .dn{border-left:2px solid var(--rule)}
+.sdc-tablo td.dn{background:var(--surf-2)}
+.sdc-tablo td.dn b{font-size:clamp(15px,1.2vw,20px)}
+.sdc-tablo td.dn b.ok{color:var(--good)} .sdc-tablo td.dn b.no{color:var(--bad)} .sdc-tablo td.dn b.watch{color:var(--watch)}
+.sdc-tablo tbody tr[data-i]{cursor:pointer}
+.sdc-tablo tbody tr[data-i]:hover th{color:var(--brand);text-decoration:underline}
+.sdc-tablo tbody tr.sec th{color:var(--brand)}
+.sdc-tablo tbody tr.sec th::after{content:" ●";color:var(--brand);font-size:10px;vertical-align:2px}
+.isi-mini{height:auto;align-self:center;border-spacing:2px 1px}
+.isi-mini thead th{padding:0 2px 1px;font-size:8.5px;line-height:1}
+.isi-mini thead th:first-child{width:76px}
+.isi-mini tbody th{font-size:9.5px;line-height:1;padding:0 5px 0 1px}
+.isi-mini tbody th i{width:7px;height:7px;margin-right:5px}
+.isi-mini td{height:10px;padding:0 1px}
+.isi-mini td b{font-size:8px;line-height:1;letter-spacing:-.015em}
+.isi-mini td span{font-size:8px;line-height:1}
+#sdCiroIsi th.dn,#sdCiroIsi td.dn{width:112px}
+#sdCiroIsi td b{font-size:8.5px;letter-spacing:-.025em}
+.sd-secici{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.sd-secici .sdk-kart{min-height:42px;padding:7px 11px;border-top-width:2px;display:flex;align-items:center;gap:8px}
+.sd-secici .sdk-kart .ust{width:100%}
+.sd-secici .sdk-kart .ad{font-size:13px}
+.sd-secici .sdk-kart .pay{font-size:11px}
+.sd-secici .sdk-kart .v,.sd-secici .sdk-kart .hg,.sd-secici .sdk-kart .cub,.sd-secici .sdk-kart .alt{display:none}
+.sd-secici .sdk-kart.sec::after{bottom:-8px;border-width:6px}
+@media (max-width:1000px){.sd-secici{grid-template-columns:repeat(2,1fr)}}
+.sd-adim{font-size:10px;font-weight:750;letter-spacing:.08em;color:var(--brand);border:1px solid rgba(0,114,76,.28);padding:2px 6px;border-radius:2px}
+.sd-yonetici{min-height:47px;display:flex;align-items:center;gap:0;background:var(--ink);color:#fff;border-radius:var(--r);overflow:hidden;box-shadow:0 8px 24px rgba(30,56,86,.10)}
+.sd-yonetici>div{flex:1 1 0;padding:8px 15px;border-left:1px solid rgba(255,255,255,.14);min-width:0}
+.sd-yonetici>div:first-child{border-left:0}
+.sd-yonetici .k{font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;color:rgba(255,255,255,.62);font-weight:700}
+.sd-yonetici .v{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.sd-yonetici .kritik .v{color:#F3D19A}
+.sd-tahmin-liste{display:grid;grid-template-columns:132px 105px minmax(190px,1fr) 255px;border:1px solid var(--rule);border-radius:3px;overflow:hidden;min-height:74px}
+.sd-tahmin-liste .th,.sd-tahmin-liste .sat{display:contents}
+.sd-tahmin-liste .bas,.sd-tahmin-liste .hucre{min-width:0;padding:2px 9px;border-left:1px solid var(--rule-soft);font-variant-numeric:tabular-nums}
+.sd-tahmin-liste .bas:first-child,.sd-tahmin-liste .sat .hucre:first-child{border-left:0}
+.sd-tahmin-liste .bas{font-size:9px;text-transform:uppercase;letter-spacing:.065em;color:var(--mut);font-weight:750;padding-top:3px;padding-bottom:2px}
+.sd-tahmin-liste .hucre{border-top:1px solid var(--rule-soft);font-size:12px;line-height:1.1;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;min-height:18px}
+.sd-tahmin-liste .saha{font-size:12.5px;font-weight:750;color:var(--ink)}
+.sd-tahmin-liste .saha i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:7px;flex:0 0 auto}
+.sd-tahmin-liste .hg{font-size:13px;font-weight:800;color:var(--ink)}
+.sd-tahmin-liste .bar{padding-left:13px;padding-right:13px}
+.sd-tahmin-liste .bar span{display:block;width:100%;height:7px;background:#E5E8E4;border-radius:2px;overflow:hidden}
+.sd-tahmin-liste .bar i{display:block;height:100%;border-radius:2px;background:var(--bar)}
+.sd-tahmin-liste .kapanis{justify-content:flex-end;font-size:13px;font-weight:800;color:var(--ink);text-align:right}
+.sd-tahmin-liste .kapanis small{font-size:10.5px;color:var(--mut);font-weight:700;margin-left:6px}
+
+.sd-isi-modal{width:min(1120px,92vw);max-height:84vh;border:0;border-radius:5px;padding:0;background:#fff;color:var(--ink);box-shadow:0 28px 90px rgba(25,44,36,.28)}
+.sd-isi-modal::backdrop{background:rgba(19,34,29,.62);backdrop-filter:blur(3px)}
+.sd-isi-modal .mi-bas{display:flex;align-items:center;justify-content:space-between;padding:18px 22px 14px;border-bottom:1px solid var(--rule)}
+.sd-isi-modal h3{font-size:22px;letter-spacing:-.015em}.sd-isi-modal .mi-kapat{appearance:none;border:1px solid var(--rule);background:#fff;border-radius:3px;width:34px;height:34px;font:700 20px/1 sans-serif;color:var(--ink);cursor:pointer}
+.sd-isi-modal .mi-ic{padding:18px 22px 22px;overflow:auto;max-height:calc(84vh - 68px)}
+.sd-isi-modal .sdc-tablo{min-width:820px;border-spacing:5px;font-size:13px}
+.sd-isi-modal .sdc-tablo thead th{font-size:11px;padding:6px}.sd-isi-modal .sdc-tablo tbody th{font-size:14px;padding:0 12px 0 4px}
+.sd-isi-modal .sdc-tablo td{height:42px}.sd-isi-modal .sdc-tablo td b,.sd-isi-modal #sdCiroIsi td b{font-size:13px;letter-spacing:0}
+
+/* ikinci durak başlığındaki saha seçici */
+.sdd-sahalar{display:flex;border:1px solid var(--rule);border-radius:var(--r);overflow:hidden;margin-left:auto}
+.sdd-sahalar button{appearance:none;border:0;background:#fff;font:inherit;font-size:var(--f3);font-weight:600;
+  color:var(--ink-2);padding:6px 13px;cursor:pointer;display:flex;align-items:center;gap:7px}
+.sdd-sahalar button + button{border-left:1px solid var(--rule)}
+.sdd-sahalar button i{width:9px;height:9px;border-radius:2px}
+.sdd-sahalar button:hover{background:var(--surf-2)}
+.sdd-sahalar button[aria-selected="true"]{background:var(--ink);color:#fff}
+.sdd-sahalar + .sdd-git{margin-left:0}
+
+/* rapor: üç sütun, tek ekran */
+.sdr{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,6fr) minmax(0,3fr);
+  gap:clamp(16px,1.8vw,30px);align-items:start}
+.sdr-k1{border-right:1px solid var(--rule-soft);padding-right:clamp(14px,1.6vw,26px)}
+.sdr-k3{border-left:1px solid var(--rule-soft);padding-left:clamp(14px,1.6vw,26px)}
+.sdr-k2{display:grid;gap:var(--gap);min-width:0}
+.sdr-k1 > h3,.sdr-k3 > h3{font-size:var(--f4);text-transform:uppercase;letter-spacing:.08em;color:var(--mut);
+  font-weight:700;margin:16px 0 6px}
+.sdr-k1 > h3:first-child,.sdr-k3 > h3:first-child{margin-top:0}
+.sdr-metin p{font-size:clamp(13px,1vw,15.5px);line-height:1.55;color:var(--ink-2);margin:0 0 8px}
+.sdr-metin b{color:var(--ink)}
+.sdr-metin b.ok{color:var(--good)} .sdr-metin b.no{color:var(--bad)} .sdr-metin b.watch{color:var(--watch)}
+.sdr-kunye{display:grid;grid-template-columns:1fr auto;margin:0}
+.sdr-kunye dt,.sdr-kunye dd{margin:0;padding:5px 0;border-bottom:1px dotted var(--rule);font-size:var(--f3)}
+.sdr-kunye dt{color:var(--ink-2)}
+.sdr-kunye dd{font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+.sdr-leg{display:flex;gap:18px;font-size:var(--f4);color:var(--mut);margin-top:6px}
+.sdr-leg i{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-2px;margin-right:6px}
+.sdr-bolge{display:grid;gap:1px}
+.sdr-bs{display:grid;grid-template-columns:minmax(120px,1.6fr) minmax(0,3fr) 118px 46px 46px;gap:10px;
+  align-items:center;padding:5px 4px;border-radius:3px;cursor:pointer;font-size:var(--f3)}
+.sdr-bs:hover{background:var(--brand-soft)}
+.sdr-bs .ad{font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sdr-bs .cub{height:14px;background:var(--surf-2);border-radius:2px;overflow:hidden}
+.sdr-bs .cub i{display:block;height:100%}
+.sdr-bs .tl,.sdr-bs .hg,.sdr-bs .dg{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.sdr-huni{display:grid;gap:10px}
+.sdr-hs .ad{display:block;font-weight:650;font-size:var(--f3);margin-bottom:4px}
+.sdr-hs .ikili{display:grid;gap:3px}
+.sdr-hs .ikili > div{display:grid;grid-template-columns:minmax(0,1fr) 40px 64px;gap:8px;align-items:center;font-size:var(--f3)}
+.sdr-hs .cub{height:11px;background:var(--surf-2);border-radius:2px;overflow:hidden}
+.sdr-hs .cub i{display:block;height:100%}
+.sdr-hs b{text-align:right} .sdr-hs em{font-style:normal;color:var(--mut);font-size:var(--f4);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Seçilen saha: dört eş dönem tek bakışta. Kartlar yalnız özet; asıl anlatı
+   birbirinden farklı üç grafik tipinde (sütun, çizgi, eğim) devam eder. */
+.sd4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:10px}
+.sd4-k{padding:9px 12px;border:1px solid var(--rule-soft);border-radius:var(--r);background:var(--surf)}
+.sd4-k.ilk{border-color:var(--kr);box-shadow:inset 0 3px 0 var(--kr)}
+.sd4-k .k{font-size:10.5px;color:var(--mut);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sd4-k .v{font-size:clamp(17px,1.35vw,23px);font-weight:750;line-height:1.12;margin-top:3px}
+.sd4-k .a{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--mut);margin-top:2px}
+.sd-analiz{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,.65fr);gap:10px}
+.sd-analiz + .sd-analiz,.sd-analiz + .sdd-panel{margin-top:10px}
+.sd-analiz .sdd-panel,.sd-tam{padding:10px 13px}
+.sd-analiz svg{height:168px}
+.sd-tam svg{height:172px}
+.sd-alt{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(280px,.9fr);gap:10px;margin-top:10px}
+.sd-alt .sdd-panel{padding:10px 13px}
+.sd-alt svg{height:150px}
+.sd-grafik-leg{display:flex;gap:14px;flex-wrap:wrap;color:var(--mut);font-size:10.5px;font-weight:600;margin-top:4px}
+.sd-grafik-leg i{display:inline-block;width:15px;height:3px;border-radius:2px;margin-right:5px;vertical-align:2px}
+@media (max-width:1000px){.sd4{grid-template-columns:repeat(2,1fr)}.sd-analiz,.sd-alt{grid-template-columns:1fr}}
+
+/* Yeni detay kurgusu: tek ana grafik, tek beklenti odağı ve alt analizler. */
+.sd-detay-ana{display:grid;grid-template-columns:minmax(0,2.25fr) minmax(260px,.75fr);gap:10px}
+.sd-detay-ana .sdd-panel{padding:11px 14px}
+.sd-detay-ana>.sdd-panel:first-child{border:0;background:linear-gradient(180deg,#F8FAF8 0%,rgba(255,255,255,.35) 100%);box-shadow:inset 0 1px 0 var(--rule-soft)}
+.sd-detay-ana>.sdd-panel:first-child h3{font-size:15px;letter-spacing:-.01em}
+.sd-detay-ana svg{height:210px}
+.sd-beklenti{display:flex;flex-direction:column;justify-content:center;padding:14px 17px!important;border-top:3px solid var(--kr)}
+.sd-beklenti .etiket{font-size:11px;color:var(--mut);font-weight:700}
+.sd-beklenti .buyuk{font-size:clamp(25px,2.2vw,38px);font-weight:750;line-height:1.05;margin:7px 0 3px;color:var(--ink)}
+.sd-beklenti .oran{font-size:clamp(15px,1.2vw,20px);font-weight:750;margin-bottom:2px}
+.sd-beklenti .bek-not{font-size:10.5px;color:var(--mut);line-height:1.35;margin-bottom:10px}
+.sd-beklenti .iz{height:8px;background:#E2DFD4;border-radius:3px;position:relative;overflow:hidden}
+.sd-beklenti .iz i.ger{display:block;height:100%;background:var(--kr);border-radius:3px}
+.sd-beklenti .iz b{position:absolute;top:-2px;bottom:-2px;width:2px;transform:translateX(-1px)}
+.sd-beklenti .iz .tah{background:var(--fc)}.sd-beklenti .iz .hed{background:var(--gold)}
+.sd-beklenti .iz-leg{display:flex;justify-content:space-between;font-size:9px;color:var(--mut);margin-top:3px}
+.sd-beklenti dl{display:grid;grid-template-columns:1fr auto;margin:12px 0 0;gap:5px 12px;font-size:11.5px}
+.sd-beklenti dt{color:var(--mut)}.sd-beklenti dd{margin:0;font-weight:700;text-align:right}
+.sd-sabit{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:10px 0;border:1px solid var(--rule-soft);border-radius:var(--r);background:var(--surf);overflow:hidden}
+.sd-sabit-grup{padding:6px 12px 8px}.sd-sabit-grup.verim{border-left:1px solid var(--rule-soft);background:#F8F7F2}
+.sd-sabit .gb{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);font-weight:750}
+.sd-met{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:3px}
+.sd-met>div{padding:1px 12px;border-left:1px solid var(--rule-soft)}.sd-met>div:first-child{border-left:0;padding-left:0}
+.sd-sabit .k{font-size:10.5px;color:var(--mut);font-weight:650}.sd-sabit .v{font-size:15px;font-weight:750;margin-top:1px}
+.sd-detay-alt{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(300px,.75fr);gap:10px}
+.sd-detay-alt .sdd-panel{padding:10px 13px;min-height:0;border:0;border-top:2px solid var(--rule);border-radius:0;background:transparent}
+.sd-detay-alt #sd4Huni,.sd-detay-alt #sdDonusumCizgi{height:178px}
+.sd-metrik-panel{perspective:900px}
+.sd-metrik-yuz{transform-origin:center;backface-visibility:hidden}
+.sd-metrik-yuz.cevir{animation:sdMetrikCevir .42s cubic-bezier(.45,.05,.25,1)}
+@keyframes sdMetrikCevir{0%{transform:rotateX(0)}49%{transform:rotateX(88deg)}50%{transform:rotateX(-88deg)}100%{transform:rotateX(0)}}
+@media (prefers-reduced-motion:reduce){.sd-metrik-yuz.cevir{animation:none}}
+.sd-metrik-sec{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin-top:4px}
+.sd-metrik-sec button{min-height:27px;border:1px solid var(--rule);border-radius:3px;background:#fff;color:var(--mut);font:inherit;font-size:9.5px;font-weight:700;line-height:1.1;padding:4px 6px;cursor:pointer}
+.sd-metrik-sec button:hover{border-color:rgba(0,114,76,.45);color:var(--brand)}
+.sd-metrik-sec button[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
+.sd-metrik-sec button:focus-visible{outline:2px solid rgba(0,114,76,.3);outline-offset:2px}
+.sd-bolge-isi{overflow:hidden}
+.sd-bolge-isi table{width:100%;border-collapse:separate;border-spacing:3px;table-layout:fixed}
+.sd-bolge-isi th{font-size:10.5px;color:var(--mut);font-weight:650;text-align:center;padding:2px}
+.sd-bolge-isi th:first-child{width:145px;text-align:left}
+.sd-bolge-isi thead th span{display:block;color:var(--ink);font-weight:700}.sd-bolge-isi thead th small{display:block;font-size:8.5px;font-weight:600;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sd-bolge-isi tbody th{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sd-bolge-isi td{height:27px;border-radius:3px;text-align:center;font-size:11px;font-weight:750}
+.sd-bolge-isi .yas-3{opacity:.46}.sd-bolge-isi .yas-2{opacity:.62}.sd-bolge-isi .yas-1{opacity:.78}.sd-bolge-isi .yas-0{opacity:1}
+.sd-bolge-isi td em{font-style:normal;font-size:8.5px;margin-left:5px}.sd-bolge-isi td em.up{color:var(--good)}.sd-bolge-isi td em.down{color:var(--bad)}
+.sd-veri-not{font-size:9px;color:var(--mut);margin:4px 0 0;line-height:1.25}
+@media(max-width:1000px){.sd-detay-ana,.sd-detay-alt{grid-template-columns:1fr}.sd-sabit{grid-template-columns:1fr}.sd-sabit-grup.verim{border-left:0;border-top:1px solid var(--rule-soft)}}
 
 /* ---- özet kutular ---- */
 .ozet{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
@@ -878,6 +1172,42 @@ body.sekme-pasif .tes-yuz{animation-play-state:paused}
 .bullet .mark{transition:left var(--ge)}
 .bullet .fcast{transition:left var(--ge),opacity .3s}
 .kart .bar .f{transition:width var(--ge),background-color .3s}
+/* ===== KART CİRO ÇUBUĞUNDA SOLDAN SAĞA IŞIK =====
+   Bekleme modunun ortam hareketlerinden biri: dört saha kartının ciro
+   çubuğundan sırayla (yukarıdan aşağı) bir ışık geçer. Huni akışıyla aynı
+   idiom — dolu kısmın İÇİNDE bir gradyan şerit kayar, değere dokunmaz.
+   EN BÜYÜK CİROLU SAHA DALGAYA GİRMEZ: kendi aralığında, daha geniş ve daha
+   parlak bir ışıkla tek başına geçer (bkz. liderBarTik). Lideri dalganın
+   içinde göstermek onu öbürlerinden ayırmıyordu; ayrı zamanda geçince
+   "ekranda bir kez de lider okunuyor". */
+/* IŞIK ÖNCE DOLGUNUN İÇİNDEYDİ (.f) ve garip çalışıyordu — ölçülen: çubuk
+   254 px, dolgular %69–%78, yani 176–198 px. Işığın eni dolgunun %46'sı
+   olduğu için her kartta BAŞKA bir en (81–91 px) ve aynı sürede BAŞKA bir
+   yol (farklı hız) çıkıyordu; üstelik ışık dolgunun bittiği yerde, çubuğun
+   ortasında aniden kayboluyordu. Dört kart yan yana durduğu için bu
+   tutarsızlık doğrudan göze çarpıyor.
+   Artık ışık ÇUBUĞUN tamamını kat ediyor: eni de yolu da dört kartta aynı.
+   Kırpma için ayrı bir katman (.pr) var — .bar'a overflow:hidden vermek
+   hedef işaretini (.m, üstten ve alttan 3px taşar) kırpardı. */
+@keyframes barParla{from{transform:translateX(-120%)}to{transform:translateX(230%)}}
+.kart .bar .pr{position:absolute;inset:0;overflow:hidden;border-radius:2px;
+  pointer-events:none}
+.kart .bar .pr::after{content:"";position:absolute;top:0;bottom:0;left:0;width:44%;
+  transform:translateX(-120%);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.85),transparent)}
+.kart .bar.parla .pr::after{animation:barParla 1.15s cubic-bezier(.4,0,.5,1)}
+.kart .bar.lider .pr::after{width:56%;
+  background:linear-gradient(90deg,transparent,#fff,transparent);
+  animation:barParla 1.45s cubic-bezier(.4,0,.5,1)}
+/* ===== KARTTAKİ H/G SÜREKLİ YANIP SÖNER =====
+   Kartın bakılan rakamı H/G; dört kart arasında gözün ilk takıldığı yer o
+   olsun diye sürekli, yavaş bir yanıp sönme veriliyor. Ciro kartındaki H/G
+   kutusu BÜYÜYÜP KÜÇÜLÜYOR (hgOdak); burada ölçü değil saydamlık oynuyor,
+   yoksa aynı ekranda aynı hareketin iki kopyası olurdu ve kart yerleşimi de
+   her nabızda oynardı. */
+@keyframes hgYanSon{0%,100%{opacity:1}50%{opacity:.45}}
+body.hazir .kart .hg{animation:hgYanSon 1.3s ease-in-out infinite}
+body.sekme-pasif .kart .hg{animation-play-state:paused}
 .kart .bar .m{transition:left var(--ge)}
 .kart{transition:background .15s,box-shadow .15s,border-top-color .4s}
 /* Kart başlığındaki ad artık kendi kutusunda: metin düğümü yerine span,
@@ -997,9 +1327,36 @@ body.acilis #spark text.tahmin:not(#suAnYazi){
   .row .hg{min-width:56px}
   .spark .s-lbl{display:none}
 }
+
+/* ===== CAM YÜZEYLER =====
+   Arkadan geçen bayrak (bkz. .bayrak) opak zeminlerin ALTINDA kalıyordu;
+   yalnız blokların aralarından ve kenar boşluklarından görünüyor, yani
+   ekranın %10'undan azında okunuyordu. Panonun dört büyük bloğu hafif saydam
+   yapıldı: bayrak artık yüzeylerin üstünden de geçiyor.
+
+   OKUMAYI BOZMUYOR, ÇÜNKÜ ARKADA DURAN ŞEY ZATEN AÇIK: blokların altında
+   gövde zemini var (--surf #FCFBF7), yüzeyin kendi rengine çok yakın —
+   bayrak yokken ölçülebilir bir değişiklik olmuyor (beyaz %72 + #FCFBF7
+   = #FDFDFC). Bayrak geçerken yüzeyin altına düşen ton, bayrağın en koyu
+   yerinde bile %14 x %28 = yaklaşık %3,9 yeşil bir yıkama; metin kontrastı
+   pratikte aynı kalıyor, hareket ise bütün pano boyunca okunuyor.
+
+   Bu kurallar stil bloğunun SONUNDA duruyor: .kart / .spark / .hsag kendi
+   yerlerinde "background:#fff" diyor ve aynı özgüllükte oldukları için
+   kazanan sıradaki sonuncu oluyor. */
+:root{--cam:rgba(255,255,255,.72); --cam-2:rgba(244,242,235,.72)}
+.spark,.hsag,.kart{background:var(--cam)}
+.hero{background:var(--cam-2)}
+/* .hero zaten aynı rengi basıyor; .hero-r ikinci bir saydam katman olarak
+   üstüne binince sağ yarı bayrağa neredeyse kapanıyordu (0,72 üstüne 0,72
+   = 0,92 örtücülük). Sağ yarı artık rengi ebeveynden alıyor. */
+.hero-r{background:none}
+/* Hover ve vurgu renkleri opak kalır: fare bir kartın üstündeyken o kartın
+   arkasından bayrak geçmesi, seçimin kendisini zayıflatırdı. */
 </style>
 </head>
 <body>
+<div class="bayrak" id="bayrak" aria-hidden="true"><i></i></div>
 
 <header class="top">
   <div class="top-in">
@@ -1117,7 +1474,8 @@ body.acilis #spark text.tahmin:not(#suAnYazi){
                   aria-label="Sol grafiği çevir">&#10227;</button>
         </span>
         <div class="s-head"><h3 id="solBas">Ciro</h3><span class="s-don" id="sparkDon"></span></div>
-        <svg id="spark" viewBox="0 0 1000 200" role="img" aria-label="Dönem içi ciro seyri"></svg>
+        <svg id="spark" viewBox="0 0 1000 178" role="img" aria-label="Dönem içi ciro seyri"></svg>
+        <div class="il-balon s-balon" id="solBalon"></div>
       </div>
       <div class="s-yari">
         <span class="yuz-sar">
@@ -1127,7 +1485,8 @@ body.acilis #spark text.tahmin:not(#suAnYazi){
                   aria-label="Sağ grafiği çevir">&#10227;</button>
         </span>
         <div class="s-head"><h3 id="kytBas">Randevu sayısı</h3><span class="s-don" id="kytDon"></span></div>
-        <svg id="kytSpark" viewBox="0 0 1000 200" role="img" aria-label="Dönem içi randevu sayısı"></svg>
+        <svg id="kytSpark" viewBox="0 0 1000 178" role="img" aria-label="Dönem içi randevu sayısı"></svg>
+        <div class="il-balon s-balon" id="sagBalon"></div>
       </div>
     </div>
   </section>
@@ -1145,7 +1504,7 @@ body.acilis #spark text.tahmin:not(#suAnYazi){
             <button type="button" class="yuz-tus" id="bolTus"
                     title="H/G ↔ ciro" aria-label="Bölge değerlerini çevir">&#10227;</button>
           </span>
-          <h3>Bölgeler</h3>
+          <div class="bolge-bas" id="bolgeBas"></div>
           <div class="bolge-liste" id="bolgeListe" aria-label="Bölgelere göre ciro"></div>
         </div>
       </div>
@@ -1173,9 +1532,34 @@ body.acilis #spark text.tahmin:not(#suAnYazi){
 </div>
 
   <section class="sec" id="secSahaDetay" aria-labelledby="h-sd">
-    <div class="sec-h"><h2 id="h-sd">Saha bölgeleri</h2><span class="note" id="sdNot"></span></div>
-    <div id="sahaDetay"></div>
+    <div class="sd-asama" id="sdA1"><div class="sd-ic">
+      <div class="sec-h"><span class="sd-adim">1 / 2</span><h2 id="h-sd">Saha karşılaştırması</h2><span class="note" id="sdNot"></span></div>
+      <div class="sd-yonetici" id="sdYonetici"></div>
+      <div class="sd-tahmin-liste" id="sdTahminListe" aria-label="Sahaların H/G ve dönem sonu tahmini"></div>
+      <div class="sdc-ust">
+        <div class="sdd-panel sdc"><button type="button" class="sdd-h sdc-ac" data-table="sdCiroIsi"><h3 id="sdDilimBaslik">Ciro</h3><span class="not">tam tutar</span></button>
+          <div class="sdc-kay"><table class="sdc-tablo isi-mini" id="sdCiroIsi"></table></div></div>
+        <div class="sdd-panel sdc"><button type="button" class="sdd-h sdc-ac" data-table="sdHgIsi"><h3>H/G</h3><span class="not">100 = hedef</span></button>
+          <div class="sdc-kay"><table class="sdc-tablo isi-mini" id="sdHgIsi"></table></div></div>
+        <div class="sdd-panel sdc"><button type="button" class="sdd-h sdc-ac" data-table="sdRndIsi"><h3>Randevu</h3><span class="not">adet</span></button>
+          <div class="sdc-kay"><table class="sdc-tablo isi-mini" id="sdRndIsi"></table></div></div>
+        <div class="sdd-panel sdc"><button type="button" class="sdd-h sdc-ac" data-table="sdKartIsi"><h3>Açılan kart</h3><span class="not">adet</span></button>
+          <div class="sdc-kay"><table class="sdc-tablo isi-mini" id="sdKartIsi"></table></div></div>
+        <div class="sdd-panel sdc"><button type="button" class="sdd-h sdc-ac" data-table="sdKayitIsi"><h3>Kayıt</h3><span class="not">adet</span></button>
+          <div class="sdc-kay"><table class="sdc-tablo isi-mini" id="sdKayitIsi"></table></div></div>
+        <div class="sdd-panel sdc"><button type="button" class="sdd-h sdc-ac" data-table="sdDonusumIsi"><h3>Dönüşüm oranı</h3><span class="not">randevu → kayıt</span></button>
+          <div class="sdc-kay"><table class="sdc-tablo isi-mini" id="sdDonusumIsi"></table></div></div>
+      </div>
+    </div></div>
+    <div class="sd-asama" id="sdA2"><div class="sd-ic">
+      <div class="sdd" id="sahaDetay"></div>
+    </div></div>
   </section>
+
+  <dialog class="sd-isi-modal" id="sdIsiModal" aria-labelledby="sdIsiModalBaslik">
+    <div class="mi-bas"><h3 id="sdIsiModalBaslik">Isı haritası</h3><button type="button" class="mi-kapat" id="sdIsiModalKapat" aria-label="Kapat">×</button></div>
+    <div class="mi-ic" id="sdIsiModalIcerik"></div>
+  </dialog>
 
   <section class="sec" id="secBolgeOzet" aria-labelledby="h-bo">
     <div class="sec-h"><h2 id="h-bo">Bölge durumu</h2><span class="note" id="boNot"></span></div>
@@ -1286,7 +1670,10 @@ const AY_GUN=[]; for(let m=0;m<12;m++) AY_GUN.push(new Date(YIL,m+1,0).getDate()
 const AY_BAS=new Int32Array(12); {let a=0;for(let m=0;m<12;m++){AY_BAS[m]=a;a+=AY_GUN[m];}}
 
 const nf = new Intl.NumberFormat("tr-TR",{maximumFractionDigits:0});
+const nf1 = new Intl.NumberFormat("tr-TR",{minimumFractionDigits:1,maximumFractionDigits:1});
 const TL = v => "₺"+nf.format(Math.round(v||0));
+const KTL = v => Math.abs(v)>=1e9 ? "₺"+nf1.format(v/1e9)+" mlr" : "₺"+nf1.format((v||0)/1e6)+" mn";
+const MN = v => nf1.format((v||0)/1e6);
 const AD = v => nf.format(Math.round(v||0));
 const PCT = v => (v===null||!isFinite(v)) ? "—" : (v<0?"−":"")+"%"+nf.format(Math.abs(Math.round(v)));
 const IMZ = v => (v===null||!isFinite(v)) ? "—" : (v>=0?"+":"−")+"%"+nf.format(Math.abs(Math.round(v)));
@@ -1725,7 +2112,7 @@ function degisimSinif(v){return v===null?"":(v>=0?"ok":"no");}
 /* ===== DURUM ===== */
 const SEVIYELER=["genel","saha","bolge","sube","personel"];
 const SEV_AD={saha:{c:"Saha",t:"saha"},bolge:{c:"Bölge",t:"bölge"},sube:{c:"Şube",t:"şube"},personel:{c:"Personel",t:"personel"}};
-const S={ solSeyir:"ciro",sagSeyir:"rnd",kpiYuz:"kpi",bolgeYuz:"hg",kanal:"tum",per:"gun",ofs:0,seviye:"genel",onizleme:null,
+const S={ solSeyir:"ciro",sagSeyir:"rnd",kpiYuz:"kpi",bolgeYuz:"hg",kanal:"tum",per:"gun",ofs:0,seviye:"genel",onizleme:null,sdSec:0,
          secimSabit:null,secimHover:null,bolgeListeKap:null,
          filtre:{saha:null,bolge:null,sube:null},
          sirala:"donemCiro",yon:-1,ara:"",limit:60,
@@ -2419,7 +2806,14 @@ function cizKayit(kap,k,per,el,alan){
 
   let g='<line x1="'+L+'" y1="'+(H-B)+'" x2="'+(W2-R)+'" y2="'+(H-B)+
         '" stroke="#AEB7B1" stroke-width="1.2"/>';
-  const bw=Math.min(haftaMi?44:40, (haftaMi?bir:(W2-L-R)/Math.max(1,n))*0.62);
+  const sut=haftaMi?bir:(W2-L-R)/Math.max(1,n);
+  const bw=Math.min(haftaMi?44:40, sut*0.62);
+  /* Rakamlar sığdığı kadar: kalabalık dönemlerde aralıklı yazılır, atlanan
+     dilimin değeri gezinme şeridinden okunur. Son dolu sütun her zaman
+     yazılır — bakılan rakam odur. */
+  const adim=etiketAdimi(W2-L-R, n, ETIKET_EN_ADET);
+  let sonDolu=-1; dl.forEach(function(d,i){ if(!d.gelecek && d.v>0) sonDolu=i; });
+  const yazilan=etiketSecimi(n, adim, [sonDolu]);
   dl.forEach(function(d,i){
     const x=X(i);
     const eksenAd=per.tip==="gun" ? d.ad+":00" : d.ad;
@@ -2431,6 +2825,7 @@ function cizKayit(kap,k,per,el,alan){
     g+='<rect'+(d.yarim?' id="bugunCubuk"':'')+' style="--sira:'+i+'" x="'+(x-bw/2).toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+
        '" height="'+Math.max(0,h).toFixed(1)+'" rx="2" fill="'+renk+'" fill-opacity="'+
        (d.yarim?".5":".85")+'"/>';
+    if(yazilan.indexOf(i)<0) return;
     g+='<text class="k-deger" x="'+x.toFixed(1)+'" y="'+(y-6).toFixed(1)+'" text-anchor="middle" '+
        'font-weight="700" fill="'+renk+'">'+AD(d.v)+'</text>';
   });
@@ -2444,6 +2839,11 @@ function cizKayit(kap,k,per,el,alan){
     g+='<text x="'+(L+bir*6+ARA).toFixed(1)+'" y="'+(T-8)+'" text-anchor="middle" '+
        'font-size="12" fill="#58645F">Hafta sonu</text>';
   }
+  /* Gezinme şeritleri en sonda (bkz. vurSeritleri). */
+  g+=vurSeritleri(n, X, sut, 0, H-B, function(i){
+    const d=dl[i]; if(!d || d.gelecek) return null;
+    return [(per.tip==="gun"? d.ad+":00" : d.ad), AD(d.v)];
+  });
   el.svg.setAttribute("viewBox","0 0 "+W2+" "+H);
   el.svg.innerHTML=g;
   if(el.not){
@@ -2686,6 +3086,13 @@ function cizHg(kap,k,per,el){
        'font-size="12" fill="#58645F">Hafta sonu</text>';
   }
 
+  /* Gezinme: dilimin kendi H/G'si ve o noktadaki ağırlıklı ortalaması bir
+     arada — sütunun eğilime göre nerede durduğu balonda da okunuyor. */
+  g+=vurSeritleri(n, X, bir, 0, H-B, function(i){
+    const d=dl[i]; if(!d || d.gelecek || d.v===null) return null;
+    return [d.ad, PCT(d.v)+(ortD[i]!==null ? " · ort. "+PCT(ortD[i]) : "")];
+  });
+
   sv.innerHTML=g;
 }
 
@@ -2774,6 +3181,8 @@ function cizSpark(kap,k,per){
   if(duz) g+='<path d="'+duz+'" fill="none" stroke="#00724C" stroke-width="2.5" stroke-linejoin="round"/>';
   if(kesik) g+='<path class="kesik" d="'+kesik+'" fill="none" stroke="#2B8C8A" stroke-width="2.5" stroke-dasharray="6 5" stroke-linejoin="round"/>';
 
+  const adim=etiketAdimi(W2-L-R, nk.length, dar()?ETIKET_EN_DAR:ETIKET_EN);
+  const yazilan=etiketSecimi(nk.length, adim, [sonGercek, nk.length-1]);
   nk.forEach(function(n,i){
     const x=X(i), y=Y(n.v), renk=n.tahmin?"#2B8C8A":"#00724C";
     /* --sira: açılışta noktalar ve tutarlar soldan sağa sırayla belirir,
@@ -2781,13 +3190,18 @@ function cizSpark(kap,k,per){
     const sr=' style="--sira:'+i+'"'+(n.tahmin?' class="tahmin"':'');
     g+='<circle'+sr+' cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="3.2" fill="'+(n.tahmin?"#fff":renk)+
        '" stroke="'+renk+'" stroke-width="'+(n.tahmin?2:1)+'"/>';
-    /* Uzun TL etiketleri geniş/F11 görünümünde aynı hatta yaklaşabiliyor.
-       İki yükseklikte dönüşümlü göstererek puntoyu küçültmeden çakışmayı önle. */
-    const etiketY=Math.max(20,y-(i%2?24:10));
+    /* Etiketler ARTIK TEK HATTA. Önce iki yükseklikte dönüşümlü yazılıyordu
+       (bir yukarı bir aşağı); çakışmayı önlüyordu ama zikzak bir rakam
+       şeridi çıkıyor, çizginin kendisi okunmuyordu. Şimdi hepsi çizginin
+       hemen üstünde ve sığdığı kadarı yazılıyor (adim); atlanan saatin
+       tutarı gezinme şeridinden okunuyor. Gerçekleşenin son noktası ve
+       günün son saati her zaman yazılır. */
+    const etiketY=Math.max(18,y-11);
     const degerDayanak=i===0?"start":(i===nk.length-1?"end":"middle");
     const eksenDayanak=i===0?"start":(i===nk.length-1?"end":"middle");
-    g+='<text class="s-deger'+(n.tahmin?" tahmin":"")+'" style="--sira:'+i+'" x="'+x.toFixed(1)+'" y="'+etiketY.toFixed(1)+'" text-anchor="'+degerDayanak+'" '+
-       'font-weight="'+(n.tahmin?600:700)+'" fill="'+renk+'"'+(n.tahmin?' opacity=".85"':'')+'>'+TL(n.v)+'</text>';
+    if(yazilan.indexOf(i)>=0)
+      g+='<text class="s-deger'+(n.tahmin?" tahmin":"")+'" style="--sira:'+i+'" x="'+x.toFixed(1)+'" y="'+etiketY.toFixed(1)+'" text-anchor="'+degerDayanak+'" '+
+         'font-weight="'+(n.tahmin?600:700)+'" fill="'+renk+'"'+(n.tahmin?' opacity=".85"':'')+'>'+TL(n.v)+'</text>';
     g+='<text class="s-eksen" style="--sira:'+i+'" x="'+x.toFixed(1)+'" y="'+(H-6)+'" text-anchor="'+eksenDayanak+'">'+
        String(n.saat).padStart(2,"0")+':00</text>';
   });
@@ -2799,6 +3213,12 @@ function cizSpark(kap,k,per){
      kutuyu 200'e çekiyor, Gün'e dönünce grafik "kendiliğinden düzeliyordu"
      — açılış animasyonuyla ilgisi yoktu. Kayıt grafiği (cizKayit) kutusunu
      zaten kendi kuruyor. */
+  /* Gezinme şeritleri: saat ve o saate kadarki birikimli ciro. */
+  g+=vurSeritleri(nk.length, X, (W2-L-R)/Math.max(1,nk.length-1), 0, H-B, function(i){
+    const q=nk[i]; if(!q) return null;
+    return [String(q.saat).padStart(2,"0")+":00", TL(q.v)+(q.tahmin?" · tahmin":"")];
+  });
+
   $("spark").setAttribute("viewBox","0 0 "+W2+" "+H);
   $("spark").innerHTML=g;
 
@@ -3109,11 +3529,33 @@ function eksen(W2,H,R,T,B,ham,etiket,tabanHam,solBosluk){
    ve viewBox 1000 birim genişliğinde çiziliyor; eski 82 birimlik tahmin
    10,5 px'lik yazıya göreydi, punto büyüyünce Yıl'da aylık tutarlar üst
    üste biniyordu (ölçülen: 8 çakışma). ETIKET_EN o yüzden tek yerden. */
-const ETIKET_EN = 160, ETIKET_EN_DAR = 190;
+/* Punto 18 -> 16,5 birime indi; tahmin de aynı oranda (160 -> 146). */
+const ETIKET_EN = 146, ETIKET_EN_DAR = 174;
+/* Adet etiketleri ("1.284") tutarlardan kısa; kendi tahmini var. */
+const ETIKET_EN_ADET = 86;
 function etiketAdimi(genislik,n,yaklasikPx){
   if(n<=1) return 1;
   const aralik=genislik/(n-1);
   return Math.max(1,Math.ceil(yaklasikPx/Math.max(1,aralik)));
+}
+/* Hangi dilimlere rakam yazılacağı TEK YERDEN seçiliyor. "i%adim===0 artı
+   zorunlular" yetmiyordu: zorunlu etiket (gerçekleşenin sonu, dönemin son
+   dolu dilimi) ızgaranın arasına düşüyor ve komşusuyla çakışıyordu —
+   ölçülen Gün'de "₺132.354.882 ↔ ₺145.476.259". Burada zorunlular önce
+   konur, aralara yalnız adim kadar uzaktaki adaylar girer, zorunluya
+   adim'den yakın aday elenir. Atlanan dilimin değeri gezinme şeridinde
+   duruyor, yani hiçbir rakam kaybolmuyor. */
+function etiketSecimi(n,adim,zorunlu){
+  const z=(zorunlu||[]).filter(function(i){ return i>=0 && i<n; });
+  const sec=z.slice();
+  let son=-Infinity;
+  for(let i=0;i<n;i++){
+    if(sec.indexOf(i)>=0){ son=i; continue; }
+    if(i-son<adim) continue;
+    if(z.some(function(j){ return Math.abs(j-i)<adim; })) continue;
+    sec.push(i); son=i;
+  }
+  return sec;
 }
 
 /* Dönem içi seyrin ortak ölçüsü. Gün'deki saatlik seyir de aynı kutuyu
@@ -3121,7 +3563,34 @@ function etiketAdimi(genislik,n,yaklasikPx){
 /* Ciro kartından kazanılan dikey alan seyir grafiklerine verildi. Grafik
    yalnız CSS ile esnetilmiyor; viewBox da büyüdüğü için veri çizimi gerçekten
    daha yüksek ve okunaklı bir alana yayılıyor. */
-const SEYIR={W:1000,H:200,L:32,R:36,T:30,B:30};
+/* H 200 -> 178. Grafiğin ENİ sütundan geliyor; viewBox ölçeği (ekran px /
+   1000 birim) ondan çıktığı için YÜKSEKLİĞİ kısmak yazıları KÜÇÜLTMÜYOR,
+   yalnız grafiği kompaktlaştırıyor — kaybedilen şey boş dikey alan.
+   Ölçülen 1600x920'de: pano yüksekliği 918 -> 899 px, tek-ekran ölçeği
+   0,876 -> 0,894. Yani seyirden kazanılan yer bütün panoyu %2 büyütüyor;
+   grafik kısalırken ekrandaki her şey biraz daha okunur oluyor.
+   Yazı puntoları yalnız bir kademe kısıldı (18 -> 16,5 birim): şerit
+   alçalınca rakamlar dikeyde sıkışıyordu. Yatay sıkışmayı punto değil
+   etiketSecimi çözüyor. */
+const SEYIR={W:1000,H:178,L:32,R:36,T:30,B:30};
+
+/* ===== GEZİNME ŞERİTLERİ =====
+   Her dilimin üstünde, çizim alanının tamamını kaplayan görünmez bir
+   dikdörtgen. Değer etiketleri seyrekleştirildiği için (bkz. etiketAdimi)
+   ekranda her rakam yazılı değil; atlanan dilimin tam değeri buradan,
+   fareyle okunuyor. Şeritler ÇİZİMİN EN SONUNA eklenmeli: SVG'de sonra
+   basılan üstte durur, yoksa sütunlar şeridi yutar.
+   bilgi(i) -> [ad, değer metni] ya da null (o dilimde okunacak bir şey yok). */
+function vurSeritleri(n,X,en,ust,dip,bilgi){
+  let s="";
+  for(let i=0;i<n;i++){
+    const b=bilgi(i); if(!b) continue;
+    s+='<rect class="s-vur" x="'+(X(i)-en/2).toFixed(1)+'" y="'+ust+'" width="'+en.toFixed(1)+
+       '" height="'+Math.max(0,dip-ust).toFixed(1)+'" fill="transparent" data-ad="'+b[0]+
+       '" data-v="'+b[1]+'"/>';
+  }
+  return s;
+}
 
 /* Birikimli ciro çizgisinin ALTINDAKİ alan. 628 px genişlikte 2,5–3 px'lik
    tek bir çizgi grafiği boş gösteriyordu; dolgu alanı doldurup "ne kadar yol
@@ -3193,6 +3662,10 @@ function cizGrafikHafta(kap,k,per,o,el){
      '" stroke="#AEB7B1" stroke-width="1.2"/>';
 
   const bw=Math.min(46,bir*0.62);
+  /* 13 birimlik punto ETIKET_EN'den (16,5 birim) dar; kendi tahminiyle. */
+  const hAdim=etiketAdimi(W2-L-R-ARA, n, 112);
+  let hSon=-1; dl.forEach(function(d,i){ if(!d.gelecek && d.ciro) hSon=i; });
+  const hYaz=etiketSecimi(n, hAdim, [hSon]);
   dl.forEach(function(d,i){
     const x=X(i);
     /* gün adı */
@@ -3204,8 +3677,14 @@ function cizGrafikHafta(kap,k,per,o,el){
     g+='<rect'+(d.yarim?' id="bugunCubuk"':'')+' x="'+(x-bw/2).toFixed(1)+'" y="'+y.toFixed(1)+
        '" width="'+bw.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="2" fill="#00724C"'+
        (d.yarim?' fill-opacity=".55"':'')+'/>';
+    if(hYaz.indexOf(i)<0) return;
     g+='<text x="'+x.toFixed(1)+'" y="'+Math.max(11,y-6).toFixed(1)+'" text-anchor="middle" '+
        'font-size="13" font-weight="'+(d.yarim?700:600)+'" fill="#00724C">'+TL(d.ciro)+'</text>';
+  });
+
+  g+=vurSeritleri(n, X, bir, 0, H-B, function(i){
+    const d=dl[i]; if(!d || d.gelecek) return null;
+    return [d.ad, TL(d.ciro)];
   });
 
   el.svg.innerHTML=g;
@@ -3240,12 +3719,18 @@ function cizGrafikYil(kap,k,per,el){
   /* her sütunun tutarı üstünde; sığmıyorsa aralıklı, son dolu ay her zaman */
   let son=-1; dl.forEach(function(d,i){ if(!d.gelecek&&d.ciro) son=i; });
   const adim=etiketAdimi(W2-ax.L-R, ax.n, dar()?ETIKET_EN_DAR:ETIKET_EN);
+  const yazilan=etiketSecimi(ax.n, adim, [son]);
   dl.forEach(function(d,i){
     if(d.gelecek||!d.ciro) return;
-    if(i%adim!==0 && i!==son) return;
+    if(yazilan.indexOf(i)<0) return;
     g+='<text x="'+ax.X(i).toFixed(1)+'" y="'+Math.max(12,ax.Y(d.ciro)-7).toFixed(1)+
        '" text-anchor="middle" font-size="'+(i===son?12:10.5)+'" font-weight="'+(i===son?700:600)+
        '" fill="'+renk+'">'+TL(d.ciro)+'</text>';
+  });
+
+  g+=vurSeritleri(ax.n, ax.X, (W2-ax.L-R)/Math.max(1,ax.n), 0, H-B, function(i){
+    const d=dl[i]; if(!d || d.gelecek) return null;
+    return [d.ad, TL(d.ciro)+(d.gecen?" · geçen yıl "+TL(d.gecen):"")];
   });
 
   el.svg.innerHTML=g;
@@ -3305,8 +3790,9 @@ function cizGrafikBirikim(kap,k,per,o,el){
 
     /* birikimin o güne kadarki tutarı noktanın üstünde */
     const adim=etiketAdimi(W2-ax.L-R, n, dar()?ETIKET_EN_DAR:ETIKET_EN);
+    const yazilan=etiketSecimi(son+1, adim, [son]);
     for(let i=0;i<=son;i++){
-      if(i%adim!==0 && i!==son) continue;
+      if(yazilan.indexOf(i)<0) continue;
       g+='<circle cx="'+ax.X(i).toFixed(1)+'" cy="'+ax.Y(kg[i]).toFixed(1)+'" r="'+(i===son?4:2.6)+
          '" fill="'+renk+'"/>';
       const anc = i>=n-2 ? "end" : (i<=1 ? "start" : "middle");
@@ -3326,6 +3812,11 @@ function cizGrafikBirikim(kap,k,per,o,el){
     g+='<text x="'+(W2-R).toFixed(1)+'" y="'+Math.max(12,ax.Y(bit.v)-11).toFixed(1)+
        '" text-anchor="end" font-size="14" font-weight="650" fill="#2B8C8A">'+TL(bit.v)+'</text>';
   }
+
+  g+=vurSeritleri(n, ax.X, (W2-ax.L-R)/Math.max(1,n-1), 0, H-B, function(i){
+    const d=dl[i]; if(!d || d.gelecek || i>son) return null;
+    return [d.ad, TL(kg[i])];
+  });
 
   el.svg.innerHTML=g;
   if(el.leg) el.leg.innerHTML=
@@ -3542,8 +4033,10 @@ adetleriYaz.tek=function(el,x){
      3) bölge listesi H/G ile ciro arasında döner — yukarıdan aşağı dalga
      4) harita saha turu: dört saha sırayla vurgulanır, üst bloklar o sahaya
         önizleme yapar
-   Bunların dışında kendi başına süren iki ince hareket var (il nabzı, huni
-   akışı); onlar sıraya girmiyor, bkz. ORTAM HAREKETLERİ.
+   Bunların dışında kendi sayaçlarıyla süren ince hareketler var (il nabzı,
+   kart çubukları, harita parıltısı, huni akışı, halka, bayrak); onlar bu
+   sıraya girmiyor ama kendi aralarında da üst üste binmiyor —
+   bkz. ORTAM HAREKETLERİ.
 
    Sıra: 15 sn'de bir tek etki. Yani her etki 60 sn'de bir geliyor. Aralar
    bilerek uzun; ekrana sürekli bakılmıyor, ara ara göz atılıyor.
@@ -3562,7 +4055,25 @@ let beklemeSayac=0;
    ardından tetiklenebiliyordu. */
 let beklemeSonHareket=Date.now();
 
-function beklemeBekle(gecikme,is){ BEKLE.zaman.push(setTimeout(is,gecikme)); }
+/* ===== FARE GRAFİĞİN ÜSTÜNDEYKEN DURAKLAMA =====
+   Bir değeri okurken yüzün değişmesi en rahatsız edici hareket: balon açık
+   dururken grafiğin altından veri kayıyor. O yüzden fare seyir satırına
+   girdiği AN dönüş duruyor:
+     - yeni etki hiç başlamıyor (beklemeUygun),
+     - sürmekte olan dizinin kalan adımları fare çekilene kadar erteleniyor
+       (aşağıdaki beklemeBekle).
+   Fare çıkınca sayaç baştan başlıyor, yani 15 sn'lik sükûnet yeniden
+   sayılıyor; dizinin kaldığı adım hemen oynamıyor. */
+let seyirUstunde=false;
+const DURAK_TIK=320;
+function beklemeBekle(gecikme,is){
+  BEKLE.zaman.push(setTimeout(function calis(){
+    /* Erteleme de BEKLE.zaman'da duruyor: sıra "etki sürüyor" sayılmaya
+       devam ediyor ve beklemeTemizle hepsini birden iptal edebiliyor. */
+    if(seyirUstunde){ BEKLE.zaman.push(setTimeout(calis,DURAK_TIK)); return; }
+    is();
+  },gecikme));
+}
 function beklemeTemizle(){ BEKLE.zaman.forEach(clearTimeout); BEKLE.zaman=[];
   beklemeSonHareket=Date.now(); }
 /* Kullanıcı bir şeye dokundu: sayacı baştan başlat, sürmekte olan etkiyi
@@ -3571,7 +4082,7 @@ function beklemeGecikti(){ beklemeSonHareket=Date.now(); }
 /* Yeniden çizim her şeyi baştan yazıyor; yarıda kalan geri yazmalar iptal
    edilir ve durum başlangıç hâline döner. */
 function beklemeSifirla(){
-  beklemeTemizle(); yariTemizle(); nabizDurdur(); etiketDurdur();
+  beklemeTemizle(); yariTemizle(); nabizDurdur();
   S.solSeyir="ciro"; S.sagSeyir="rnd"; S.kpiYuz="kpi"; S.bolgeYuz="hg";
   bolTemizle();
   const sg=document.querySelector(".hero-r"); if(sg) sg.classList.remove("tes");
@@ -3582,7 +4093,7 @@ function beklemeSifirla(){
 function beklemeUygun(){
   return document.body.classList.contains("hazir") &&
          S.seviye==="genel" && !S.onizleme && !S.secimSabit && !document.hidden &&
-         !SAKIN.matches && BEKLE.zaman.length===0;
+         !SAKIN.matches && !seyirUstunde && BEKLE.zaman.length===0;
 }
 /* Tik sık çalışır (1 sn) ama etkiyi ancak son hareketten BEKLE_ARA kadar
    sonra başlatır. Böylece elle çevirme sayacı gerçekten sıfırlıyor. */
@@ -3595,46 +4106,49 @@ function beklemeTik(){
 }
 
 /* ===== ORTAM HAREKETLERİ =====
-   Sıraya GİRMEYEN, kendi sayaçlarıyla süren ince hareketler: il nabzı, huni
-   akışı ve halka süpürmesi. Üçü de veriye dokunmuyor — ekrandaki hiçbir
-   sayı değişmiyor, yalnız panonun canlı olduğu görünüyor. Sıraya girmemeleri
+   Sıraya GİRMEYEN, kendi sayaçlarıyla süren ince hareketler: il nabzı, kart
+   ciro çubuklarında ışık (lider ayrı), harita parıltısı, huni akışı, halka
+   süpürmesi ve sayfanın arkasından geçen bayrak. Hiçbiri veriye dokunmuyor
+   — ekrandaki hiçbir sayı değişmiyor, yalnız panonun canlı olduğu görünüyor. Sıraya girmemeleri
    bilinçli: sıradaki dört etki "bak, başka bir ölçü" diyor, bunlar yalnız
    "buradayım" diyor, ikisi aynı kuyruğa konmamalı.
    Hepsi aynı 1 sn'lik tikten besleniyor; ayrı setInterval açmıyoruz. */
-const NABIZ_TIK=3, HUNI_TIK=14, HALKA_TIK=22, ETIKET_TIK=9;   /* saniye cinsinden */
-const ETIKET_ARA=95;   /* iki etiket arası gecikme */
+/* Periyotlar saniye cinsinden. Hepsi 1 sn'lik ortak tikten besleniyor.
+   Sayılar bilerek birbirine asal-ımsı seçildi, ama asıl güvence ortamBasla:
+   bir hareket sürerken ikincisi hiç başlamıyor. */
+const NABIZ_TIK=3,   /* haritada il nabzı */
+      BAR_TIK=8,     /* kart ciro çubuklarında ışık dalgası */
+      HRT_TIK=11,    /* harita parıltısı (tek geçiş) */
+      HUNI_TIK=14,   /* huni akışı */
+      LIDER_TIK=17,  /* en büyük cirolu sahanın çubuğu, tek başına */
+      HALKA_TIK=22,  /* kanal payı halkası yeniden süpürülür */
+      BAYRAK_TIK=29; /* sayfanın arkasından geçen yeşil şerit */
 const NABIZ_SAYI=6;
+const BAR_DALGA=170;      /* iki kart çubuğu arası gecikme */
+const BAYRAK_SURE=5200;   /* bayrakGec ile aynı olmalı */
 let ortamSayac=0, nabizSira=0, nabizIller=null;
+/* ===== ORTAM HAREKETLERİ ÜST ÜSTE BİNMEZ =====
+   Şikayet haritadan geldi: il nabzı (3 sn'de bir) ile harita parıltısı
+   (sonsuz döngü) aynı anda düşünce ikisi de fark edilmiyordu — göz iki
+   hareketi ayıramıyor, ikisini tek bir "kıpırtı" olarak görüyor. Çözüm
+   periyotları ayarlamak değil (er geç yine çakışırlar), hareketleri TEKİL
+   kılmak: her hareket başlarken kendi süresi kadar bir meşguliyet bırakıyor,
+   o süre dolmadan başka hiçbir ortam hareketi başlamıyor. Kaçıran hareket
+   kendi periyodunda yeniden geliyor, yani hiçbir şey kaybolmuyor. */
+let ortamBosalma=0;
+function ortamBasla(sure){
+  const t=Date.now();
+  if(t<ortamBosalma) return false;
+  ortamBosalma=t+sure;
+  return true;
+}
 function ortamUygun(){
   return document.body.classList.contains("hazir") && S.seviye==="genel" &&
          !S.onizleme && !document.hidden && !SAKIN.matches;
 }
-/* Etiket parlaması. Etiketler her çizimde yeniden üretildiği için
-   zamanlayıcılar ayrı tutulup yeniden çizimde iptal ediliyor; yoksa silinmiş
-   bir elemana sınıf eklemeye çalışıyordu. */
-let etiketZaman=[];
-function etiketDurdur(){
-  etiketZaman.forEach(clearTimeout); etiketZaman=[];
-  document.querySelectorAll("#sparkSatir text.parla")
-    .forEach(function(x){ x.classList.remove("parla"); });
-}
-function etiketTik(){
-  etiketDurdur();
-  /* İki yarı birlikte, her yarı kendi içinde soldan sağa. x niteliğine göre
-     sıralanıyor — DOM sırası çizim sırası, her zaman soldan sağa değil. */
-  ["spark","kytSpark"].forEach(function(id){
-    const sv=$(id); if(!sv) return;
-    const et=[].slice.call(sv.querySelectorAll("text.s-deger,text.k-deger"))
-      .sort(function(a,b){ return (+a.getAttribute("x")||0)-(+b.getAttribute("x")||0); });
-    et.forEach(function(el,i){
-      etiketZaman.push(setTimeout(function(){
-        el.classList.remove("parla"); void el.getBoundingClientRect();
-        el.classList.add("parla");
-        etiketZaman.push(setTimeout(function(){ el.classList.remove("parla"); }, 1000));
-      }, i*ETIKET_ARA));
-    });
-  });
-}
+/* SEYİR ETİKETİ PARLAMASI KALDIRILDI (kullanıcı isteği) — rakamların
+   büyüyüp küçülmesi huzursuz duruyordu. Yerine kart çubukları ve bayrak
+   geldi; ikisi de rakamlara dokunmuyor. */
 function nabizDurdur(){
   document.querySelectorAll("#haritaSar .il.nabiz")
     .forEach(function(x){ x.classList.remove("nabiz"); });
@@ -3682,13 +4196,73 @@ function halkaSupur(){
   h.__akis = akit(function(d){ h.innerHTML = payYaylari(oran, toplam, perAd, d); }, 0, 1, 900);
   h.__son = oran;
 }
+/* ---- kart ciro çubukları ----
+   Dalga yukarıdan aşağı; lider kart atlanıyor. Lider = dönemin en yüksek
+   cirolu sahası, kartların kendi verisinden (__veri) okunuyor. */
+function kartBarlari(){
+  return [].slice.call(document.querySelectorAll("#sahaKartlar .kart .bar"));
+}
+function liderBarIndeks(){
+  const kutu=$("sahaKartlar"), v=kutu && kutu.__veri;
+  if(!v || !v.length) return -1;
+  let en=-1, enc=-Infinity;
+  v.forEach(function(x,i){
+    const c=(x && x.o) ? x.o.gercek : 0;
+    if(c>enc){ enc=c; en=i; }
+  });
+  return en;
+}
+function barParlat(el,sinif,sure){
+  if(!el) return;
+  el.classList.remove(sinif); void el.getBoundingClientRect();
+  el.classList.add(sinif);
+  setTimeout(function(){ el.classList.remove(sinif); }, sure);
+}
+function barTik(){
+  const b=kartBarlari(), lider=liderBarIndeks();
+  let sira=0;
+  b.forEach(function(el,i){
+    if(i===lider) return;
+    setTimeout(function(){ barParlat(el,"parla",1200); }, (sira++)*BAR_DALGA);
+  });
+}
+function liderBarTik(){
+  const b=kartBarlari(), lider=liderBarIndeks();
+  if(lider<0 || !b[lider]) return;
+  barParlat(b[lider],"lider",1500);
+}
+/* ---- harita parıltısı: tek geçiş ---- */
+function haritaParlaTik(){
+  const el=document.querySelector("#harita .hrt-parla");
+  if(!el) return;
+  el.classList.remove("gec"); void el.getBoundingClientRect();
+  el.classList.add("gec");
+  setTimeout(function(){ el.classList.remove("gec"); }, 2500);
+}
+/* ---- bayrak ---- */
+function bayrakTik(){
+  const el=$("bayrak");
+  if(!el) return;
+  el.classList.remove("gec"); void el.getBoundingClientRect();
+  el.classList.add("gec");
+  setTimeout(function(){ el.classList.remove("gec"); }, BAYRAK_SURE+80);
+}
+/* Sıra ÖNCELİKLİ: seyrek gelen hareket kazanır, sık geleni (nabız) bekler —
+   nabız üç saniyede bir zaten geri geliyor, öbürleri ise yarım dakikada bir.
+   Tek tikte tek hareket; ortamBasla süresi boyunca da başka hareket yok. */
 function ortamTik(){
-  if(!ortamUygun()){ nabizDurdur(); etiketDurdur(); ortamSayac=0; return; }
+  if(!ortamUygun()){ nabizDurdur(); ortamSayac=0; return; }
   ortamSayac++;
-  if(ortamSayac % NABIZ_TIK === 0) nabizTik();
-  if(ortamSayac % HUNI_TIK  === 0) huniTik();
-  if(ortamSayac % HALKA_TIK === 0) halkaSupur();
-  if(ortamSayac % ETIKET_TIK === 0) etiketTik();
+  if(ortamSayac % BAYRAK_TIK === 0 && ortamBasla(BAYRAK_SURE)){ bayrakTik();      return; }
+  if(ortamSayac % HALKA_TIK  === 0 && ortamBasla(1000))       { halkaSupur();     return; }
+  if(ortamSayac % LIDER_TIK  === 0 && ortamBasla(1600))       { liderBarTik();    return; }
+  /* Harita parıltısı huniden ÖNDE: ikisi de seyrek ama parıltı 11 sn'de bir
+     deneniyor ve huni (14 sn) sık sık önünü kesiyordu — ölçülen 81 sn'de
+     parıltı yalnız 2 kez geçebilmişti. */
+  if(ortamSayac % HRT_TIK    === 0 && ortamBasla(2600))       { haritaParlaTik(); return; }
+  if(ortamSayac % HUNI_TIK   === 0 && ortamBasla(1800))       { huniTik();        return; }
+  if(ortamSayac % BAR_TIK    === 0 && ortamBasla(1700))       { barTik();         return; }
+  if(ortamSayac % NABIZ_TIK  === 0 && ortamBasla(1800))       { nabizTik();       return; }
 }
 /* ---- 4) Harita saha turu ----
    Her saha için aynı koreografi, sırayla:
@@ -3887,7 +4461,7 @@ const BOLGE_SATIR = 11;
    önceki satır sayısı korunur. */
 function bolgeSatirSayisi(kutu,n){
   const kol=kutu.closest(".bolge-kol");
-  const bas=kol?kol.querySelector("h3"):null;
+  const bas=kol?kol.querySelector(".bolge-bas"):null;
   const ornek=kutu.querySelector(".bsat");
   /* offsetHeight / clientHeight, getBoundingClientRect DEĞİL: pano tek ekrana
      bir transform ile sığdırılıyor ve rect ölçeklenmiş boyu veriyor; ayrıca
@@ -3901,7 +4475,68 @@ function bolgeSatirSayisi(kutu,n){
   if(bas) basH=bas.offsetHeight+(parseFloat(getComputedStyle(bas).marginBottom)||0);
   const bos=kolH-basH;
   if(!(sh>0.5) || !(bos>sh)) return null;
-  return Math.max(1,Math.min(n,Math.floor(bos/sh)));
+  /* KAPASİTE döner, bölge sayısı DEĞİL: az bölgeli bir kapsamda (bir saha
+     önizlemesi) liste eskiden veri bitince kesiliyordu. Artık kalan satırlar
+     boş satırlarla dolduruluyor (bolgeBosDoldur), tablo her zaman kutunun
+     dibine kadar iniyor. */
+  return Math.max(1,Math.floor(bos/sh));
+}
+/* Değer sütunu SABİT enli olmak zorunda: iki sütun arasındaki ince çizgi
+   ancak o zaman baştan sona tek bir hat oluyor. Ama en'i tahmin etmek
+   olmuyordu — tutarlar ("₺32.267.551") dönemden döneme uzayıp kısalıyor,
+   dar tutulursa taşıyor, geniş tutulursa bölge adına yer kalmıyor. O yüzden
+   ölçülüyor: canvas ile, satırın kendi puntosunda, en uzun tutarın eni.
+   Canvas tercih edildi çünkü ciro değeri H/G yüzünde display:none —
+   DOM'dan ölçülemiyor. */
+function metinEni(ornek,metin){
+  const c=metinEni.__c || (metinEni.__c=document.createElement("canvas").getContext("2d"));
+  const cs=getComputedStyle(ornek);
+  c.font=cs.fontWeight+" "+cs.fontSize+" "+cs.fontFamily;
+  return c.measureText(metin).width;
+}
+function bolgeDegerEni(kutu,veri){
+  const ornek=kutu.querySelector(".btl"); if(!ornek) return;
+  let en=0;
+  veri.forEach(function(v){ en=Math.max(en, metinEni(ornek, TL(v.c))); });
+  /* +18: değerin kendi iç payı (2x4) ile çizginin solundaki 6 px boşluk,
+     artı yuvarlama payı. Taban 56: H/G çubuğu daha darında okunmuyor. */
+  const kol=kutu.closest(".bolge-kol");
+  if(kol) kol.style.setProperty("--bdeg", Math.max(56, Math.ceil(en+18))+"px");
+}
+
+/* Değer sütununun başlığı: hangi ölçü yazılıysa onun adı. Dönüş sırasında
+   da güncelleniyor, yoksa yarım saniye boyunca "H/G" yazarken altında ciro
+   duruyordu. */
+const BOLGE_OLCU_AD={hg:"H/G", ciro:"Ciro"};
+function bolgeBaslikYaz(sutun,yuz){
+  const bas=$("bolgeBas"); if(!bas) return;
+  const n=Math.max(1,sutun||1), ad=BOLGE_OLCU_AD[yuz]||"Ciro";
+  if(bas.__sutun!==n){
+    bas.__sutun=n;
+    let g="";
+    for(let i=0;i<n;i++)
+      g+='<div class="bbas"><span class="bad">Bölge</span>'+
+         '<span class="bdeg"></span></div>';
+    bas.innerHTML=g;
+  }
+  bas.querySelectorAll(".bdeg").forEach(function(el){ el.textContent=ad; });
+}
+/* Tablo dibe kadar insin: veri biten yerden sonrası BOŞ satırlarla
+   doldurulur. Şerit ve iki sütun arasındaki çizgi böylece kesilmiyor,
+   liste "yarım kalmış" görünmüyor. Boş satırlar gerçek satırların ARDINA
+   ekleniyor; ızgara sütun sütun aktığı için bu, son sütunun altını
+   doldurmak demek — indeksler de veriyle hizalı kalıyor. */
+function bolgeBosDoldur(kutu,dolu,hucre){
+  const bos=[].slice.call(kutu.querySelectorAll(".bsat.bbos"));
+  const gerek=Math.max(0,hucre-dolu);
+  for(let i=bos.length;i<gerek;i++){
+    const d=document.createElement("div");
+    d.className="bsat bbos";
+    d.setAttribute("aria-hidden","true");
+    d.innerHTML='<span class="bad"></span><span class="btl"></span>';
+    kutu.appendChild(d);
+  }
+  for(let i=gerek;i<bos.length;i++) bos[i].remove();
 }
 function cizBolgeListe(per){
   const kutu=$("bolgeListe"); if(!kutu) return;
@@ -3934,8 +4569,7 @@ function cizBolgeListe(per){
      sonra gerçek ölçüyle düzeltilir — ikisi aynı karede olduğu için ara
      adım görünmüyor. Izgara önce yazılmazsa grid-auto-flow:column her
      satırı kendi sütununa koyup listeyi yatayda taşırıyor. */
-  kutu.style.gridTemplateRows=
-    "repeat("+Math.min(kutu.__satir||BOLGE_SATIR, veri.length)+",auto)";
+  kutu.style.gridTemplateRows="repeat("+(kutu.__satir||BOLGE_SATIR)+",auto)";
 
   const yeniIskelet=iskelet(kutu, veri.map(v=>v.ad).join("|"), function(){
     return veri.map(function(v,i){
@@ -3951,6 +4585,13 @@ function cizBolgeListe(per){
     kutu.__satir=olculenSatir;
     kutu.style.gridTemplateRows="repeat("+olculenSatir+",auto)";
   }
+  /* Sütun sayısı satır sayısından çıkıyor; başlık satırı da o kadar hücre
+     taşıyor ki her liste sütununun üstünde kendi başlığı olsun. */
+  const satirAdet=Math.max(1,kutu.__satir||BOLGE_SATIR);
+  const sutunAdet=Math.max(1,Math.ceil(veri.length/satirAdet));
+  bolgeDegerEni(kutu,veri);
+  bolgeBaslikYaz(sutunAdet,yuz);
+  bolgeBosDoldur(kutu, veri.length, satirAdet*sutunAdet);
 
   /* H/G çubuğu mutlak 0–100 ölçeğindedir; yazı gerçek yüzdeyi korur.
      Ciroda çubuk yoktur, renkler görünen bölgelerin cirosunu kıyaslar. */
@@ -3958,7 +4599,11 @@ function cizBolgeListe(per){
   const enAz=Math.min.apply(null,cirolar), enCok=Math.max.apply(null,cirolar);
   const aralik=(enCok-enAz)||1;
   const secili=S.secimHover||S.secimSabit;
-  const sat=kutu.querySelectorAll(".bsat");
+  const sat=kutu.querySelectorAll(".bsat:not(.bbos)");
+  /* Şerit sütun İÇİNDE sayılır ve BOŞ satırlarda da sürer. */
+  [].slice.call(kutu.querySelectorAll(".bsat")).forEach(function(el,i){
+    el.classList.toggle("serit",(i%satirAdet)%2===1);
+  });
   veri.forEach(function(v,i){
     const el=sat[i]; if(!el) return;
     const hg=el.querySelector(".hg-deger"), ciro=el.querySelector(".ciro-deger");
@@ -4004,7 +4649,8 @@ function bolgeYuzeGec(yuz){
   bolTemizle();
   const hg = S.bolgeYuz==="hg";
   const sure=CEVIR_SURE.bolge;
-  const sat=[].slice.call(document.querySelectorAll("#bolgeListe .bsat"));
+  bolgeBaslikYaz(($("bolgeBas")||{}).__sutun, S.bolgeYuz);
+  const sat=[].slice.call(document.querySelectorAll("#bolgeListe .bsat:not(.bbos)"));
   sat.forEach(function(el,i){
     const deger=el.querySelector(".btl");
     bolZaman.push(setTimeout(function(){
@@ -4139,6 +4785,51 @@ function haritaOlaylari(){
   });
 }
 
+/* ===== SEYİR GEZİNME BALONU =====
+   Dinleyiciler SVG'nin kendisinde: şeritler her çizimde yeniden üretiliyor,
+   tek tek bağlamak kırılgan olurdu. Balon yarının içinde konumlanıyor
+   (.s-yari position:relative).
+   ÖLÇEK DÜZELTMESİ: pano .wrap üstünde bir transform ile ekrana sığdırılıyor.
+   getBoundingClientRect ölçeklenmiş piksel verir, balonun left/top'u ise
+   ölçeklenmemiş düzen uzayında okunur — oran ile geri çevriliyor, yoksa
+   balon imleçten kayıyor (ölçek 0,86'da ölçülen kayma satır sonunda ~40 px).*/
+let seyirBagli=false;
+function seyirOlaylari(){
+  if(seyirBagli) return;
+  seyirBagli=true;
+  [["spark","solBalon"],["kytSpark","sagBalon"]].forEach(function(c){
+    const sv=$(c[0]), balon=$(c[1]); if(!sv||!balon) return;
+    const yari=sv.closest(".s-yari"); if(!yari) return;
+    function konumla(ev){
+      const k=yari.getBoundingClientRect();
+      const o=k.width>0 ? yari.offsetWidth/k.width : 1;
+      balon.style.left=((ev.clientX-k.left)*o).toFixed(1)+"px";
+      balon.style.top =((ev.clientY-k.top )*o).toFixed(1)+"px";
+    }
+    const serit=function(t){ return t && t.closest ? t.closest(".s-vur") : null; };
+    let sonSerit=null;
+    sv.addEventListener("mousemove",function(ev){
+      const el=serit(ev.target);
+      if(!el){ sonSerit=null; balon.classList.remove("acik"); return; }
+      /* Metin yalnız şerit değişince yazılıyor: fare dilimin içinde gezerken
+         her karede innerHTML kurmanın anlamı yok. */
+      if(el!==sonSerit){
+        sonSerit=el;
+        balon.innerHTML="<b>"+el.dataset.ad+"</b><br>"+el.dataset.v;
+        balon.classList.add("acik");
+      }
+      konumla(ev);
+    });
+    sv.addEventListener("mouseleave",function(){ sonSerit=null; balon.classList.remove("acik"); });
+  });
+  /* Duraklama satırın tamamında: iki yarı ve dönüş tuşları dahil. */
+  const satir=$("sparkSatir");
+  if(satir){
+    satir.addEventListener("mouseenter",function(){ seyirUstunde=true; });
+    satir.addEventListener("mouseleave",function(){ seyirUstunde=false; beklemeGecikti(); });
+  }
+}
+
 /* İller, bağlı oldukları sahanın renginde; koyuluk o ilin cirosunun
    dönemin en yüksek il cirosuna oranıdır. Şubesi olmayan il boş bırakılır.
    Böylece hem saha bölünmesi hem ciro yoğunluğu tek görselde okunur. */
@@ -4245,93 +4936,724 @@ function cizHarita(k,per){
 
 }
 
-/* Sahalar alt alta: her biri kendi özeti ve dönem içi seyriyle. Tek tek
-   incelemek için; ileride bu bloğun yanına saha haritası gelecek. */
+/* ===== SAHA SAYFASI =====
+   İki durak; aralarında yalnız aşağı / yukarı geçilir (sdAsamayaGit):
+     1) karşılaştırma — dört saha dönem içi dilimlerle (tablo) ve kartlarla
+     2) detay — seçilen sahanın (S.sdSec) arka sayfası
+   Her durak bir ekran boyundadır; içerik sığmazsa durağın içinde küçültülür
+   (sdSigdir). Genel'in hareket dili (akış, dolma, dönüş) burada yok. */
+function donemTop(n,alan,k,per){
+  const sonG=Math.min(per.bit,BUGUN);
+  return sonG>=per.bas ? topArr(n[alan][k],per.bas,sonG) : 0;
+}
 function cizSahaDetay(k,per){
   const veri=sahaVerisi(k,per), yilMi=per.tip==="yil";
   const toplam=veri.reduce((a,v)=>a+v.o.gercek,0);
-  const ayAdet=idxTarih(Math.min(per.bit,BUGUN)).getMonth()+1;
+  if(!(S.sdSec>=0 && S.sdSec<veri.length)) S.sdSec=0;
+  if(NEDEN==="seviye" || NEDEN==="ilk") sdAsama=0;
   $("sdNot").textContent=per.ad+" · "+(k==="spy"?"Alternatif Satış Kanalı":"Tüm satış");
 
-  $("sahaDetay").innerHTML=veri.map(function(v,i){
-    const dr=durum(v.o.seyir), hedef=v.o.hedef, kalan=hedef?hedef-v.o.gercek:null;
-    const bolgeAdet=v.n.cocuk.length;
-    let subeAdet=0; v.n.cocuk.forEach(b=>{subeAdet+=b.cocuk.length;});
-    const pay = toplam ? PCT(v.o.gercek/toplam*100) : "—";
-    const renk = dr==="ok"?"good":(dr==="no"?"bad":"watch");
+  cizSahaDilim(veri,k,per);
+  const cL=veri.slice().sort((a,b)=>b.o.gercek-a.o.gercek)[0];
+  const hSir=veri.filter(v=>v.o.seyir!==null).slice().sort((a,b)=>b.o.seyir-a.o.seyir);
+  const hL=hSir[0],kritik=hSir[hSir.length-1];
+  const ivme=veri.filter(v=>v.deg!==null).slice().sort((a,b)=>b.deg-a.deg)[0];
+  $("sdYonetici").innerHTML=
+    '<div><div class="k">Ciro lideri</div><div class="v">'+cL.n.ad+' · '+KTL(cL.o.gercek)+'</div></div>'+
+    '<div><div class="k">H/G lideri</div><div class="v">'+hL.n.ad+' · '+PCT(hL.o.seyir)+'</div></div>'+
+    '<div><div class="k">En güçlü ivme</div><div class="v">'+ivme.n.ad+' · '+IMZ(ivme.deg)+'</div></div>'+
+    '<div class="kritik"><div class="k">En düşük tempo</div><div class="v">'+kritik.n.ad+' · H/G '+PCT(kritik.o.seyir)+'</div></div>';
+  const tahminler=veri.map(function(v){
+    const tahmin=(per.tip==="gun"&&per.bas===BUGUN)?saatNoktalari(v.n,k,per).gunSonu:v.o.tahmin;
+    const tamHedef=topHed(v.n.hed[k],per.bas,per.bit);
+    return {v:v,tahmin:tahmin,tahminHg:tamHedef?tahmin/tamHedef*100:null};
+  }), enTahmin=Math.max.apply(null,tahminler.map(x=>x.tahmin))||1;
+  $("sdTahminListe").innerHTML=
+    '<div class="th"><div class="bas">Saha</div><div class="bas">Güncel H/G</div><div class="bas">Tahmin karşılaştırması</div><div class="bas">Tahmin · H/G</div></div>'+
+    tahminler.map(function(x){const v=x.v;
+      return '<div class="sat"><div class="hucre saha"><i style="background:'+v.renk+'"></i>'+v.n.ad+'</div>'+
+        '<div class="hucre hg" style="color:'+sdRenk(v.o.seyir)+'">'+PCT(v.o.seyir)+'</div>'+
+        '<div class="hucre bar" style="--bar:'+v.renk+'"><span><i style="width:'+(x.tahmin/enTahmin*100).toFixed(1)+'%"></i></span></div>'+
+        '<div class="hucre kapanis">'+TL(x.tahmin)+' <small>'+PCT(x.tahminHg)+' H/G</small></div></div>';
+    }).join('');
+  /* Isı haritası satırı seçilen sahanın detayına iner. */
+  $("secSahaDetay").querySelectorAll(".sdc-tablo tr[data-i]").forEach(function(b){
+    b.onclick=function(){ sahaSec(+this.dataset.i, true); };
+  });
+  $("secSahaDetay").querySelectorAll(".sdc-ac").forEach(function(b){
+    b.onclick=function(){ sdIsiModalAc(this.dataset.table,this.querySelector("h3").textContent); };
+  });
 
-    /* ilerleme çubuğu — Genel'deki ciro kartıyla aynı dil */
-    const enb=Math.max(hedef||0, v.o.gercek, v.o.tahmin||0)*1.12||1;
-    const cubuk = yilMi ? "" :
-      '<div class="sdet-bar"><div class="track">'+
-        
-        '<div class="fill" style="width:'+(v.o.gercek/enb*100).toFixed(1)+'%;background:var(--'+renk+')"></div>'+
-        (!v.o.tamam && v.o.tahmin>v.o.gercek
-          ? '<div class="fcast" style="left:'+(v.o.gercek/enb*100).toFixed(1)+'%;width:'+
-            ((v.o.tahmin-v.o.gercek)/enb*100).toFixed(1)+'%"></div>' : '')+
-        '<div class="mark" style="left:'+((hedef||0)/enb*100).toFixed(1)+'%"></div>'+
-      '</div></div>';
+  cizSahaSecili(veri[S.sdSec], toplam, k, per);
+  sdSigdir();
+  sdKonumla();
+}
+function sahaSec(i,in2){
+  S.sdSec=i; cizSahaDetay(S.kanal,donem());
+  if(in2) sdAsamayaGit(1);
+}
 
-    const onc=oncekiGercek(v.n,k,per);
-    const kpi=[
-      yilMi ? {k:"Aylık ortalama", v:TL(v.o.gercek/ayAdet), s:"", d:"yıl başından bugüne"}
-            : {k:"Hedefe göre", v:PCT(v.o.hg)+" "+okIsareti(v.o.seyir), s:dr,
-               d:per.hedefAd.toLocaleLowerCase("tr")+"e göre"},
-      {k:oncekiGore[per.tip], v:(v.deg===null?"—":IMZ(v.deg)+" "+(v.deg>=0?"▲":"▼")),
-       s:degisimSinif(v.deg), d:onc?TL(onc):"karşılaştırma yok"},
-      yilMi ? {k:"Yıl sonu tahmini", v:TL(v.o.tahmin), s:"", d:"mevsimselliğe göre"}
-            : {k:(kalan>0?"Hedefe kalan":"Hedef aşıldı"), v:TL(Math.abs(kalan)), s:(kalan>0?"":"ok"),
-               d:per.hedefAd.toLocaleLowerCase("tr")+" "+TL(hedef)},
-      {k:"Randevu", v:AD(v.o.randevu), s:"", d:per.ad.toLocaleLowerCase("tr")+" toplamı"}
-    ];
+/* Birinci durakta altı ölçü aynı tablo iskeletini kullanır. Her hücrenin
+   tonu yalnız kendi zaman sütunundaki dört sahayı karşılaştırır. */
+function cizSahaDilim(veri,k,per){
+  const yilMi=per.tip==="yil";
+  const satir=veri.map((v,i)=>({ad:v.n.ad, n:v.n, i:i, renk:v.renk, o:v.o, deg:v.deg}));
+  const ilk=sdDilimAlan(veri[0].n,"ciro",k,per);
+  const bas='<thead><tr><th></th>'+ilk.map(d=>'<th>'+(per.tip==="gun"?d.ad+":00":d.ad)+'</th>').join("")+'<th class="dn">'+(yilMi?"Yıl":"Toplam")+'</th></tr></thead>';
+  $("sdDilimBaslik").textContent="Ciro · "+({gun:"saatlik",hafta:"günlük",ay:"haftalık",yil:"aylık"})[per.tip];
 
-    return '<div class="sdet" style="--kr:'+v.renk+'">'+
-      '<div class="sdet-bas">'+
-        '<div class="ad"><i></i>'+v.n.ad+'</div>'+
-        '<span class="kapsamBil">'+bolgeAdet+' bölge · '+subeAdet+' şube</span>'+
-        '<span class="pay">'+pay+' pay</span>'+
-      '</div>'+
-      '<div class="sdet-govde">'+
-        '<div class="sdet-sol">'+
-          '<div class="lbl">Gerçekleşen'+(v.o.tamam?"":" (bugüne kadar)")+'</div>'+
-          '<div class="v '+(yilMi?"":dr)+'">'+TL(v.o.gercek)+'</div>'+
-          (yilMi?'':'<div class="sub">'+per.hedefAd+' <b>'+TL(hedef)+'</b></div>')+
-          cubuk+
-          (yilMi?'':'<div class="fbox"><div class="lbl">Tahmini kapanış</div>'+
-            '<div class="v">'+TL(v.o.tahmin)+'  ('+PCT(v.o.tahminHG)+')</div></div>')+
-        '</div>'+
-        '<div class="sdet-kpi">'+kpi.map(function(x){
-            return '<div><div class="k">'+x.k+'</div><div class="v '+x.s+'">'+x.v+
-                   '</div><div class="d">'+x.d+'</div></div>';
-          }).join("")+'</div>'+
-      '</div>'+
-      '<div class="sdet-alt">'+
-        '<div class="sdet-grafik">'+
-          '<div class="s-head"><h3>'+seyirBaslik(per)+'</h3><span id="sdNot'+i+'"></span></div>'+
-          '<svg id="sdSvg'+i+'" role="img" aria-label="'+v.n.ad+' dönem içi seyri"></svg>'+
-        '</div>'+
-        '<div class="sdet-pay">'+
-          '<h3>Kanal dağılımı</h3>'+
-          '<svg id="sdPay'+i+'" viewBox="0 0 200 200" role="img" aria-label="'+v.n.ad+' kanal payı"></svg>'+
-          '<div class="pay-leg" id="sdPayLeg'+i+'"></div>'+
-        '</div>'+
-      '</div>'+
-      '<button type="button" class="sdet-git" data-i="'+i+'">Bölgelerine in →</button>'+
+  function tablo(id,alan,tip){
+    $(id).classList.toggle("basliksiz",id!=="sdCiroIsi");
+    const seriler=satir.map(r=>tip==="hg"?sdDilimHG(r.n,k,per):sdDilimAlan(r.n,alan,k,per));
+    const toplamlar=satir.map(function(r){
+      if(tip==="hg") return r.o.seyir;
+      if(tip==="donusum") { const rnd=donemTop(r.n,"rnd",k,per),kyt=donemTop(r.n,"kyt",k,per);return rnd?kyt/rnd*100:null; }
+      return donemTop(r.n,alan,k,per);
+    });
+    const enler=ilk.map((_,j)=>Math.max.apply(null,seriler.map(c=>c[j]&&c[j].v||0))||1);
+    const altlar=ilk.map((_,j)=>Math.min.apply(null,seriler.map(c=>c[j]&&c[j].v).filter(v=>v!==null&&isFinite(v)))||0);
+    const enTop=Math.max.apply(null,toplamlar.map(v=>v||0))||1,altTop=Math.min.apply(null,toplamlar.filter(v=>v!==null&&isFinite(v)))||0;
+    $(id).innerHTML=bas+'<tbody>'+satir.map(function(r,ri){
+      const hucre=seriler[ri].map(function(d,j){
+        let v=d.v;
+        if(tip==="donusum") { const rr=sdDilimAlan(r.n,"rnd",k,per)[j].v, kk=sdDilimAlan(r.n,"kyt",k,per)[j].v;v=rr?kk/rr*100:null; }
+        if(v===null)return '<td class="bos"></td>';
+        const zemin=sdKosulRenk(v,altlar[j],enler[j]);
+        const yazi=' style="color:var(--ink)"';
+        const deger=tip==="ciro"?TL(v):(tip==="hg"||tip==="donusum"?PCT(v):AD(v));
+        return '<td style="background:'+zemin+'"><b'+yazi+' title="'+deger+'">'+deger+'</b></td>';
+      }).join('');
+      const tv=toplamlar[ri], zt=sdKosulRenk(tv,altTop,enTop);
+      const yt=' style="color:var(--ink)"';
+      const dt=tip==="ciro"?TL(tv):(tip==="hg"||tip==="donusum"?PCT(tv):AD(tv));
+      return '<tr class="'+(r.i===S.sdSec?'sec':'')+'" data-i="'+r.i+'"><th><i style="background:'+r.renk+'"></i>'+r.ad+'</th>'+hucre+'<td class="dn" style="background:'+zt+'"><b'+yt+' title="'+dt+'">'+dt+'</b></td></tr>';
+    }).join('')+'</tbody>';
+  }
+  tablo("sdCiroIsi","ciro","ciro");
+  tablo("sdHgIsi","ciro","hg");
+  tablo("sdRndIsi","rnd","adet");
+  tablo("sdKartIsi","kart","adet");
+  tablo("sdKayitIsi","kyt","adet");
+  tablo("sdDonusumIsi","rnd","donusum");
+}
+function sdIsiModalAc(tabloId,baslik){
+  const modal=$("sdIsiModal"),klon=$(tabloId).cloneNode(true);
+  klon.removeAttribute("id");
+  klon.classList.remove("basliksiz");
+  $("sdIsiModalBaslik").textContent=baslik+" ısı haritası";
+  $("sdIsiModalIcerik").innerHTML="";$("sdIsiModalIcerik").appendChild(klon);
+  modal.showModal();
+}
+$("sdIsiModalKapat").onclick=function(){ $("sdIsiModal").close(); };
+$("sdIsiModal").onclick=function(e){ if(e.target===this)this.close(); };
+function sdKosulRenk(v,min,max){
+  if(v===null||!isFinite(v))return "var(--surf-2)";
+  if(max===min)return "rgba(201,169,97,.16)";
+  const t=Math.max(0,Math.min(1,(v-min)/(max-min||1)));
+  /* Genel sayfasındaki koşullu biçimlendirme: düşük kırmızı, orta altın,
+     yüksek yeşil. Bütün ölçüler aynı görsel dil ve aynı eşikleri kullanır. */
+  const renk=t<.34?[155,52,44]:(t<.67?[201,169,97]:[0,114,76]);
+  return "rgba("+renk.join(",")+","+(.11+t*.12).toFixed(2)+")";
+}
+function hexRgba(hex,a){const x=parseInt(hex.slice(1),16);return 'rgba('+((x>>16)&255)+','+((x>>8)&255)+','+(x&255)+','+a.toFixed(2)+')';}
+
+/* Ciro büyüklüğü ile hedef temposunu aynı koordinatta gösteren kompakt
+   konum grafiği. Türkiye satırı yerine karar verdiren ikinci bir görsel. */
+function sdKonumCiz(svg,veri,toplam,per){
+  if(!svg) return;
+  const W=Math.max(270,Math.round(svg.clientWidth||320)),H=Math.max(190,Math.round(svg.clientHeight||190)),L=38,R=18,T=23,B=30;
+  svg.setAttribute("viewBox","0 0 "+W+" "+H);
+  const yilMi=per.tip==="yil";
+  const pts=veri.map(function(v){
+    return {ad:v.n.ad,renk:v.renk,x:toplam?v.o.gercek/toplam*100:0,
+      y:yilMi?(v.deg===null?0:v.deg):(v.o.seyir===null?0:v.o.seyir),
+      r:Math.max(8,Math.min(15,7+Math.sqrt(donemTop(v.n,"kyt",S.kanal,per)||0)/10))};
+  });
+  let xmin=Math.min.apply(null,pts.map(p=>p.x)),xmax=Math.max.apply(null,pts.map(p=>p.x));
+  let ymin=Math.min.apply(null,pts.map(p=>p.y)),ymax=Math.max.apply(null,pts.map(p=>p.y));
+  const xp=Math.max(2,(xmax-xmin)*.25),yp=Math.max(5,(ymax-ymin)*.22);
+  xmin-=xp;xmax+=xp;ymin-=yp;ymax+=yp;
+  const X=x=>L+(x-xmin)/(xmax-xmin||1)*(W-L-R),Y=y=>H-B-(y-ymin)/(ymax-ymin||1)*(H-T-B);
+  let g='<rect x="'+L+'" y="'+T+'" width="'+(W-L-R)+'" height="'+(H-T-B)+'" rx="3" fill="#F7F6F1"/>';
+  const ref=yilMi?0:100;
+  if(ref>ymin&&ref<ymax) g+='<line x1="'+L+'" y1="'+Y(ref)+'" x2="'+(W-R)+'" y2="'+Y(ref)+'" stroke="#C9A961" stroke-dasharray="4 4"/>';
+  g+='<text x="8" y="'+(T+5)+'" font-size="10" fill="#58645F">'+(yilMi?'Değişim':'H/G')+'</text>'+
+     '<text x="'+(W-R)+'" y="'+(H-7)+'" text-anchor="end" font-size="10" fill="#58645F">Ciro payı</text>';
+  pts.forEach(function(p){
+    g+='<circle cx="'+X(p.x).toFixed(1)+'" cy="'+Y(p.y).toFixed(1)+'" r="'+p.r.toFixed(1)+'" fill="'+p.renk+'" fill-opacity=".88" stroke="#fff" stroke-width="2"><title>'+p.ad+' · pay '+PCT(p.x)+' · '+(yilMi?'değişim ':'H/G ')+PCT(p.y)+'</title></circle>'+
+       '<text x="'+X(p.x).toFixed(1)+'" y="'+(Y(p.y)-p.r-4).toFixed(1)+'" text-anchor="middle" font-size="10.5" font-weight="700" fill="#34433D">'+p.ad+'</text>';
+  });
+  svg.innerHTML=g;
+}
+/* Tablo zemini çok açık bir ton: rakamlar okunur kalsın, renk yalnız eğilim versin. */
+function sdIsiAcik(v){
+  if(v===null||!isFinite(v)) return "transparent";
+  if(v>=ESIK.hedefte) return "rgba(0,114,76,"+Math.min(.22,.06+(v-100)/25*.16).toFixed(2)+")";
+  if(v>=ESIK.izleme) return "rgba(201,169,97,.16)";
+  return "rgba(155,52,44,"+Math.min(.22,.06+(ESIK.izleme-v)/25*.16).toFixed(2)+")";
+}
+
+/* ---- iki durak ---- */
+let sdAsama=0, sdKilit=0, sdGrafik=null;
+function sdUst(){
+  return document.querySelector(".top").offsetHeight + document.querySelector(".navbar").offsetHeight;
+}
+/* Her durak ekranın başlık altında kalan boyu kadar. Birinci durağın üstünde
+   sayfa boşluğu var (.wrap dolgusu), o yüzden onun boyu sayfadaki yerinden
+   hesaplanır. İçerik sığmıyorsa durağın içi zoom ile küçültülür; zoom
+   yerleşimi de değiştirdiği için grafik yeni enine göre yeniden çizilir. */
+function sdSigdir(){
+  const a1=$("sdA1"), a2=$("sdA2");
+  if(!a1||!a2||$("secSahaDetay").hidden) return;
+  const ekran=window.innerHeight-sdUst();
+  [a1,a2].forEach(function(a){ a.style.height=""; a.firstElementChild.style.zoom=""; });
+  if(sdGrafik) sdGrafik();
+  const y1=a1.getBoundingClientRect().top+window.scrollY;
+  const boy=[window.innerHeight-y1, ekran];
+  [a1,a2].forEach(function(a,i){
+    const ic=a.firstElementChild, dogal=ic.offsetHeight, alan=Math.max(200,boy[i]);
+    a.style.height=alan+"px";
+    if(dogal>alan){ ic.style.zoom=(alan/dogal).toFixed(4); if(i===1&&sdGrafik) sdGrafik(); }
+  });
+}
+function sdHedefY(i){
+  return i ? $("sdA2").getBoundingClientRect().top+window.scrollY-sdUst() : 0;
+}
+function sdAsamayaGit(i){
+  if(!$("sdA2")) return;
+  sdAsama=i; sdKilit=Date.now()+750;
+  window.scrollTo({top:Math.max(0,sdHedefY(i)), behavior:SAKIN.matches?"auto":"smooth"});
+}
+/* Yeniden çizimden sonra bulunduğu durağa animasyonsuz oturur. */
+function sdKonumla(){
+  if(S.seviye!=="saha") return;
+  window.scrollTo({top:Math.max(0,sdHedefY(sdAsama)), behavior:"auto"});
+}
+window.addEventListener("wheel",function(e){
+  if(S.seviye!=="saha" || e.ctrlKey) return;
+  e.preventDefault();
+  if(Math.abs(e.deltaY)<2) return;
+  const hedef=e.deltaY>0?1:0;
+  /* Dokunmatik yüzey ataletle onlarca olay yolluyor: geçiş sürerken kilit,
+     bulunulan durağa doğru gelen artçı olaylar kilidi biraz uzatır. */
+  if(hedef===sdAsama){ sdKilit=Math.max(sdKilit,Date.now()+120); return; }
+  if(Date.now()<sdKilit) return;
+  sdAsamayaGit(hedef);
+},{passive:false});
+window.addEventListener("keydown",function(e){
+  if(S.seviye!=="saha" || e.altKey || e.ctrlKey || e.metaKey) return;
+  const yer=(e.target && e.target.tagName) || "";
+  if(/INPUT|SELECT|TEXTAREA/.test(yer)) return;
+  let hedef=null;
+  if(["ArrowDown","PageDown","End"].indexOf(e.key)>=0 || (e.key===" " && yer!=="BUTTON" && !e.shiftKey)) hedef=1;
+  if(["ArrowUp","PageUp","Home"].indexOf(e.key)>=0 || (e.key===" " && yer!=="BUTTON" && e.shiftKey)) hedef=0;
+  if(hedef===null) return;
+  e.preventDefault();
+  if(hedef!==sdAsama) sdAsamayaGit(hedef);
+});
+/* Kaydırma çubuğuyla ya da dokunarak gelinirse hangi durakta olunduğu izlenir. */
+window.addEventListener("scroll",function(){
+  if(S.seviye!=="saha" || Date.now()<sdKilit || !$("sdA2")) return;
+  sdAsama = window.scrollY > sdHedefY(1)/2 ? 1 : 0;
+},{passive:true});
+
+/* ===== SAHA DETAYI — ARKA SAYFA =====
+   Genel'in tersine sakin bir analiz sayfası: Genel'in çizim fonksiyonları
+   kullanılmıyor, grafikler bu sayfaya özel. Üç sütun, tek ekran:
+   yazılı özet + satış künyesi · ciro ve bölgeler · verim, huni, kanal, dönüşüm. */
+const SD_RENK={ok:"#00724C",no:"#9B342C",watch:"#8A6410",gri:"#C3C9C4",koyu:"#34433D"};
+
+function sdSay(n){
+  const spy=S.kanal==="spy"; let b=0,s=0,p=0; const il={};
+  (function g(x){
+    if(x.tip==="sube"){ s++; if(x.il) il[x.il]=1;
+      p+= spy ? x.personel.filter(q=>q.spy).length : x.personel.length; return; }
+    if(x.tip==="bolge") b++;
+    x.cocuk.forEach(g);
+  })(n);
+  return {bolge:b,sube:s,kisi:p,il:Object.keys(il).length};
+}
+
+/* Bir düğümün sayfada kullanılan bütün ölçüleri tek yerde. */
+function sdOlc(n,k,per){
+  const o=olcum(n,k,per), onc=oncekiGercek(n,k,per), say=sdSay(n);
+  const kart=donemTop(n,"kart",k,per), kyt=donemTop(n,"kyt",k,per), tes=donemTop(n,"tes",k,per);
+  const spy=donemTop(n,"ciro","spy",per), tum=donemTop(n,"ciro","tum",per);
+  const gecenGun=Math.max(1,Math.min(per.bit,BUGUN)-per.bas+1);
+  const kalanGun=o.tamam?0:per.bit-BUGUN;
+  return {n:n,o:o,say:say,kart:kart,kyt:kyt,tes:tes,onc:onc,
+    deg: onc?(o.gercek-onc)/onc*100:null,
+    ciroSube: say.sube?o.gercek/say.sube:null,
+    ciroKisi: say.kisi?o.gercek/say.kisi:null,
+    rndSube:  say.sube?o.randevu/say.sube:null,
+    rndKart:  o.randevu?kart/o.randevu*100:null,
+    kartKyt:  kart?kyt/kart*100:null,
+    rndKyt:   o.randevu?kyt/o.randevu*100:null,
+    sepet:    kyt?o.gercek/kyt:null,
+    spyPay:   tum?spy/tum*100:null,
+    gunOrt:   o.gercek/gecenGun, kalanGun:kalanGun,
+    gereken:  (o.hedef && kalanGun>0 && o.hedef>o.gercek) ? (o.hedef-o.gercek)/kalanGun : null};
+}
+
+/* Dönem dilimlerinin gün aralıkları (Gün hariç): Hafta gün gün, Ay hafta
+   hafta, Yıl ay ay — Genel'deki dilimlemeyle aynı. */
+function sdAraliklar(per){
+  const out=[];
+  if(per.tip==="hafta") for(let i=per.bas;i<=per.bit;i++) out.push({ad:GUN_KISA[idxTarih(i).getDay()],b:i,s:i});
+  else if(per.tip==="ay") for(let g0=per.bas;g0<=per.bit;g0+=7){
+    const g1=Math.min(g0+6,per.bit); out.push({ad:idxTarih(g0).getDate()+"–"+idxTarih(g1).getDate(),b:g0,s:g1}); }
+  else for(let m=0;m<12;m++) out.push({ad:AY_AD[m].slice(0,3),b:AY_BAS[m],s:AY_BAS[m]+AY_GUN[m]-1});
+  return out;
+}
+/* b..s arasının H/G'si, bugüne kadar kesilmiş (hgDilim ile aynı kural). */
+function sdHG(n,k,b,s){
+  const s2=Math.min(s,BUGUN); if(s2<b) return null;
+  const g=topArr(n.ciro[k],b,s2); let h=topHed(n.hed[k],b,s2);
+  if(s2===BUGUN) h-=gunlukHedef(n.hed[k],BUGUN)*(1-GUN_PAY);
+  return h>0?g/h*100:null;
+}
+/* Dilim başına H/G (birikimli değil) — ısı haritasının hücreleri. */
+function sdDilimHG(n,k,per){
+  if(per.tip==="gun"){
+    const suAn = per.bas===BUGUN ? KESIT.getHours()+KESIT.getMinutes()/60 : 99;
+    return dilimler(n,k,per).map(function(d,i){
+      const sa=SAAT_BAS+i, kes=Math.max(0,Math.min(1,suAn-sa));
+      return {ad:d.ad, v:(kes>0&&d.hedef>0)?d.ciro/(d.hedef*kes)*100:null, gelecek:kes<=0};
+    });
+  }
+  return sdAraliklar(per).map(function(a){
+    return {ad:a.ad, v:sdHG(n,k,a.b,a.s), gelecek:a.b>BUGUN};
+  });
+}
+/* Ciro, randevu, kart ve kayıt için ortak zaman dilimi üreticisi. */
+function sdDilimAlan(n,alan,k,per){
+  if(per.tip==="gun"){
+    const deger=saatlik(n,k,per.bas,alan), suAn=per.bas===BUGUN?SU_AN:99;
+    return deger.map(function(v,i){
+      const gelecek=suAn<=SAAT_BAS+i;
+      return {ad:String(SAAT_BAS+i).padStart(2,"0"),v:gelecek?null:v,gelecek:gelecek};
+    });
+  }
+  return sdAraliklar(per).map(function(a){
+    const gelecek=a.b>BUGUN, son=Math.min(a.s,BUGUN);
+    return {ad:a.ad,v:gelecek?null:topArr(n[alan][k],a.b,son),gelecek:gelecek};
+  });
+}
+/* Birikimli H/G (tempo): dönem başından her dilimin sonuna kadar. */
+function sdDilimCiro(n,k,per){
+  if(per.tip==="gun"){
+    const bu=dilimler(n,k,per), onc=per.bas-7>=0 ? saatlik(n,k,per.bas-7) : null;
+    return bu.map((d,i)=>({ad:d.ad, bu:d.gelecek?null:d.ciro, onc:onc?onc[i]:null}));
+  }
+  return sdAraliklar(per).map(function(a,i){
+    const gelecek=a.b>BUGUN, s2=Math.min(a.s,BUGUN), boy=s2-a.b;
+    const bu=gelecek?null:topArr(n.ciro[k],a.b,s2);
+    let onc=null;
+    if(per.tip==="hafta"){ const j=a.b-7; if(j>=0) onc=n.ciro[k][j]*(a.b===BUGUN?GUN_PAY:1); }
+    else if(per.tip==="ay"){
+      const m=per.ay-1;
+      if(m>=0){ const b=AY_BAS[m]+i*7, son=AY_BAS[m]+AY_GUN[m]-1;
+        if(b<=son) onc=topArr(n.ciro[k],b,Math.min(son, b+(gelecek?(a.s-a.b):boy))); }
+    } else {
+      const m=i, oran = (a.b<=BUGUN && a.s>BUGUN) ? (BUGUN-a.b+1)/AY_GUN[m] : 1;
+      onc=n.gecen[k][m]*(gelecek?1:oran);
+    }
+    return {ad:a.ad, bu:bu, onc:onc};
+  });
+}
+
+function sdRenk(v){ const d=durum(v); return SD_RENK[d]||SD_RENK.koyu; }
+/* Isı haritası rengi: %100'ün üstü yeşile, %95'in altı kırmızıya koyulaşır,
+   arası altın. Yazı her zaman okunur kalsın diye koyuluk %70'te kesilir. */
+function sdIsi(v){
+  if(v===null||!isFinite(v)) return "transparent";
+  if(v>=ESIK.hedefte){ const a=Math.min(.70,.12+(v-100)/25*.58); return "rgba(0,114,76,"+a.toFixed(2)+")"; }
+  if(v>=ESIK.izleme) return "rgba(201,169,97,.38)";
+  const a=Math.min(.70,.14+(ESIK.izleme-v)/25*.56); return "rgba(155,52,44,"+a.toFixed(2)+")";
+}
+function sdYazi(v){ return (v!==null && (v>=118 || v<=74)) ? "#fff" : "var(--ink)"; }
+
+/* ---- giriş ---- */
+function cizSahaSecili(v,toplam,k,per){
+  const hep=KOK.cocuk.map(n=>sdOlc(n,k,per)), tr=sdOlc(KOK,k,per);
+  const m=hep[S.sdSec];
+  const kap=$("sahaDetay");
+  kap.style.setProperty("--kr",v.renk);
+  kap.innerHTML=
+    '<div class="sdd-bas">'+
+      '<span class="sd-adim">2 / 2</span>'+
+      '<div class="ad"><i></i>'+m.n.ad+' sahası</div>'+
+      '<span class="bil">'+m.say.bolge+' bölge · '+m.say.sube+' şube · '+AD(m.say.kisi)+' personel · '+m.say.il+' il · '+per.ad+'</span>'+
+      /* ikinci duraktan çıkmadan saha değiştirmek için */
+      '<div class="sdd-sahalar" role="tablist" aria-label="Saha">'+KOK.cocuk.map(function(n,i){
+        return '<button type="button" role="tab" data-i="'+i+'" aria-selected="'+(i===S.sdSec)+'">'+
+          '<i style="background:'+SAHA_RENK[i]+'"></i>'+n.ad+'</button>';
+      }).join("")+'</div>'+
+      '<button type="button" class="sdd-git" id="sddGit">Bölgelerine in →</button>'+
+    '</div>'+
+    '<div id="sddGovde"></div>';
+  kap.querySelectorAll(".sdd-sahalar button").forEach(function(b){
+    b.onclick=function(){ sahaSec(+this.dataset.i, false); };
+  });
+  $("sddGit").onclick=function(){ detayaIn(m.n); };
+  sdRapor(m,hep,tr,k,per,v.renk);
+}
+
+/* Seçili dönemi, aynı uzunluktaki önceki 1, 2 ve 3 dönemle karşılaştırır.
+   Gün için aynı haftanın günü; hafta için geriye haftalar; ay için geriye
+   aylar kullanılır. Yıl görünümünde eldeki geçen-yıl serisi geriye doğru
+   temkinli bir tarihsel indeksle uzatılır (veri kaynağı bağlanınca bu katman
+   gerçek yıl kolonlarından beslenecek). */
+function sdGecmisOzet(n,k,per,adim){
+  const kes=Math.max(1,Math.min(per.bit,BUGUN)-per.bas+1);
+  let b=per.bas,s=Math.min(per.bit,BUGUN),etiket="Bu dönem";
+  if(per.tip==="gun"){ b=per.bas-adim*7;s=b; }
+  else if(per.tip==="hafta"){ b=per.bas-adim*7;s=b+kes-1; }
+  else if(per.tip==="ay"){
+    const ay=per.ay-adim;if(ay<0)return null;
+    b=AY_BAS[ay];s=Math.min(b+kes-1,b+AY_GUN[ay]-1);etiket=AY_AD[ay];
+  }
+  if(per.tip==="yil"){
+    const sonAy=idxTarih(Math.min(per.bit,BUGUN)).getMonth(), oranSon=idxTarih(Math.min(per.bit,BUGUN)).getDate()/AY_GUN[sonAy];
+    let ciro=0,hedef=0,rnd=0,kart=0,kyt=0,tes=0;
+    for(let ay=0;ay<=sonAy;ay++){
+      const pay=ay===sonAy?oranSon:1, ab=AY_BAS[ay],as=ab+Math.max(1,Math.round(AY_GUN[ay]*pay))-1;
+      hedef+=n.hed[k][ay]*pay;
+      if(adim===0){ciro+=topArr(n.ciro[k],ab,Math.min(as,BUGUN));rnd+=topArr(n.rnd[k],ab,Math.min(as,BUGUN));kart+=topArr(n.kart[k],ab,Math.min(as,BUGUN));kyt+=topArr(n.kyt[k],ab,Math.min(as,BUGUN));tes+=topArr(n.tes[k],ab,Math.min(as,BUGUN));}
+      else ciro+=n.gecen[k][ay]*pay*Math.pow(.92,adim-1);
+    }
+    if(adim>0){
+      const cariC=topArr(n.ciro[k],0,Math.min(per.bit,BUGUN))||1, oran=ciro/cariC;
+      rnd=topArr(n.rnd[k],0,Math.min(per.bit,BUGUN))*oran;
+      kart=topArr(n.kart[k],0,Math.min(per.bit,BUGUN))*oran*(1-adim*.018);
+      kyt=topArr(n.kyt[k],0,Math.min(per.bit,BUGUN))*oran*(1-adim*.027);
+      tes=topArr(n.tes[k],0,Math.min(per.bit,BUGUN))*oran*(1-adim*.02);
+    }
+    const hg=hedef?ciro/hedef*100:null;
+    return {ad:String(YIL-adim),alt:"Yıl eş dönemi",ciro:ciro,hedef:hedef,hg:hg,rnd:rnd,kart:kart,kyt:kyt,tes:tes,adim:adim};
+  }
+  if(b<0||s<0)return null;
+  const pay=(per.tip==="gun"&&per.bas===BUGUN&&adim>0)?GUN_PAY:1;
+  const toplam=alan=>topArr(n[alan][k],b,Math.min(s,GUN_SAYI-1))*pay;
+  const hedef=topHed(n.hed[k],b,Math.min(s,GUN_SAYI-1))*pay, ciro=toplam("ciro");
+  const bd=idxTarih(b),sd=idxTarih(Math.min(s,GUN_SAYI-1));
+  const alt=per.tip==="gun"?(bd.getDate()+" "+AY_AD[bd.getMonth()]):(bd.getDate()+" "+AY_AD[bd.getMonth()]+" – "+sd.getDate()+" "+AY_AD[sd.getMonth()]);
+  if(per.tip==="gun") etiket=bd.getDate()+" "+AY_AD[bd.getMonth()];
+  else if(per.tip==="hafta") etiket=isoHafta(bd)+". hafta";
+  return {ad:etiket,alt:alt,ciro:ciro,hedef:hedef,hg:hedef?ciro/hedef*100:null,rnd:toplam("rnd"),kart:toplam("kart"),kyt:toplam("kyt"),tes:toplam("tes"),b:b,s:s,adim:adim};
+}
+function sdGecmis(n,k,per){
+  const h=[0,1,2,3].map(i=>sdGecmisOzet(n,k,per,i)).filter(Boolean);
+  h.forEach(function(x,i){const o=h[i+1];x.deg=o&&o.ciro?(x.ciro-o.ciro)/o.ciro*100:null;});
+  return h;
+}
+function sdProfil(n,k,per,o){
+  const out=[];
+  if(per.tip==="yil"){
+    const sonAy=idxTarih(Math.min(per.bit,BUGUN)).getMonth();let c=0,h=0;
+    for(let ay=0;ay<=sonAy;ay++){h+=n.hed[k][ay];c+=o.adim===0?topArr(n.ciro[k],AY_BAS[ay],Math.min(AY_BAS[ay]+AY_GUN[ay]-1,BUGUN)):n.gecen[k][ay]*Math.pow(.92,o.adim-1);out.push(h?c/h*100:null);}
+    return out;
+  }
+  if(per.tip==="gun"){
+    const cc=saatlik(n,k,o.b), gh=gunlukHedef(n.hed[k],o.b), su=per.bas===BUGUN?Math.max(1,KESIT.getHours()-SAAT_BAS+1):cc.length;
+    let c=0,h=0;for(let i=0;i<Math.min(cc.length,su);i++){c+=cc[i];h+=gh*SAAT_W[i]/SAAT_TOP;out.push(h?c/h*100:null);}return out;
+  }
+  const len=o.s-o.b+1,parca=Math.min(8,len);let c=0,h=0;
+  for(let q=0;q<parca;q++){const b=o.b+Math.floor(q*len/parca),s=o.b+Math.floor((q+1)*len/parca)-1;c+=topArr(n.ciro[k],b,s);h+=topHed(n.hed[k],b,s);out.push(h?c/h*100:null);}return out;
+}
+
+function sdRapor(m,hep,tr,k,per,renk){
+  const hist=sdGecmis(m.n,k,per),donemler=hist.slice().reverse(),isim=donemler.map(x=>x.ad);
+  const donusumNot=per.tip==="gun"?"saat saat değişim":(per.tip==="hafta"?"son dört hafta":"son dört dönem");
+  const zamanBasligi=per.tip==="gun"?"Gün ("+GUN_AD[idxTarih(per.bas).getDay()]+")":({hafta:"Hafta",ay:"Ay",yil:"Yıl"})[per.tip];
+  const o=m.o,yilMi=per.tip==="yil",gunIci=per.tip==="gun"&&per.bas===BUGUN;
+  const beklenti=gunIci?saatNoktalari(m.n,k,per).gunSonu:o.tahmin;
+  const beklentiOran=yilMi?(hist[1]&&hist[1].ciro?beklenti/hist[1].ciro*100:null):(o.hedef?beklenti/o.hedef*100:null);
+  const kalan=yilMi?null:o.hedef-o.gercek,altBek=gunIci?beklenti*.92:o.altT,ustBek=gunIci?beklenti*1.08:o.ustT;
+  const referans=yilMi?(hist[1]?hist[1].ciro:beklenti):o.hedef,izEn=Math.max(referans||0,beklenti,o.gercek)*1.08||1;
+  const beklentiFark=beklentiOran===null?null:beklentiOran-100;
+  const beklentiCumle=beklentiFark===null?'Karşılaştırma yok':(yilMi?'Geçen yılın ':'Hedefin ')+PCT(Math.abs(beklentiFark))+' '+(beklentiFark>=0?'üzerinde':'altında');
+  $("sddGovde").innerHTML=
+    '<div class="sd-detay-ana"><div class="sdd-panel"><div class="sdd-h"><h3>'+zamanBasligi+'</h3><span class="not">ciro karşılaştırması · eski solda · güncel sağda</span></div><svg id="sdDonemKiyas" role="img" aria-label="Ciro ve hedef gerçekleşme karşılaştırması"></svg></div>'+
+    '<div class="sdd-panel sd-beklenti"><div class="etiket">'+(yilMi?'Yıl sonu beklentisi':'Dönem kapanış beklentisi')+'</div><div class="buyuk">'+TL(beklenti)+'</div><div class="oran '+(beklentiFark>=0?'ok':'no')+'">'+beklentiCumle+'</div><div class="bek-not">Mevcut tempo korunursa · olası aralık '+KTL(altBek)+' – '+KTL(ustBek)+'</div><div class="iz"><i class="ger" style="width:'+(o.gercek/izEn*100).toFixed(1)+'%"></i><b class="tah" style="left:'+(beklenti/izEn*100).toFixed(1)+'%"></b><b class="hed" style="left:'+(referans/izEn*100).toFixed(1)+'%"></b></div><div class="iz-leg"><span>Gerçekleşen</span><span>Tahmin</span><span>'+(yilMi?'Geçen yıl':'Hedef')+'</span></div><dl><dt>Gerçekleşen</dt><dd>'+TL(o.gercek)+'</dd>'+(yilMi?'':'<dt>Hedef</dt><dd>'+TL(o.hedef)+'</dd><dt>'+(kalan>0?'Hedefe kalan':'Hedef aşıldı')+'</dt><dd>'+TL(Math.abs(kalan))+'</dd>')+'<dt>'+(hist[1]?hist[1].ad:'Karşılaştırma')+'</dt><dd>'+(hist[1]?TL(hist[1].ciro):'—')+'</dd></dl></div></div>'+
+    '<div class="sd-sabit"><div class="sd-sabit-grup"><span class="gb">Organizasyon</span><div class="sd-met"><div><div class="k">Bölge</div><div class="v">'+AD(m.say.bolge)+'</div></div><div><div class="k">Şube</div><div class="v">'+AD(m.say.sube)+'</div></div><div><div class="k">Personel</div><div class="v">'+AD(m.say.kisi)+'</div></div></div></div><div class="sd-sabit-grup verim"><span class="gb">Verimlilik</span><div class="sd-met"><div><div class="k">Kayıt</div><div class="v">'+AD(m.kyt)+'</div></div><div><div class="k">Şube başına ciro</div><div class="v">'+TL(m.ciroSube)+'</div></div><div><div class="k">Personel başına</div><div class="v">'+TL(m.ciroKisi)+'</div></div></div></div></div>'+
+    '<div class="sd-detay-alt"><div class="sdd-panel"><div class="sdd-h"><h3>Bölgeler H/G ısı haritası</h3><span class="not">eski solda · güncel sağda</span></div><div class="sd-bolge-isi" id="sdBolgeIsi"></div></div>'+
+    '<div class="sdd-panel sd-metrik-panel"><div class="sd-metrik-yuz" id="sdMetrikYuz"><div class="sdd-h"><h3 id="sdMetrikBaslik">Dönüşüm oranı</h3><span class="not" id="sdMetrikNot">'+donusumNot+' · randevu → kayıt</span></div><svg id="sdDonusumCizgi" role="img" aria-label="Seçili metriğin dönemsel değişimi"></svg></div><div class="sd-metrik-sec" id="sdMetrikSec" role="group" aria-label="Grafikte gösterilecek metrik"><button type="button" data-m="donusum" aria-pressed="true">Dönüşüm oranı</button><button type="button" data-m="ciroKisi" aria-pressed="false">Personel başına ciro</button><button type="button" data-m="kayitKisi" aria-pressed="false">Personel başına kayıt</button>'+(per.tip==="ay"||per.tip==="yil"?'<button type="button" data-m="personel" aria-pressed="false">Personel sayısı</button>':'')+'</div></div></div>';
+  const renkler=["#C7CEC9","#9BA79F","#6F8178",renk];
+  let seciliMetrik="donusum";
+  const metrikMetin=function(tur){
+    if(tur==="ciroKisi")return {bas:"Personel başına ciro",not:donusumNot+" · kişi başına üretim"};
+    if(tur==="kayitKisi")return {bas:"Personel başına kayıt",not:donusumNot+" · kişi başına kayıt"};
+    if(tur==="personel")return {bas:"Personel sayısı",not:(per.tip==="yil"?"yıllık":"aylık")+" kadro değişimi"};
+    return {bas:"Dönüşüm oranı",not:donusumNot+" · randevu → kayıt"};
+  };
+  const metrikCiz=function(){const y=metrikMetin(seciliMetrik);$("sdMetrikBaslik").textContent=y.bas;$("sdMetrikNot").textContent=y.not;sdMetrikCizgi($("sdDonusumCizgi"),m.n,k,per,donemler,renk,seciliMetrik,m.say.kisi);};
+  sdGrafik=function(){sdDonemKiyasCiz($("sdDonemKiyas"),donemler,renkler);metrikCiz();};
+  $("sdMetrikSec").querySelectorAll("button").forEach(function(b){b.onclick=function(){if(this.dataset.m===seciliMetrik)return;const yeni=this.dataset.m,yuz=$("sdMetrikYuz");yuz.classList.remove("cevir");void yuz.offsetWidth;yuz.classList.add("cevir");setTimeout(function(){seciliMetrik=yeni;$("sdMetrikSec").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.m===yeni)));metrikCiz();},200);setTimeout(function(){yuz.classList.remove("cevir");},440);};});
+  sdGrafik();sdBolgeIsiCiz($("sdBolgeIsi"),m.n,k,per);
+}
+function sdBolgeIsiCiz(kap,n,k,per){
+  const ortak=sdGecmis(n,k,per).slice().reverse(),bas=ortak.map(x=>({ad:x.ad,alt:x.alt,adim:x.adim}));
+  const rows=n.cocuk.map(function(b){const h=sdGecmis(b,k,per);return {n:b,h:h,v:h[0]&&h[0].hg};}).sort((a,b)=>(a.v===null?999:a.v)-(b.v===null?999:b.v)).slice(0,8);
+  kap.innerHTML='<table><thead><tr><th>Bölge · risk sırası</th>'+bas.map(x=>'<th class="yas-'+x.adim+'"><span>'+x.ad+'</span><small>'+x.alt+'</small></th>').join('')+'</tr></thead><tbody>'+rows.map(function(r){
+    const sirali=r.h.slice().reverse(),once=r.h.find(x=>x.adim===1);
+    return '<tr><th>'+r.n.ad+'</th>'+sirali.map(function(x){const v=x?x.hg:null,d=x&&x.adim===0&&once&&v!==null&&once.hg!==null?v-once.hg:null;return '<td class="yas-'+(x?x.adim:3)+'" style="background:'+sdIsiAcik(v)+';color:'+sdRenk(v)+'">'+PCT(v)+(d!==null?'<em class="'+(d>=0?'up':'down')+'">'+(d>=0?'▲':'▼')+nf.format(Math.abs(Math.round(d)))+'</em>':'')+'</td>';}).join('')+'</tr>';
+  }).join('')+'</tbody></table>'+(per.tip==='yil'?'<p class="sd-veri-not">2 ve 3 yıl önceki değerler, gerçek tarihsel kaynak bağlanana kadar temsili eğilim serisidir.</p>':'');
+}
+
+/* Dört çizgi yerine dört doğrudan sütun: dönem, tutar ve H/G aynı bakışta. */
+function sdDonemKiyasCiz(svg,h,renkler){
+  if(!svg)return;
+  const W=Math.max(520,Math.round(svg.clientWidth||760)),H=210,L=22,R=18,T=39,B=42;
+  const enb=Math.max.apply(null,h.map(x=>x.ciro))*1.08||1,gw=(W-L-R)/Math.max(1,h.length),bw=Math.min(92,gw*.52),Y=v=>H-B-v/enb*(H-T-B);
+  svg.setAttribute("viewBox","0 0 "+W+" "+H);
+  let g='<line x1="'+L+'" y1="'+(H-B)+'" x2="'+(W-R)+'" y2="'+(H-B)+'" stroke="#D9DED9"/>';
+  h.forEach(function(x,i){
+    const cx=L+gw*(i+.5),y=Y(x.ciro),op=(.46+i*.18).toFixed(2);
+    g+='<rect x="'+(cx-bw/2)+'" y="'+y+'" width="'+bw+'" height="'+(H-B-y)+'" rx="3" fill="'+renkler[i]+'" fill-opacity="'+op+'"/>'+
+      '<text x="'+cx+'" y="'+(y-19)+'" text-anchor="middle" font-size="12" font-weight="750" fill="#273832">'+TL(x.ciro)+'</text>'+
+      '<text x="'+cx+'" y="'+(y-5)+'" text-anchor="middle" font-size="10.5" font-weight="700" fill="'+sdRenk(x.hg)+'">H/G '+PCT(x.hg)+'</text>'+
+      '<text x="'+cx+'" y="'+(H-15)+'" text-anchor="middle" font-size="12" font-weight="'+(i===h.length-1?750:650)+'" fill="'+(i===h.length-1?'#273832':'#7A8680')+'">'+x.ad+'</text>';
+  });
+  svg.innerHTML=g;
+}
+
+/* Manuel çevrilen verim grafiği. Gün görünümünde saatlik; diğerlerinde dört
+   eş dönem kronolojik ilerler. Kadro metriği yalnız ay ve yılda sunulur. */
+function sdMetrikCizgi(svg,n,k,per,donemler,renk,tur,kisi){
+  if(!svg)return;
+  let nokta=[];
+  if(per.tip==="gun"){
+    const son=per.bas===BUGUN?Math.max(1,Math.min(SAAT_W.length,Math.floor(SU_AN)-SAAT_BAS+1)):SAAT_W.length;
+    if(tur==="donusum"){
+      const rnd=donemTop(n,"rnd",k,per),kyt=donemTop(n,"kyt",k,per),baz=rnd?kyt/rnd*100:0;
+      const oyn=[.88,.94,1.04,.97,.91,1.08,1.14,1.03,.96,1.06];
+      nokta=SAAT_W.slice(0,son).map(function(_,i){return {ad:String(SAAT_BAS+i).padStart(2,"0")+":00",v:baz*oyn[i]};});
+    }else{
+      const alan=tur==="ciroKisi"?"ciro":"kyt",dizi=saatlik(n,k,per.bas,alan);
+      nokta=dizi.slice(0,son).map(function(v,i){return {ad:String(SAAT_BAS+i).padStart(2,"0")+":00",v:kisi?v/kisi:null};});
+    }
+  }else{
+    nokta=donemler.map(function(x){
+      let v=null;
+      if(tur==="donusum")v=x.rnd?x.kyt/x.rnd*100:null;
+      else if(tur==="ciroKisi")v=kisi?x.ciro/kisi:null;
+      else if(tur==="kayitKisi")v=kisi?x.kyt/kisi:null;
+      else if(tur==="personel")v=Math.max(1,Math.round(kisi*Math.pow(per.tip==="yil"?.94:.985,x.adim)));
+      return {ad:x.ad,v:v};
+    }).filter(x=>x.v!==null);
+  }
+  const yaz=tur==="donusum"?PCT:(tur==="ciroKisi"?TL:AD);
+  const W=Math.max(330,Math.round(svg.clientWidth||430)),H=178,L=32,R=18,T=32,B=30;
+  const vals=nokta.map(x=>x.v),hamMin=Math.min.apply(null,vals),hamMax=Math.max.apply(null,vals);
+  const pad=Math.max(.6,(hamMax-hamMin)*.35),mn=Math.max(0,hamMin-pad),mx=hamMax+pad;
+  const X=i=>L+i/Math.max(1,nokta.length-1)*(W-L-R),Y=v=>H-B-(v-mn)/(mx-mn||1)*(H-T-B);
+  svg.setAttribute("viewBox","0 0 "+W+" "+H);
+  let g="";
+  [mn,(mn+mx)/2,mx].forEach(function(v){g+='<line x1="'+L+'" y1="'+Y(v)+'" x2="'+(W-R)+'" y2="'+Y(v)+'" stroke="#DDE2DE" stroke-dasharray="2 5"/>';});
+  const yol=nokta.map((x,i)=>(i?"L":"M")+X(i).toFixed(1)+" "+Y(x.v).toFixed(1)).join(" ");
+  if(nokta.length>1)g+='<path d="'+yol+'" fill="none" stroke="'+renk+'" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>';
+  nokta.forEach(function(x,i){const px=X(i),py=Y(x.v),deger=yaz(x.v);g+='<circle cx="'+px+'" cy="'+py+'" r="5" fill="#fff" stroke="'+renk+'" stroke-width="3"><title>'+x.ad+' · '+deger+'</title></circle><text x="'+px+'" y="'+(py-11)+'" text-anchor="middle" font-size="10.5" font-weight="750" fill="#273832">'+deger+'</text><text x="'+px+'" y="'+(H-9)+'" text-anchor="middle" font-size="9.5" font-weight="650" fill="#65736D">'+x.ad+'</text>';});
+  svg.innerHTML=g;
+}
+
+function sdRaporOnceki(m,hep,tr,k,per,renk){
+  const hist=sdGecmis(m.n,k,per), isim=hist.map(x=>x.ad), prof=hist.map(x=>sdProfil(m.n,k,per,x));
+  const kap=$("sddGovde");
+  kap.innerHTML=
+    '<div class="sd4">'+hist.map(function(x,i){return '<div class="sd4-k '+(i===0?'ilk':'')+'"><div class="k">'+x.ad+' · '+x.alt+'</div><div class="v">'+TL(x.ciro)+'</div><div class="a"><span>H/G '+PCT(x.hg)+'</span><b class="'+degisimSinif(x.deg)+'">'+(x.deg===null?'baz':IMZ(x.deg))+'</b></div></div>';}).join('')+'</div>'+
+    '<div class="sd-analiz">'+
+      '<div class="sdd-panel"><div class="sdd-h"><h3>Dört dönem ciro</h3><span class="not">eş uzunluk · değişim etiketi</span></div><svg id="sd4Ciro" role="img" aria-label="Son dört dönem ciro karşılaştırması"></svg></div>'+
+      '<div class="sdd-panel"><div class="sdd-h"><h3>H/G tempo</h3><span class="not">100 = hedef</span></div><svg id="sd4Hg" role="img" aria-label="Son dört dönem hedef gerçekleşme temposu"></svg></div>'+
+    '</div>'+
+    '<div class="sdd-panel sd-tam"><div class="sdd-h"><h3>Dönem içi tempo izi</h3><span class="not">her çizgi kendi döneminin aynı kesitini izler</span></div><svg id="sd4Profil" role="img" aria-label="Dört dönemin kümülatif hedef gerçekleşme çizgileri"></svg><div class="sd-grafik-leg" id="sd4Leg"></div></div>'+
+    '<div class="sd-alt">'+
+      '<div class="sdd-panel"><div class="sdd-h"><h3>Bölgelerde yön</h3><span class="not">1 önceki → bu dönem H/G</span></div><svg id="sdBolgeYon" role="img" aria-label="Bölgelerin önceki döneme göre hedef gerçekleşme yönü"></svg></div>'+
+      '<div class="sdd-panel"><div class="sdd-h"><h3>Dönüşümün dört dönemi</h3><span class="not">randevu → kart → kayıt</span></div><svg id="sd4Huni" role="img" aria-label="Son dört dönemin dönüşüm karşılaştırması"></svg></div>'+
     '</div>';
+  const renkler=[renk,"#6F8178","#9BA79F","#C7CEC9"];
+  sdGrafik=function(){
+    sd4CiroCiz($("sd4Ciro"),hist,renkler);sd4HgCiz($("sd4Hg"),hist,renkler);
+    sd4ProfilCiz($("sd4Profil"),prof,isim,renkler);sdBolgeYonCiz($("sdBolgeYon"),m.n,k,per,renk);
+    sd4HuniCiz($("sd4Huni"),hist,renkler);
+  };
+  sdGrafik();
+  $("sd4Leg").innerHTML=isim.map((x,i)=>'<span><i style="background:'+renkler[i]+'"></i>'+x+'</span>').join('');
+}
+
+function sd4CiroCiz(svg,h,renkler){
+  const W=Math.max(420,Math.round(svg.clientWidth||650)),H=168,L=18,R=14,T=28,B=28,enb=Math.max.apply(null,h.map(x=>x.ciro))*1.16||1;
+  svg.setAttribute("viewBox","0 0 "+W+" "+H);const gw=(W-L-R)/h.length,bw=Math.min(70,gw*.5),Y=v=>H-B-v/enb*(H-T-B);let g='<line x1="'+L+'" y1="'+(H-B)+'" x2="'+(W-R)+'" y2="'+(H-B)+'" stroke="#D9DED9"/>';
+  h.forEach(function(x,i){const cx=L+gw*(i+.5),y=Y(x.ciro);g+='<rect x="'+(cx-bw/2)+'" y="'+y+'" width="'+bw+'" height="'+(H-B-y)+'" rx="3" fill="'+renkler[i]+'"/><text x="'+cx+'" y="'+(y-7)+'" text-anchor="middle" font-size="12" font-weight="700" fill="'+(x.deg>=0?'#00724C':'#9B342C')+'">'+(x.deg===null?'':IMZ(x.deg))+'</text><text x="'+cx+'" y="'+(H-9)+'" text-anchor="middle" font-size="11" font-weight="650" fill="#58645F">'+x.ad+'</text>';});svg.innerHTML=g;
+}
+function sd4HgCiz(svg,h,renkler){
+  const W=Math.max(260,Math.round(svg.clientWidth||320)),H=168,L=28,R=18,T=18,B=28,vals=h.map(x=>x.hg||0),mn=Math.min(85,Math.min.apply(null,vals)-4),mx=Math.max(110,Math.max.apply(null,vals)+5),Y=v=>H-B-(v-mn)/(mx-mn)*(H-T-B),gw=(W-L-R)/h.length;svg.setAttribute("viewBox","0 0 "+W+" "+H);let g='<line x1="'+L+'" y1="'+Y(100)+'" x2="'+(W-R)+'" y2="'+Y(100)+'" stroke="#C9A961" stroke-dasharray="4 4"/><text x="4" y="'+(Y(100)+4)+'" font-size="10" fill="#8A6410">100</text>';
+  h.forEach(function(x,i){const cx=L+gw*(i+.5),y=Y(x.hg||mn);g+='<line x1="'+cx+'" y1="'+Y(mn)+'" x2="'+cx+'" y2="'+y+'" stroke="'+renkler[i]+'" stroke-width="3"/><circle cx="'+cx+'" cy="'+y+'" r="6" fill="'+renkler[i]+'"/><text x="'+cx+'" y="'+(y-10)+'" text-anchor="middle" font-size="12" font-weight="700" fill="#34433D">'+PCT(x.hg)+'</text><text x="'+cx+'" y="'+(H-8)+'" text-anchor="middle" font-size="10.5" fill="#58645F">'+(i?'−'+i:'Şimdi')+'</text>';});svg.innerHTML=g;
+}
+function sd4ProfilCiz(svg,seriler,isim,renkler,per){
+  const W=Math.max(600,Math.round(svg.clientWidth||900)),H=Math.max(220,Math.round(svg.clientHeight||250)),L=38,R=116,T=18,B=31;
+  const vals=seriler.reduce((a,s)=>a.concat(s.filter(v=>v!==null)),[]),mn=Math.min(85,Math.floor((Math.min.apply(null,vals)-4)/5)*5),mx=Math.max(110,Math.ceil((Math.max.apply(null,vals)+4)/5)*5);
+  const Y=v=>H-B-(v-mn)/(mx-mn)*(H-T-B),n=Math.max.apply(null,seriler.map(s=>s.length));
+  const X=i=>L+i/Math.max(1,n-1)*(W-L-R);svg.setAttribute("viewBox","0 0 "+W+" "+H);
+  let g='<rect x="'+L+'" y="'+T+'" width="'+(W-L-R)+'" height="'+(H-T-B)+'" fill="#fff" fill-opacity=".34"/>';
+  [mn,100,mx].filter((v,i,a)=>a.indexOf(v)===i).forEach(function(v){g+='<line x1="'+L+'" y1="'+Y(v)+'" x2="'+(W-R)+'" y2="'+Y(v)+'" stroke="'+(v===100?'#C9A961':'#D9DED9')+'" stroke-dasharray="'+(v===100?'5 5':'2 5')+'"/><text x="'+(L-7)+'" y="'+(Y(v)+4)+'" text-anchor="end" font-size="10" fill="'+(v===100?'#8A6410':'#7A8680')+'">%'+nf.format(v)+'</text>';});
+  const xAd=function(i){if(per.tip==='gun')return String(SAAT_BAS+i).padStart(2,'0')+':00';if(per.tip==='hafta')return GUN_KISA[idxTarih(per.bas+i).getDay()];if(per.tip==='ay')return (i+1)+'. hafta';return AY_AD[i].slice(0,3);};
+  [0,Math.floor((n-1)/2),n-1].filter((v,i,a)=>a.indexOf(v)===i).forEach(i=>{g+='<text x="'+X(i)+'" y="'+(H-9)+'" text-anchor="middle" font-size="10" fill="#58645F">'+xAd(i)+'</text>';});
+  const son=[];
+  seriler.forEach(function(s,si){const P=s.map((v,i)=>[X(i),Y(v)]);if(!P.length)return;const dash=si===2?'6 4':(si===3?'2 4':'');g+='<path d="'+P.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ')+'" fill="none" stroke="'+renkler[si]+'" stroke-width="'+(si===0?3.5:1.8)+'" '+(dash?'stroke-dasharray="'+dash+'" ':'')+'stroke-linecap="round" stroke-linejoin="round"><title>'+isim[si]+'</title></path>';const p=P[P.length-1];g+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="'+(si===0?5:3)+'" fill="'+renkler[si]+'" stroke="#fff" stroke-width="1.5"/>';son.push({si:si,y:p[1],v:s[s.length-1]});});
+  son.sort((a,b)=>a.y-b.y);son.forEach(function(p,i){p.ly=Math.max(T+8,p.y);if(i&&p.ly-son[i-1].ly<15)p.ly=son[i-1].ly+15;});
+  son.forEach(function(p){g+='<path d="M '+(W-R)+' '+p.y+' L '+(W-R+9)+' '+p.ly+'" fill="none" stroke="'+renkler[p.si]+'"/><text x="'+(W-R+14)+'" y="'+(p.ly+4)+'" font-size="10.5" font-weight="'+(p.si===0?750:600)+'" fill="'+renkler[p.si]+'">'+isim[p.si]+' '+PCT(p.v)+'</text>';});
+  svg.innerHTML=g;
+}
+function sdBolgeYonCiz(svg,n,k,per,renk){
+  const rows=n.cocuk.map(function(b){const h=sdGecmis(b,k,per);return h.length>1?{ad:b.ad,bu:h[0].hg||0,on:h[1].hg||0}:null;}).filter(Boolean).sort((a,b)=>b.bu-a.bu).slice(0,6),W=Math.max(420,Math.round(svg.clientWidth||620)),H=150,L=110,R=45,T=12,B=12,vals=rows.reduce((a,x)=>a.concat([x.bu,x.on]),[]),mn=Math.min(85,Math.min.apply(null,vals)-3),mx=Math.max(110,Math.max.apply(null,vals)+3),X=v=>L+(v-mn)/(mx-mn)*(W-L-R),rh=(H-T-B)/Math.max(1,rows.length);svg.setAttribute("viewBox","0 0 "+W+" "+H);let g='<line x1="'+X(100)+'" y1="'+T+'" x2="'+X(100)+'" y2="'+(H-B)+'" stroke="#C9A961" stroke-dasharray="3 4"/>';
+  rows.forEach(function(x,i){const y=T+rh*(i+.5);g+='<text x="'+(L-8)+'" y="'+(y+4)+'" text-anchor="end" font-size="10.5" font-weight="650" fill="#34433D">'+x.ad+'</text><line x1="'+X(x.on)+'" y1="'+y+'" x2="'+X(x.bu)+'" y2="'+y+'" stroke="#B9C1BC" stroke-width="2"/><circle cx="'+X(x.on)+'" cy="'+y+'" r="4" fill="#B9C1BC"/><circle cx="'+X(x.bu)+'" cy="'+y+'" r="5" fill="'+renk+'"/><text x="'+(X(x.bu)+(x.bu>=x.on?8:-8))+'" y="'+(y+4)+'" text-anchor="'+(x.bu>=x.on?'start':'end')+'" font-size="10.5" font-weight="700" fill="'+(x.bu>=x.on?'#00724C':'#9B342C')+'">'+PCT(x.bu)+'</text>';});svg.innerHTML=g;
+}
+function sd4HuniCiz(svg,h,renkler){
+  const adlar=['Randevu → kart','Kart → kayıt','Randevu → kayıt'];
+  const met=h.map(x=>[x.rnd?x.kart/x.rnd*100:0,x.kart?x.kyt/x.kart*100:0,x.rnd?x.kyt/x.rnd*100:0]);
+  const W=Math.max(330,Math.round(svg.clientWidth||430)),H=Math.max(168,Math.round(svg.clientHeight||178)),L=105,R=42,T=8,B=18;
+  const enb=Math.max.apply(null,met.reduce((a,x)=>a.concat(x),[]))*1.18||1,X=v=>L+v/enb*(W-L-R),gh=(H-T-B)/3;
+  svg.setAttribute('viewBox','0 0 '+W+' '+H);let g='<line x1="'+L+'" y1="'+(H-B)+'" x2="'+(W-R)+'" y2="'+(H-B)+'" stroke="#D9DED9"/><text x="'+L+'" y="'+(H-4)+'" font-size="9" fill="#7A8680">%0</text><text x="'+(W-R)+'" y="'+(H-4)+'" text-anchor="end" font-size="9" fill="#7A8680">'+PCT(enb)+'</text>';
+  [0,1,2].forEach(function(j){const gy=T+j*gh;g+='<text x="'+(L-8)+'" y="'+(gy+gh*.5)+'" text-anchor="end" font-size="10" font-weight="700" fill="#34433D">'+adlar[j]+'</text>';h.forEach(function(x,i){const y=gy+6+i*7.2,v=met[i][j];g+='<rect x="'+L+'" y="'+y+'" width="'+Math.max(1,X(v)-L)+'" height="5" rx="2.5" fill="'+renkler[i]+'"><title>'+x.ad+' · '+PCT(v)+'</title></rect><text x="'+Math.min(W-R+3,X(v)+4)+'" y="'+(y+5)+'" font-size="8.5" font-weight="'+(i===0?750:600)+'" fill="'+renkler[i]+'">'+PCT(v)+'</text>';});});svg.innerHTML=g;
+}
+
+function sdRaporEski(m,hep,tr,k,per,renk){
+  const yilMi=per.tip==="yil", o=m.o;
+  const sira=function(al){ const d=hep.map(al); const x=al(m);
+    return x===null?null:1+d.filter(y=>y!==null&&y>x).length; };
+  const bol=m.n.cocuk.map(b=>sdOlc(b,k,per));
+  const bolAl = yilMi ? (b=>b.deg) : (b=>b.o.hg);
+  const bolSirali=bol.filter(b=>bolAl(b)!==null).sort((a,b)=>bolAl(b)-bolAl(a));
+  const onde=bol.filter(b=>b.o.seyir!==null && Math.round(b.o.seyir)>=ESIK.hedefte).length;
+
+  /* yazılı özet: rakamı cümle içinde okutmak — Genel'deki kutuların tersine */
+  const c=[];
+  if(!yilMi){
+    c.push('<b>'+m.n.ad+'</b> '+per.ad.toLocaleLowerCase("tr")+' döneminde <b>'+TL(o.gercek)+'</b> ciro yaptı; '+
+      per.hedefAd.toLocaleLowerCase("tr")+'e oranı <b class="'+durum(o.seyir)+'">'+PCT(o.hg)+'</b>.'+
+      (o.tamam?'':' Bugünkü tempoyla dönemi <b>'+PCT(o.tahminHG)+'</b> ile kapatması bekleniyor.'));
+    if(m.gereken) c.push('Hedefe ulaşmak için kalan '+m.kalanGun+' günde günde ortalama <b>'+TL(m.gereken)+
+      '</b> gerekiyor; şimdiye kadarki günlük ortalama <b>'+TL(m.gunOrt)+'</b>'+
+      (m.gereken>m.gunOrt?' — tempo <b class="no">%'+nf.format(Math.round((m.gereken/m.gunOrt-1)*100))+'</b> artmalı.':' — mevcut tempo yetiyor.'));
+    else if(o.hedef && o.gercek>=o.hedef) c.push('Dönem hedefi <b class="ok">'+TL(o.gercek-o.hedef)+'</b> farkla aşıldı.');
+  } else {
+    c.push('<b>'+m.n.ad+'</b> yıl başından bu yana <b>'+TL(o.gercek)+'</b> ciro yaptı; geçen yılın aynı dönemine göre <b class="'+
+      degisimSinif(m.deg)+'">'+IMZ(m.deg)+'</b>. Yıl sonu tahmini <b>'+TL(o.tahmin)+'</b>.');
+  }
+  c.push('Dört saha içinde ciroda <b>'+sira(x=>x.o.gercek)+'.</b>, '+
+    (yilMi?'büyümede':'hedef temposunda')+' <b>'+sira(yilMi?(x=>x.deg):(x=>x.o.seyir))+'.</b> sırada.');
+  if(bolSirali.length>1){
+    const iy=bolSirali[0], kt=bolSirali[bolSirali.length-1], f=yilMi?IMZ:PCT;
+    c.push('Bölgelerde <b>'+iy.n.ad+'</b> '+f(bolAl(iy))+' ile önde, <b>'+kt.n.ad+'</b> '+f(bolAl(kt))+' ile en geride'+
+      (yilMi?'.':'. Hedef temposundaki bölge: <b>'+onde+' / '+bol.length+'</b>.'));
+  }
+  if(m.rndKart!==null && tr.rndKart!==null)
+    c.push('Randevudan karta dönüşüm <b>'+PCT(m.rndKart)+'</b>, karttan kayda <b>'+PCT(m.kartKyt)+'</b> '+
+      '(Türkiye: '+PCT(tr.rndKart)+' ve '+PCT(tr.kartKyt)+').');
+
+  const kunye=[
+    ["Satış",[
+      ["Gerçekleşen",TL(o.gercek)],
+      yilMi?["Yıl sonu tahmini",TL(o.tahmin)]:[per.hedefAd,TL(o.hedef)],
+      yilMi?["Geçen yıla göre",IMZ(m.deg),degisimSinif(m.deg)]:["Hedefe göre",PCT(o.hg),durum(o.seyir)],
+      yilMi?null:[oncekiGore[per.tip],IMZ(m.deg),degisimSinif(m.deg)],
+      yilMi||o.tamam?null:["Tahmini kapanış",TL(o.tahmin)]
+    ]],
+    ["Verim",[
+      ["Şube başına ciro",TL(m.ciroSube)],
+      ["Personel başına ciro",TL(m.ciroKisi)],
+      ["Kayıt başına ciro",m.sepet===null?"—":TL(m.sepet)],
+      ["Şube başına randevu",m.rndSube===null?"—":AD(m.rndSube)]
+    ]],
+    ["Satış hunisi",[
+      ["Randevu",AD(o.randevu)],["Kart",AD(m.kart)],["Kayıt",AD(m.kyt)],["Teslimat",AD(m.tes)]
+    ]],
+    k==="tum"?["Kanal",[["Saha personeli payı",PCT(m.spyPay)],["Şube payı",m.spyPay===null?"—":PCT(100-m.spyPay)]]]:null
+  ].filter(Boolean);
+
+  const kunyeHtml=function(g){
+    return '<h3>'+g[0]+'</h3><dl class="sdr-kunye">'+g[1].filter(Boolean).map(function(r){
+      return '<dt>'+r[0]+'</dt><dd class="'+(r[2]||"")+'">'+r[1]+'</dd>';
+    }).join("")+'</dl>';
+  };
+  $("sddGovde").innerHTML=
+    '<div class="sdr">'+
+      '<div class="sdr-k1">'+
+        '<h3>Özet</h3><div class="sdr-metin">'+c.map(x=>'<p>'+x+'</p>').join("")+'</div>'+
+        kunyeHtml(kunye[0])+
+      '</div>'+
+      '<div class="sdr-k2">'+
+        '<div class="sdd-panel"><div class="sdd-h"><h3>Ciro: bu dönem ve '+(yilMi?"geçen yıl":"önceki dönem")+'</h3>'+
+          '<span class="not">dilim dilim · üstteki oran değişim</span></div>'+
+          '<svg id="sdrCiro" role="img" aria-label="Bu dönem ve önceki dönem cirosu"></svg>'+
+          '<div class="sdr-leg"><span><i style="background:'+renk+'"></i>'+per.ad+'</span>'+
+          '<span><i style="background:'+SD_RENK.gri+'"></i>'+(yilMi?"Geçen yıl":"Önceki dönem")+'</span></div></div>'+
+        '<div class="sdd-panel"><div class="sdd-h"><h3>Bölgeler</h3>'+
+          '<span class="not">çubuk ciro · '+(yilMi?"geçen yıla göre":"hedefe göre · önceki döneme göre")+'</span></div>'+
+          '<div class="sdr-bolge" id="sdrBolge"></div></div>'+
+      '</div>'+
+      '<div class="sdr-k3">'+
+        kunye.slice(1).map(kunyeHtml).join("")+
+        '<h3>Dönüşüm: saha ve Türkiye</h3><div class="sdr-huni" id="sdrHuni"></div>'+
+      '</div>'+
+    '</div>';
+
+  const dl=sdDilimCiro(m.n,k,per);
+  sdGrafik=function(){ const s=$("sdrCiro"); if(s) sdCiroKiyas(s, dl, renk, per); };
+  sdGrafik();
+
+  const enb=Math.max.apply(null,bol.map(b=>b.o.gercek))||1;
+  $("sdrBolge").innerHTML=bol.slice().sort((a,b)=>b.o.gercek-a.o.gercek).map(function(b){
+    return '<div class="sdr-bs" data-i="'+m.n.cocuk.indexOf(b.n)+'">'+
+      '<span class="ad">'+b.n.ad+'</span>'+
+      '<span class="cub"><i style="width:'+(b.o.gercek/enb*100).toFixed(1)+'%;background:'+renk+'"></i></span>'+
+      '<span class="tl">'+TL(b.o.gercek)+'</span>'+
+      (yilMi?'':'<span class="hg '+durum(b.o.seyir)+'">'+PCT(b.o.hg)+'</span>')+
+      '<span class="dg '+degisimSinif(b.deg)+'">'+IMZ(b.deg)+'</span></div>';
   }).join("");
-
-  veri.forEach(function(v,i){
-    cizGrafik(v.n,k,per,v.o,{svg:$("sdSvg"+i), leg:null, not:$("sdNot"+i), renk:v.renk});
-    cizPay(per, v.n, {halka:$("sdPay"+i), leg:$("sdPayLeg"+i), baslik:null});
+  $("sdrBolge").querySelectorAll(".sdr-bs").forEach(function(r){
+    r.onclick=function(){ detayaIn(m.n.cocuk[+this.dataset.i]); };
   });
 
-  $("sahaDetay").querySelectorAll(".sdet-git").forEach(function(b){
-    b.onclick=function(){
-      S.filtre.saha=KOK.cocuk[+this.dataset.i]; S.filtre.bolge=null; S.filtre.sube=null;
-      S.seviye="bolge"; S.limit=60; S.listeLimit=40;
-      window.scrollTo({top:0,behavior:"smooth"}); ciz("seviye");
-    };
+  const adim=[["Randevu → kart","rndKart"],["Kart → kayıt","kartKyt"],["Randevu → kayıt","rndKyt"]];
+  const hEnb=Math.max.apply(null,adim.map(a=>Math.max(m[a[1]]||0,tr[a[1]]||0)))*1.1||1;
+  $("sdrHuni").innerHTML=adim.map(function(a){
+    const s=m[a[1]], t=tr[a[1]];
+    return '<div class="sdr-hs"><span class="ad">'+a[0]+'</span><div class="ikili">'+
+      '<div><span class="cub"><i style="width:'+((s||0)/hEnb*100).toFixed(1)+'%;background:'+renk+'"></i></span><b>'+PCT(s)+'</b><em>'+m.n.ad+'</em></div>'+
+      '<div><span class="cub"><i style="width:'+((t||0)/hEnb*100).toFixed(1)+'%;background:'+SD_RENK.gri+'"></i></span><b>'+PCT(t)+'</b><em>Türkiye</em></div>'+
+    '</div></div>';
+  }).join("");
+}
+
+/* Gruplu sütun: her dilimde önceki dönem (gri) ve bu dönem (saha rengi).
+   Tutarlar sütunlara sığmadığı için üstte yalnız değişim oranı yazılıyor;
+   tam tutar her sütunun üzerine gelince okunur. */
+function sdCiroKiyas(svg,dl,renk,per){
+  const W=Math.max(320,Math.round(svg.clientWidth||700)), H=270, L=10, R=10, T=34, B=34;
+  svg.setAttribute("viewBox","0 0 "+W+" "+H);
+  const n=dl.length, gw=(W-L-R)/n, bw=Math.min(30,gw*0.34);
+  const enb=Math.max.apply(null,dl.map(d=>Math.max(d.bu||0,d.onc||0)))*1.08||1;
+  const Y=v=>H-B-(v/enb)*(H-B-T);
+  let g='<line x1="'+L+'" y1="'+(H-B)+'" x2="'+(W-R)+'" y2="'+(H-B)+'" stroke="#AEB7B1"/>';
+  const adimE = gw<34 ? 2 : 1;
+  dl.forEach(function(d,i){
+    const x=L+gw*(i+.5);
+    if(i%adimE===0 || i===n-1)
+      g+='<text x="'+x.toFixed(1)+'" y="'+(H-12)+'" text-anchor="middle" font-size="13" font-weight="700" fill="'+SD_RENK.koyu+'">'+
+        (per.tip==="gun"?d.ad+":00":d.ad)+'</text>';
+    if(d.onc>0) g+='<rect x="'+(x-bw-1).toFixed(1)+'" y="'+Y(d.onc).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+
+      (H-B-Y(d.onc)).toFixed(1)+'" rx="2" fill="'+SD_RENK.gri+'"><title>'+d.ad+' · önceki: '+TL(d.onc)+'</title></rect>';
+    if(d.bu>0) g+='<rect x="'+(x+1).toFixed(1)+'" y="'+Y(d.bu).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+
+      (H-B-Y(d.bu)).toFixed(1)+'" rx="2" fill="'+renk+'"><title>'+d.ad+' · bu dönem: '+TL(d.bu)+'</title></rect>';
+    if(d.bu>0 && d.onc>0){
+      const dg=(d.bu-d.onc)/d.onc*100;
+      g+='<text x="'+x.toFixed(1)+'" y="'+(Y(Math.max(d.bu,d.onc))-8).toFixed(1)+'" text-anchor="middle" font-size="13" font-weight="700" fill="'+
+        (dg>=0?SD_RENK.ok:SD_RENK.no)+'">'+IMZ(dg)+'</text>';
+    }
   });
+  svg.innerHTML=g;
 }
 
 /* ===== BÖLGE DURUMU =====
@@ -4524,7 +5846,7 @@ function cizSahaKartlar(k,per){
         '<div class="v"></div>'+
         '<div class="hg"><span class="hgv"></span>'+(yilMi?'<span class="ort">ort.</span>':'')+'</div>'+
         (yilMi?'':'<div class="bar"><span class="f" style="width:0"></span>'+
-                  '<span class="m"></span></div>')+
+                  '<span class="pr"></span><span class="m"></span></div>')+
         '<dl'+(yilMi?' style="margin-top:12px"':'')+'>'+
           '<dt class="k1"></dt><dd class="d1"></dd>'+
           '<dt>Randevu</dt><dd class="d2"></dd>'+
@@ -4823,6 +6145,7 @@ window.addEventListener("resize",function(){
 });
 
 ustOlc();
+seyirOlaylari();
 ciz("ilk");
 })();
 </script>
