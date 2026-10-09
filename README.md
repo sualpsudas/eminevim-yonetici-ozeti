@@ -96,7 +96,7 @@ değil, hepsi bu ekranda bir şeyi bozduğu için yazıldı.
 | Sayfa | İçerik | Filtre |
 |---|---|---|
 | **Genel** | Ciro kartı (hedefe göre, önceki döneme göre, hedefe kalan, randevu, tahmini kapanış) · seyir (Gün'de saatlik, diğerlerinde dönem içi) · Türkiye haritası + kanal payı halkası · sağ sütunda 4 saha kartı | Yok |
-| **Saha** | **Sahalar alt alta**, her blok Genel'in minyatürü: ciro + ilerleme çubuğu + tahmini kapanış + 4 KPI + dönem seyri + kanal payı halkası | Yok |
+| **Saha** | **İki durak**, her biri bir ekran boyunda; tek kaydırma hareketiyle (tekerlek, ↑/↓, PageUp/PageDown) aralarında geçilir. **1) Karşılaştırma tablosu:** satır = saha, sütun = ciro · H/G · randevu · kart · kayıt · teslimat (dikey çizgilerle ayrılır, hücrede değer + sütunun en büyüğüne göre çubuk, H/G'de altın çizgi = hedef, altta Türkiye). Kart **döner**: arka yüzü dönem içi dilimlerle **ısı haritası**, metrik kartın üstündeki sekmelerle seçilir (adetlerde renk sütun içi sıra, H/G'de beklenen seyir). **2) Seçilen sahanın detayı:** başlık + silik organizasyon satırı (bölge · şube · personel · il), saha sekmeleri, altı ölçü kartı, dilim dilim ciro seyri, dönüşüm oranı, bölgeler. **Metrik penceresi:** tablo hücresine, sütun başlığına ya da ölçü kartına basınca o metriğin dört sahadaki dilim dilim seyri yan yana dört sütun grafiğinde, ortak ölçekle. Saha adına basınca detaya inilir. | Yok |
 | **Bölge** | Durum şeridi · hedefe göre dağılım · liste | Saha |
 | **Şube** | Öne çıkanlar · liste | Saha · Bölge |
 | **Personel** | Öne çıkanlar · tablo | Saha · Bölge · Şube |
@@ -127,6 +127,22 @@ Kartların **arka yüzü** vardır (`.kart .arka`): gösterinin son aşamasında
 döner ve o sahanın bölgeleri dönem cirosuyla listelenir. Ön yüz `.kart.arkada`
 sınıfıyla gizlenir; iskelet bozulmadığı için `cizSahaKartlar` değer güncellemesi
 etkilenmez.
+
+**Saha sayfası (6 Ekim 2026'da baştan yazıldı).** Kod tek blokta: CSS
+`/* ---- saha sayfası ---- */` (bütün sınıflar `sh-` önekli), HTML
+`#secSahaDetay` + `#shPop` (dialog), JS `/* ===== SAHA SAYFASI ===== */`.
+Akış: `cizSahaDetay` → `shTabloCiz` · `shIsiCiz` · `shDetayCiz`
+(→ `shSeyirCiz` / `shHuniCiz` / `shBolgeCiz`); pencere `shPopAc`. Dilim
+verisi tek yerden: `shDilimler` (bütün metrikler; `hg` = dilimin tam
+hedefine göre, `seyir` = beklenene göre, bugün GUN_PAY düzeltmeli). Sütun
+grafikleri tek fonksiyon: `shSutunCiz`. Durum `SH` nesnesinde (yüz, ısı
+haritası metriği, durak); seçili saha `S.sdSec`. Duraklar: `--durak-h` /
+`--durak1-h` değişkenlerini `shDurakOlc` yazar; ikinci durak ekrana
+sığmıyorsa ya da pencere açıksa kaydırma ele geçirilmez. Saha'dan başka
+sayfaya geçince sayfa başa alınır. Bilerek basit: iskelet ve rakam akışı
+yok, her çizimde HTML baştan; tek hareket kartın dönüşü. **Sayfa betiği
+kapalı kapsamda** — test sayfası iç fonksiyonları çağıramaz, DOM
+tıklamalarıyla sürülür.
 
 ## Gösteri (play) tuşu
 
@@ -239,7 +255,89 @@ kanal payı) bu yüzden yeniden ele alınacak — bkz. "Sıradaki adımlar".
   risk). Saha bloklarında ise sahanın kendi kimlik rengi kullanılır — çizim
   fonksiyonu hedef SVG'yi ve rengi parametre olarak alır.
 
+### Kompakt seyir, gezinme balonu ve duraklama
+
+Üç şikayet bir arada çözüldü: grafikler yer kaplıyordu, rakamlar birbirine
+karışıyordu, ve bir değeri okurken bekleme modu yüzü çeviriyordu.
+
+- **Kutu kısaldı, yazı değil.** `SEYIR.H` 200 → **178**. Grafiğin eni sütundan
+  geliyor ve viewBox ölçeği (ekran px / 1000 birim) ondan çıkıyor; yüksekliği
+  kısmak yazıları küçültmüyor, yalnız boş dikey alanı alıyor. Ölçülen
+  1600×920'de pano yüksekliği 918 → 899 px, tek-ekran ölçeği **0,876 → 0,894**
+  — yani seyirden kazanılan yer bütün panoyu %2 büyütüyor.
+  Değer puntosu bir kademe kısıldı (18 → 16,5 birim), eksen/başlık yazıları
+  16 → 15: alçalan şeritte rakamlar dikeyde sıkışıyordu.
+- **Etiket seçimi tek yerden** (`etiketSecimi`). Eski kural "`i % adim === 0`
+  artı zorunlular"dı; zorunlu etiket (gerçekleşenin sonu, son dolu dilim)
+  ızgaranın arasına düşünce komşusuyla çakışıyordu — ölçülen Gün'de
+  `₺132.354.882 ↔ ₺145.476.259`. Yeni kural: zorunlular önce konur, aralara
+  yalnız `adim` kadar uzaktaki adaylar girer, zorunluya yakın aday elenir.
+  Dört dönem × beş yüzün hepsinde metin kutuları kesiştirilerek ölçüldü:
+  **0 çakışma**.
+- **Saatlik seyirde zikzak bitti.** Tutarlar iki yükseklikte dönüşümlü
+  yazılıyordu (bir yukarı bir aşağı); çakışmayı önlüyordu ama rakam şeridi
+  zikzak çiziyor, çizginin kendisi okunmuyordu. Artık hepsi çizginin hemen
+  üstünde, sığdığı kadarı.
+- **Gezinme şeritleri** (`vurSeritleri`). Her dilimin üstünde, çizim alanını
+  kaplayan saydam bir dikdörtgen; `data-ad` / `data-v` ile dilimin adı ve tam
+  değeri. Fare girince şerit hafifçe yeşile dönüyor ve balon (haritadakinin
+  aynısı, `.il-balon`) değeri veriyor. Böylece **atlanan hiçbir rakam
+  kaybolmuyor** — ekranda yazmayan değer fareyle okunuyor. H/G'de balon
+  dilimin kendi yüzdesini ve o noktadaki ağırlıklı ortalamayı birlikte verir.
+  Şeritler SVG'nin en sonuna basılır (sonra basılan üstte durur), yani
+  etiketler bile hover'ı engellemiyor.
+  Balonun konumu **ölçekle düzeltiliyor**: pano `.wrap` üstünde bir
+  `transform: scale()` ile sığdırılıyor, `getBoundingClientRect` ölçeklenmiş
+  piksel veriyor, `left/top` ise ölçeklenmemiş uzayda okunuyor.
+- **Fare grafiğin üstündeyken dönüş duraklıyor** (`seyirUstunde`). Yeni etki
+  hiç başlamıyor (`beklemeUygun`), sürmekte olan dizinin kalan adımları fare
+  çekilene kadar erteleniyor (`beklemeBekle` içindeki 320 ms'lik nöbet).
+  Fare çıkınca `beklemeGecikti()` ile 15 sn'lik
+  sükûnet baştan sayılıyor. Ölçülen: fare grafiğin üstünde 40 sn boyunca
+  hiçbir yüz dönmedi; fare çekilince 16. saniyede KPI kutuları döndü.
+
 ## Harita satırı: harita solda, bölgeler sağında
+
+### Bölge listesi bir TABLO
+
+Liste artık yarım kalmış bir ad-değer çifti değil, komple bir tablo:
+
+- **Başlık satırı.** Tek bir "Bölgeler" başlığı yerine her liste sütununun
+  üstünde `Bölge` ve değerin üstünde ölçünün adı (`H/G` / `Ciro`). Tek başlık
+  iki sütunlu listede sağdaki sütunu başlıksız bırakıyordu; başlık bu yüzden
+  liste ızgarasının aynısını kullanan ayrı bir ızgara (`.bolge-bas`), hücre
+  sayısı sütun sayısı kadar. Ölçü adı dönüş sırasında da güncelleniyor
+  (`bolgeBaslikYaz`), yoksa yarım saniye "H/G" yazarken altında ciro dururdu.
+- **İki sütun arasında ince çizgi.** Satır `flex` değil artık iki hücreli
+  `grid`: değer sütunu her satırda aynı yerde başlıyor, çizgi de baştan sona
+  tek bir hat oluyor. `flex`'te değer kendi enine göre sağa yaslanıyordu,
+  çizgi tırtıklı çıkardı.
+- **Değer sütununun eni ÖLÇÜLÜYOR** (`bolgeDegerEni`). Sabit bir en tahmin
+  edilemiyordu: tutarlar dönemden döneme uzayıp kısalıyor, dar tutulursa
+  taşıyor, geniş tutulursa bölge adına yer kalmıyor. En uzun tutarın eni
+  canvas ile, satırın kendi puntosunda ölçülüyor — canvas gerekiyor çünkü
+  ciro değeri H/G yüzünde `display:none`, DOM'dan ölçülemiyor. Ölçülen
+  1600×920: 93 px.
+- **Sütun eni 10,3vw/172 → 11,2vw/186.** Değer sütunu eski sabit çubuktan
+  (60 px) geniş olduğu için bölge adına 72 px kalıyordu ve adların çoğu
+  kesiliyordu; fark haritanın payından alındı (harita 532 px, boyu CSS'ten
+  sabit, tek-ekran ölçeği etkilenmiyor). Ad sütunu 80,5 px.
+- **Boş satırlar.** Veri biten yerden sonrası boş satırlarla dolduruluyor
+  (`bolgeBosDoldur`), şerit ve çizgi kutunun dibine kadar iniyor. Satır
+  kapasitesi artık bölge sayısıyla kırpılmıyor (`bolgeSatirSayisi` kapasite
+  döndürüyor): az bölgeli bir kapsamda (bir saha önizlemesi) liste eskiden
+  veri bitince kesiliyordu. Boş satırlar gerçek satırların ARDINA ekleniyor —
+  ızgara sütun sütun aktığı için bu, son sütunun altını doldurmak demek ve
+  indeksler veriyle hizalı kalıyor. Ölçülen 1600×920: sütun başına 15 satır,
+  22 bölge + 8 boş = 2 tam sütun, listede taşma yok.
+
+**Satırlar şeritli** (zebra) — boş satırlarda da sürer. Ad solda, değer sağda ve aradaki boşluk sütun
+geninin yarısı kadar; göz satırı soldan sağa takip ederken kayıyordu. Şerit
+`:nth-child` ile verilmiyor: ızgara `grid-auto-flow:column`, yani DOM sırası
+sütun sütun ilerliyor ve sütuna çift sayıda satır düşerse (ölçülen: 12) ikinci
+sütun yine şeritle başlayıp iki sütun birbirinin aynası oluyor. Şerit bu yüzden
+JS'te, **ölçülen satır sayısına göre** veriliyor (`(i % satirAdet) % 2`), her
+sütun kendi içinde tek/çift. Hover ve seçim rengi şeridin üstünde kalır.
 
 Harita kendi sütununda **sola dayalı**; sağında kalan yere **"Bölgeler"**
 başlığı ve bölge listesi girdi (ad + H/G veya dönem cirosu). Liste hedef
@@ -1451,28 +1549,120 @@ aynı tekrarladı, 49,1. sn'de Türkiye Geneli.
 > 15 sn bu ölçekte rahat — kritik olan, 15 sn'ye birden fazla etki
 > sıkıştırmamak.
 
-### Ortam hareketleri — sıraya girmeyen üç hareket
+### Ortam hareketleri — sıraya girmeyen, birbirine de binmeyen
 
-Üçü de **veriye dokunmuyor**; ekrandaki hiçbir sayı değişmiyor, yalnız
-panonun canlı olduğu görünüyor. Sıraya girmemeleri bilinçli: sıradaki dört
-etki "bak, başka bir ölçü" diyor, bunlar yalnız "buradayım" diyor. Hepsi aynı
-1 sn'lik tikten besleniyor, ayrı `setInterval` açılmıyor (`ortamTik`).
+Hepsi **veriye dokunmuyor**; ekrandaki hiçbir sayı değişmiyor, yalnız panonun
+canlı olduğu görünüyor. Sıraya girmemeleri bilinçli: sıradaki dört etki "bak,
+başka bir ölçü" diyor, bunlar yalnız "buradayım" diyor. Hepsi aynı 1 sn'lik
+tikten besleniyor, ayrı `setInterval` açılmıyor (`ortamTik`).
 
 | hareket | periyot | ne yapar |
 |---|---|---|
 | **il nabzı** | 3 sn | en çok ciro yapan 6 il sırayla kısa bir nabız atar (`filter:brightness`) |
+| **kart çubuğu dalgası** | 8 sn | saha kartlarının ciro çubuklarından yukarıdan aşağı, 170 ms arayla ışık geçer — **lider kart hariç** |
+| **harita parıltısı** | 11 sn | haritanın üstünden soldan sağa tek bir ışık geçer (2,4 sn) |
 | **huni akışı** | 14 sn | dolu çubukların içinden soldan sağa ışık geçer, üç kademe 180 ms arayla |
+| **lider çubuk** | 17 sn | en yüksek cirolu sahanın çubuğu TEK BAŞINA, daha geniş ve daha parlak bir ışıkla geçer |
 | **halka süpürmesi** | 22 sn | kanal halkası 0'dan kendi oranına yeniden süpürülür |
-| **etiket parlaması** | 9 sn | seyir veri etiketleri soldan sağa teker teker parlar (95 ms aralıkla) |
+| **bayrak** | 29 sn | bütün sayfanın arkasından çok açık yeşil, eğik bir şerit soldan sağa kayar (5,2 sn) |
 
-Etiket parlaması `x` niteliğine göre sıralanıyor, DOM sırasına göre DEĞİL:
-DOM sırası çizim sırasıdır ve her zaman soldan sağa olmuyor. Ölçülen yanma
-sırası (viewBox x): 32 -> 136 -> 239 -> 343 -> 446 -> 550 -> 653 -> 757 ->
-860 -> 964, yani tam zaman yönünde. `transform-box:fill-box` zorunlu —
-SVG'de varsayılan referans kutusu viewBox'ın kendisi, o yüzden `scale`
-etiketi kendi merkezinden değil grafiğin köşesinden büyütüp yerinden
-fırlatıyor. Etiketler her çizimde yeniden üretildiği için zamanlayıcılar
-ayrı tutulup yeniden çizimde iptal ediliyor (`etiketDurdur`).
+#### İki hareket aynı anda olmaz (`ortamBasla`)
+
+Şikayet haritadan geldi: il nabzı (3 sn'de bir) ile harita parıltısı (o zaman
+9,5 sn'lik **sonsuz** bir CSS döngüsüydü) aynı ana denk gelince ikisi de fark
+edilmiyordu — göz iki hareketi ayıramıyor, ikisini tek bir "kıpırtı" olarak
+görüyor. Periyotları ayarlamak çözüm değil, er geç yine çakışırlar.
+
+Çözüm hareketleri **tekil** kılmak: her hareket başlarken kendi süresi kadar
+bir meşguliyet bırakıyor (`ortamBosalma`), o süre dolmadan başka hiçbir ortam
+hareketi başlamıyor. Kaçıran hareket kendi periyodunda yeniden geliyor, yani
+hiçbir şey kaybolmuyor. Sıra **önceliklidir**: seyrek gelen kazanır, sık gelen
+(nabız) bekler. Harita parıltısı huniden öne alındı — ölçülen ilk 81 sn'de
+huni önünü kestiği için yalnız 2 kez geçebilmişti.
+
+> Ölçüm: 81 sn boyunca 200 ms'de bir örneklendi, **27 hareketin hiçbiri
+> başkasıyla üst üste binmedi** (her örnekte en çok bir hareket etkin).
+> Bu arada parıltı artık sonsuz döngü değil, tike bağlı tek geçiş
+> (`.hrt-parla.gec`).
+
+#### Işık çubuğun TAMAMINI kat eder (düzeltme)
+
+İlk hâlinde ışık dolgunun (`.f`) içindeydi ve garip çalışıyordu. Ölçülen:
+çubuk dört kartta da 254 px, dolgular ise %69–%78 (176–198 px). Işığın eni
+dolgunun %46'sı olduğu için **her kartta başka bir en** (81–91 px) ve aynı
+sürede **başka bir yol**, yani başka bir hız çıkıyordu; üstelik ışık dolgunun
+bittiği yerde, çubuğun ortasında aniden kayboluyordu. Dört kart alt alta
+durduğu için bu tutarsızlık doğrudan göze çarpıyordu.
+
+Işık artık çubuğun kendisini kat ediyor: eni de yolu da dört kartta aynı
+(ölçülen: dördünde de aynı piksel eni). Kırpma için `.bar` içine ayrı bir
+katman kondu (`.pr`): `.bar`'a doğrudan `overflow:hidden` vermek hedef
+işaretini (`.m`, üstten ve alttan 3 px taşar) kırpardı.
+
+#### Lider çubuk neden dalgaya girmiyor
+
+Lideri dalganın içinde göstermek onu öbürlerinden ayırmıyordu: dört çubuk
+sırayla parlayınca hepsi tek bir hareket oluyor. Ayrı zamanda, daha geniş
+(%60 vs %46) ve daha parlak bir ışıkla geçince ekranda bir kez de "lider"
+okunuyor. Lider, kartların kendi verisinden seçiliyor (`liderBarIndeks`,
+`__veri[i].o.gercek` en büyüğü), yani dönem/kanal değişince kendiliğinden
+doğru kart oluyor. Ölçülen: 45 sn'de 0. kart (İstanbul, ₺32,3 mn) hiç dalgaya
+girmedi, yalnız `lider` sınıfını aldı; 1-2-3 yalnız dalgaya girdi.
+
+#### Bayrak
+
+Şeridin rengi kurumsal koyu yeşilden (#00724C) **açık yeşile** alındı
+(#62BE90) ve opaklık %14 → **%24**. Koyu yeşili belirginleştirmek için
+opaklığı artırmak şeridi kirli/gri bir gölgeye çeviriyordu; açık yeşil aynı
+opaklıkta daha fazla "renk" gösteriyor. Ölçülen sonuç: blok aralarında
+(#FCFBF7 üstünde) yaklaşık **#DCF0E6**, net ama yumuşak; cam yüzeylerin
+altında %24 × %28 = **%6,7**, yaklaşık #F4FAF6 — okumayı bozmayan bir yıkama.
+
+Panonun dört büyük bloğu (`.hero`, `.spark`, `.hsag`, `.kart`) **hafif saydam**
+(`--cam`, beyaz %72 / `--cam-2`, `--surf-2` %72). Önce hepsi opaktı ve bayrak
+yalnız blokların aralarından görünüyordu, yani ekranın onda birinden azında;
+şimdi yüzeylerin üstünden de geçiyor. Okuma bozulmuyor çünkü blokların
+ARKASINDA duran şey zaten açık: gövde zemini `--surf` (#FCFBF7), yüzeyin kendi
+rengine çok yakın — bayrak yokken ölçülebilir bir değişiklik yok (beyaz %72 +
+#FCFBF7 = #FDFDFC). Bayrak geçerken yüzeyin altına düşen ton en koyu yerinde
+%14 × %28 ≈ **%3,9** yeşil bir yıkama. `.hero-r` zeminini bıraktı: ebeveyniyle
+aynı rengi ikinci kez basınca sağ yarı %92 örtücülüğe çıkıyor ve bayrağa
+kapanıyordu. Hover/seçim renkleri opak kaldı — fare bir kartın üstündeyken
+arkasından bayrak geçmesi seçimin kendisini zayıflatırdı.
+
+Kurallar stil bloğunun **sonunda** duruyor: `.kart` / `.spark` / `.hsag` kendi
+yerlerinde `background:#fff` diyor, aynı özgüllükte oldukları için kazanan
+sıradaki sonuncu.
+
+Şerit sayfanın **arkasından** geçiyor: `position:fixed`, `z-index:0`, `.top` ve
+`.navbar` yapışkan ve z-index'li (30/25), `.wrap` ise transform taşıdığı için
+konumlanmış katmanda ve DOM'da bayraktan sonra geliyor. Kartların ve
+bölümlerin zeminleri opak olduğu için şerit yalnız aralardan ve kenar
+boşluklarından görünür — hiçbir rakamın üstünden geçmiyor. Doğrulandı:
+kenardaki bir noktanın hedefi `#bayrak`, kartın üstündeki noktanın hedefi
+kartın kendi içeriği.
+
+#### Kaldırılan: seyir etiketi parlaması
+
+Seyir veri etiketleri 9 sn'de bir soldan sağa teker teker büyüyüp küçülüyordu.
+Okunan rakamın boyu değiştiği için hareket "canlı" değil huzursuz duruyordu;
+kaldırıldı (kullanıcı isteği). Grafiğin üstündeki tek hareket artık gezinme
+şeridinin kendisi.
+
+#### Kart H/G'si sürekli yanıp söner
+
+Kartta bakılan rakam H/G; dört kart arasında gözün ilk takıldığı yer o olsun
+diye `.kart .hg` sürekli, yavaş bir **saydamlık** nabzı atıyor (`hgYanSon`,
+1,3 sn). Ciro kartındaki H/G kutusu ise **büyüyüp küçülüyor** (`hgOdak`,
+1,9 sn):
+aynı ekranda aynı hareketin iki kopyası olmasın diye ölçüler ayrıldı — ayrıca
+kartta ölçü oynatmak her nabızda yerleşimi kıpırdatırdı.
+
+Panodaki bütün nabızlar bir kademe **hızlandırıldı** (kullanıcı isteği);
+genlikler aynı, yalnız çevrim kısaldı: büyük ciro rakamı (`ciroNabiz`)
+2,8 → 1,5 sn, kart H/G'si 2,6 → 1,3 sn, ciro kartındaki H/G odağı
+3,2 → 1,9 sn, saatlik seyrin "şu an" noktası 2,2 → 1,3 sn, bugünün çubuğu
+2,4 → 1,4 sn.
 
 İl nabzı önizleme açıkken (`.harita-sar.vurgu`) susuyor — o sırada haritanın
 kendi vurgusu okunuyor, iki işaret birbirine karışır. İller şubelerin ili
@@ -1724,14 +1914,6 @@ sonra beş sayfa × dört dönem taraması çalıştırılacak (hata, boş böl�
   bulunmadı), Saha'daki karşılaştırmalı seyir grafiği.
 
 ## Bilinen açık konular
-
-- **Saha sayfasındaki ilerleme çubukları görünmüyor.** `.sdet-bar .track` gri
-  zemini çiziyor ama içindeki `.fill` / `.fcast` / `.mark` için hiçbir kural
-  yok: bu sınıflar yalnız `.bullet` altında tanımlı, `.sdet-bar` ise `.bullet`
-  içinde değil. Ölçüldü: dolgu `position:static`, yüksekliği 0 px. Yani Saha
-  sayfasında çubukların yalnız boş zemini görünüyor. Eski bir hata, hareket
-  katmanıyla ilgisi yok. Saha sayfası zaten yeniden kurgulanacak, düzeltme
-  oraya bırakıldı.
 
 - **Şube başına ciro haritası** ayrı bir seçenek olarak duruyor. Mevcut harita
   "hacim nerede" sorusunu cevaplıyor; çarpıklığın asıl sebebi şube sayısı
